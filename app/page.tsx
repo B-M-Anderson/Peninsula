@@ -11,7 +11,7 @@ export default function HomePage() {
     <div className={dark ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"}>
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-8 py-4 border-b dark:border-gray-700">
-        <h1 className="text-2xl font-bold">Your Name</h1>
+        <h1 className="text-2xl font-bold">Testtest</h1>
         <div className="flex gap-6 items-center">
           <a href="#about" className="hover:opacity-75">About</a>
           <a href="/projects" className="hover:opacity-75">Projects</a>
@@ -33,7 +33,7 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="text-5xl font-bold mb-4"
         >
-          Hi, I'm Your Name
+          changing things to test
         </motion.h1>
 
         <motion.p

@@ -1,10 +1,19 @@
-// page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
 export default function HomePage() {
+  const [repos, setRepos] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("https://api.github.com/users/bennettanderson/repos") // replace with your GitHub username
+      .then((res) => res.json())
+      .then(setRepos)
+      .catch(console.error);
+  }, []);
+
   return (
     <main className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
       {/* LEFT THIRD: About Me */}
@@ -59,26 +68,26 @@ export default function HomePage() {
           GitHub & Recent Projects
         </motion.h2>
 
-        <div className="mb-6">
-          <a
-            href="https://github.com/yourusername"
-            target="_blank"
-            className="text-blue-600 hover:underline"
-          >
-            Visit my GitHub
-          </a>
-        </div>
-
         <div className="grid gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
-          >
-            <h3 className="text-xl font-semibold mb-2">Project Title</h3>
-            <p className="opacity-80">Short description of the project.</p>
-          </motion.div>
+          {repos.map((repo) => (
+            <motion.div
+              key={repo.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
+            >
+              <h3 className="text-xl font-semibold mb-2">{repo.name}</h3>
+              <p className="opacity-80 mb-2">{repo.description}</p>
+              <a
+                href={repo.html_url}
+                target="_blank"
+                className="text-blue-600 hover:underline"
+              >
+                View on GitHub
+              </a>
+            </motion.div>
+          ))}
         </div>
       </section>
     </main>

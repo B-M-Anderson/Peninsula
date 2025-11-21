@@ -15,7 +15,7 @@ export default function ProjectsPage() {
     (It took some time to realize I didn't need to push every update to see how it works so early commits are messy and abundant)<br /><br />
     Note: my learning of textscript website development sourced a lot of early information from LLM-AIs. 
     Many fixes & feature/content implementations were done by me, but original code was AI-assisted. 
-    The I do and improve to this website, the more I continue to learn to do on my own!
+    The more I do and improve to this website, the more I continue to learn to do on my own!
   </p>
 
   {/* GitHub link */}

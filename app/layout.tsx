@@ -7,13 +7,9 @@ export const metadata: Metadata = {
   description: "Personal portfolio of B. Anderson",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="light">
+    <html>
       <body className="min-h-screen transition-colors duration-300">
         <Navbar />
         <main className="p-8">{children}</main>
@@ -21,3 +17,4 @@ export default function RootLayout({
     </html>
   );
 }
+

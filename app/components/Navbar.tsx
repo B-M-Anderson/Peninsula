@@ -7,14 +7,26 @@ import { Moon, Sun } from "lucide-react";
 export default function Navbar() {
   const [dark, setDark] = useState(false);
 
+  // Detect system preference
+  useEffect(() => {
+    const darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    setDark(darkModeMediaQuery.matches);
+
+    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
+    darkModeMediaQuery.addEventListener("change", handler);
+
+    return () => darkModeMediaQuery.removeEventListener("change", handler);
+  }, []);
+
+  // Apply class to <html>
   useEffect(() => {
     const html = document.documentElement;
     if (dark) {
-      html.classList.remove("light");
       html.classList.add("dark");
+      html.classList.remove("light");
     } else {
-      html.classList.remove("dark");
       html.classList.add("light");
+      html.classList.remove("dark");
     }
   }, [dark]);
 

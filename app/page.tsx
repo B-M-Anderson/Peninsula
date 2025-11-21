@@ -82,9 +82,28 @@ export default function HomePage() {
           About Me
         </motion.h2>
         <p className="text-lg leading-relaxed opacity-90 mb-6">
-          I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the medical industry.
+          I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the medical industry. 
         </p>
-      </section>
+
+        {/* Buttons */}
+  <div className="flex flex-col gap-4 mt-4 w-full">
+    <a
+      href="/BennettA_Resume.pdf"
+      download
+      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-center"
+    >
+      Download Resume
+    </a>
+    <a
+      href="https://www.linkedin.com/in/bennett-m-anderson/"
+      target="_blank"
+      className="px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition dark:bg-gray-800 dark:text-white dark:hover:bg-gray-900 text-center"
+    >
+      LinkedIn
+    </a>
+  </div>
+</section>
+
 
       {/* RIGHT: Scrolling content */}
       <section className="md:w-2/3 p-8 space-y-12 overflow-y-auto">

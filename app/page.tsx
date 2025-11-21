@@ -92,14 +92,14 @@ export default function HomePage() {
       download
       className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-center"
     >
-      Download Resume
+      Download Resume 📄
     </a>
     <a
       href="https://www.linkedin.com/in/bennett-m-anderson/"
       target="_blank"
       className="px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition dark:bg-gray-800 dark:text-white dark:hover:bg-gray-900 text-center"
     >
-      LinkedIn
+      LinkedIn 🔗
     </a>
   </div>
 </section>
@@ -115,7 +115,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-3xl font-bold mb-6"
           >
-            Featured Projects
+            Featured Projects 🚀
           </motion.h2>
           <div className="grid gap-6">
             {featuredProjects.map((project, idx) => (
@@ -133,7 +133,7 @@ export default function HomePage() {
                   target="_blank"
                   className="text-blue-600 hover:underline"
                 >
-                  View Project
+                  View Project 
                 </a>
               </motion.div>
             ))}
@@ -148,7 +148,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-3xl font-bold mb-6"
           >
-            GitHub Repositories
+            GitHub Repositories ⚡
           </motion.h2>
           <div className="grid gap-6">
             {repos.map((repo, idx) => (
@@ -166,7 +166,7 @@ export default function HomePage() {
                   target="_blank"
                   className="text-blue-600 hover:underline"
                 >
-                  View on GitHub
+                  View on GitHub 
                 </a>
               </motion.div>
             ))}
@@ -181,7 +181,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-3xl font-bold mb-6"
           >
-            Skills
+            Skills & Technologies 🛠️
           </motion.h2>
           <div className="flex flex-wrap gap-4">
             {skills.map((skill, idx) => (
@@ -203,7 +203,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-3xl font-bold mb-6"
           >
-            My Cat Penrose :3
+            My Cat Penrose😺 :3
           </motion.h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {catPhotos.map((photo, idx) => (

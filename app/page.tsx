@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import SkillsSection from "./components/SkillsSection";
+import Link from "next/link";
 
 type Repo = {
   id: number;
@@ -18,12 +19,7 @@ const featuredProjects = [
   {
     name: "Portfolio Website",
     description: "This website! Built with Next.js, Tailwind, and TypeScript.",
-    url: "https://github.com/B-M-Anderson/peninsula",
-  },
-  {
-    name: "Example_2",
-    description: "Fill in later.",
-    url: "#",
+    path: "/projects", // internal route instead of external URL
   },
 ];
 
@@ -76,20 +72,37 @@ export default function HomePage() {
 
         {/* Buttons */}
         <div className="flex flex-col gap-4 mt-4 w-full">
-          <a
-            href="/BennettA_Resume.pdf"
-            download
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-center"
-          >
-            Download Resume 📄
-          </a>
-          <a
-            href="https://www.linkedin.com/in/bennett-m-anderson/"
-            target="_blank"
-            className="px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition dark:bg-gray-800 dark:text-white dark:hover:bg-gray-900 text-center"
-          >
-            LinkedIn 🔗
-          </a>
+          <div className="flex flex-col gap-4 mt-4 w-full">
+   {/* Resume button: dark blue */}
+  <a
+    href="/BennettA_Resume.pdf"
+    download
+    className="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 transition-colors duration-300 text-center"
+  >
+    Download Resume 📄
+  </a>
+
+  {/* LinkedIn button: gray */}
+  <a
+    href="https://www.linkedin.com/in/bennett-m-anderson/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors duration-300 text-center"
+  >
+    LinkedIn 🔗
+  </a>
+
+  {/* GitHub button: dark green */}
+  <a
+    href="https://github.com/B-M-Anderson"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="px-4 py-2 bg-green-800 text-white rounded hover:bg-green-700 transition-colors duration-300 text-center"
+  >
+    GitHub 🌐
+  </a>
+
+</div>
         </div>
       </section>
 
@@ -108,24 +121,24 @@ export default function HomePage() {
           <div className="grid gap-6">
             {featuredProjects.map((project, idx) => (
               <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * idx, duration: 0.6 }}
-                className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
-              >
-                <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
-                <p className="opacity-80 mb-2">{project.description}</p>
-                <a
-                  href={project.url}
-                  target="_blank"
-                  className="text-blue-600 hover:underline"
-                >
-                  View Project
-                </a>
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * idx, duration: 0.6 }}
+              className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
+            >
+              <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
+              <p className="opacity-80 mb-2">{project.description}</p>
+              <Link
+              href={project.path}
+              className="text-blue-600 hover:underline"
+            >
+              Move To Projects ⯈
+              </Link>
               </motion.div>
-            ))}
-          </div>
+  ))}
+</div>
+
         </div>
 
         {/* GitHub Feed */}

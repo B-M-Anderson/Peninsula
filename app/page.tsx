@@ -22,7 +22,7 @@ export default function HomePage() {
         className="md:w-1/3 p-8 flex flex-col items-center text-center border-r border-gray-200 dark:border-gray-700"
       >
         <Image
-          src="/profile.jpg"
+          src="/profile.jpeg"
           alt="Profile picture"
           width={200}
           height={200}
@@ -45,7 +45,7 @@ export default function HomePage() {
             href="/BennettA_Resume.pdf"
             className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
           >
-            Download Resume
+            Open Resume
           </a>
           <a
             href="https://www.linkedin.com/in/bennett-m-anderson/"

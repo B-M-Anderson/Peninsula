@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import SkillsSection from "./components/SkillsSection";
 
 type Repo = {
   id: number;
@@ -25,17 +26,6 @@ const featuredProjects = [
     description: "Fill in later.",
     url: "#",
   },
-];
-
-// Dummy skills stack
-const skills = [
-  "TypeScript",
-  "React / Next.js",
-  "Tailwind CSS",
-  "MATLAB",
-  "CRISPR Modeling",
-  "Python",
-  "Data Analysis",
 ];
 
 const catPhotos = [
@@ -173,27 +163,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Skills Stack */}
-        <div>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl font-bold mb-6"
-          >
-            Skills & Technologies 🛠️
-          </motion.h2>
-          <div className="flex flex-wrap gap-4">
-            {skills.map((skill, idx) => (
-              <span
-                key={idx}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-full font-medium text-gray-900 dark:text-white"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
+        <SkillsSection />
 
         {/* Cat Photo Album */}
         <div>

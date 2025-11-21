@@ -4,11 +4,21 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
+interface Repo {
+  id: number;
+  name: string;
+  html_url: string;
+  description: string;
+  stargazers_count: number;
+  forks_count: number;
+  updated_at: string;
+}
+
 export default function HomePage() {
-  const [repos, setRepos] = useState<any[]>([]);
+  const [repos, setRepos] = useState<Repo[]>([]);
 
   useEffect(() => {
-    fetch("https://api.github.com/users/bennettanderson/repos") // replace with your GitHub username
+    fetch("https://api.github.com/users/bennettanderson/repos?sort=updated")
       .then((res) => res.json())
       .then(setRepos)
       .catch(console.error);
@@ -16,11 +26,8 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
-      {/* LEFT THIRD: About Me */}
-      <section
-        id="about"
-        className="md:w-1/3 p-8 flex flex-col items-center text-center border-r border-gray-200 dark:border-gray-700"
-      >
+      {/* LEFT: About Me */}
+      <section className="md:w-1/3 p-8 flex flex-col items-center text-center border-r border-gray-200 dark:border-gray-700">
         <Image
           src="/profile.jpeg"
           alt="Profile picture"
@@ -57,7 +64,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* RIGHT TWO-THIRDS: GitHub + Projects */}
+      {/* RIGHT: GitHub Feed */}
       <section className="md:w-2/3 p-8">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -65,7 +72,7 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="text-3xl font-bold mb-6"
         >
-          GitHub & Recent Projects
+          GitHub Activity
         </motion.h2>
 
         <div className="grid gap-6">
@@ -75,10 +82,17 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
+              className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow hover:shadow-lg transition"
             >
               <h3 className="text-xl font-semibold mb-2">{repo.name}</h3>
               <p className="opacity-80 mb-2">{repo.description}</p>
+              <div className="flex justify-between text-sm opacity-70 mb-2">
+                <span>⭐ {repo.stargazers_count}</span>
+                <span>🍴 {repo.forks_count}</span>
+                <span>
+                  Updated: {new Date(repo.updated_at).toLocaleDateString()}
+                </span>
+              </div>
               <a
                 href={repo.html_url}
                 target="_blank"

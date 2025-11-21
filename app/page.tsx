@@ -82,7 +82,7 @@ export default function HomePage() {
           About Me
         </motion.h2>
         <p className="text-lg leading-relaxed opacity-90 mb-6">
-          I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the medical industry. 
+          I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the pursuit of the betterment of global health.
         </p>
 
         {/* Buttons */}

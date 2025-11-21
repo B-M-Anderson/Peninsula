@@ -5,10 +5,9 @@ export default function ProjectsPage() {
 
       {/* Example project entry */}
       <div className="mb-8 p-6 border rounded-lg shadow dark:border-gray-700">
-        <h2 className="text-xl font-semibold mb-2">Computational Drug Design</h2>
+        <h2 className="text-xl font-semibold mb-2">proj title</h2>
         <p className="opacity-80">
-          A project exploring molecular docking simulations and predictive modeling
-          for novel therapeutic compounds.
+          blah blah blah insert project here
         </p>
       </div>
 

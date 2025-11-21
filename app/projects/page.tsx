@@ -11,7 +11,13 @@ export default function ProjectsPage() {
         </p>
       </div>
 
-      {/* Add more entries here */}
+      {/* Example project entry */}
+      <div className="mb-8 p-6 border rounded-lg shadow dark:border-gray-700">
+        <h2 className="text-xl font-semibold mb-2">proj title</h2>
+        <p className="opacity-80">
+          blah blah blah insert project here
+        </p>
+      </div>
     </div>
   );
 }

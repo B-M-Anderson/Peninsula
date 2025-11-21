@@ -26,7 +26,7 @@ export default function Navbar() {
           : "bg-white text-neutral-900 border-neutral-200"
       }`}
     >
-      <h1 className="text-xl font-semibold">Hosted on Vercel & Coded in TypeScript by Yours Truly :p</h1>
+      <h1 className="text-xl font-semibold">Hosted on Vercel & Coded in TypeScript</h1>
 
       <div className="flex gap-6 items-center">
         <Link href="/">Home</Link>

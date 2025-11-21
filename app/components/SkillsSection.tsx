@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SkillsSection() {
+  const [mounted, setMounted] = useState(false);
+  const [openCategory, setOpenCategory] = useState<number | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const categories = [
     {
       name: "Computational Tools",
@@ -49,14 +56,10 @@ export default function SkillsSection() {
     },
   ];
 
-  // Colors
   const strongColor =
     "bg-green-100 dark:bg-green-800 text-green-900 dark:text-green-100";
   const normalColor =
     "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100";
-
-  // Default open first category
-  const [openCategory, setOpenCategory] = useState<number | null>(0);
 
   const toggle = (index: number) =>
     setOpenCategory(openCategory === index ? null : index);
@@ -67,7 +70,6 @@ export default function SkillsSection() {
 
       <div className="space-y-4">
         {categories.map((cat, index) => {
-          // Auto-sort: strong → normal
           const sortedSkills = [...cat.skills].sort(
             (a, b) => Number(b.strong) - Number(a.strong)
           );
@@ -77,23 +79,22 @@ export default function SkillsSection() {
               key={cat.name}
               className="border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden"
             >
-              {/* CATEGORY HEADER */}
+              {/* Category button */}
               <button
                 onClick={() => toggle(index)}
-                className="w-full flex justify-between items-center p-4 text-left
-                           bg-gray-100 dark:bg-gray-800
-                           hover:bg-gray-200 dark:hover:bg-gray-700
-                           transition-colors"
+                className="w-full flex justify-between items-center p-4 text-left bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 <span className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
                   {cat.name}
                 </span>
-                <span className="text-xl">
-                  {openCategory === index ? "▲" : "▼"}
+
+                {/* Hydration-safe arrow */}
+                <span className="text-xl text-gray-900 dark:text-white">
+                  {mounted && (openCategory === index ? "▲" : "▼")}
                 </span>
               </button>
 
-              {/* DROPDOWN CONTENT */}
+              {/* Dropdown */}
               <AnimatePresence initial={false}>
                 {openCategory === index && (
                   <motion.div

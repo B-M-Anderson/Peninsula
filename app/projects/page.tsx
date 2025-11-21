@@ -10,7 +10,7 @@ export default function ProjectsPage() {
           You're looking at this one! <br /><br />
           My personal website, built from scratch using Next.js, TypeScript, and Tailwind CSS. 
           It's deployed & hosted by Vercel with a custom domain from Squarespace. 
-          It features an auto-detecting dark mode toggle, responsive design & animations, and showcases my projects and skills. <br /><br />
+          It features an auto-detecting dark mode toggle, a screen-size responsive navigation bar & homepage + other designs & animations, all intended to showcases my projects and skills. <br /><br />
           Feel free to explore the code on my GitHub in my first public repository! 
           (It took some time to realize I didn't need to push every update to see how it works so early commits are messy and abundant)<br /><br />
           Note: my learning of textscript website development sourced a lot of early information from LLM-AIs. 

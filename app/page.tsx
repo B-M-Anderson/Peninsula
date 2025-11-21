@@ -14,7 +14,6 @@ type Repo = {
   owner: { login: string };
 };
 
-// Dummy featured projects data
 const featuredProjects = [
   {
     name: "Portfolio Website",
@@ -53,9 +52,9 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="flex min-h-[calc(100vh-4rem)]">
+    <main className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
       {/* LEFT: About Me */}
-      <section className="md:w-1/3 p-8 flex flex-col items-center text-center border-r border-gray-200 dark:border-gray-700 sticky top-0 h-screen">
+      <section className="md:w-1/3 w-full p-8 flex flex-col items-center text-center border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700">
         <Image
           src="/profile.jpeg"
           alt="Profile picture"
@@ -76,27 +75,26 @@ export default function HomePage() {
         </p>
 
         {/* Buttons */}
-  <div className="flex flex-col gap-4 mt-4 w-full">
-    <a
-      href="/BennettA_Resume.pdf"
-      download
-      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-center"
-    >
-      Download Resume 📄
-    </a>
-    <a
-      href="https://www.linkedin.com/in/bennett-m-anderson/"
-      target="_blank"
-      className="px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition dark:bg-gray-800 dark:text-white dark:hover:bg-gray-900 text-center"
-    >
-      LinkedIn 🔗
-    </a>
-  </div>
-</section>
-
+        <div className="flex flex-col gap-4 mt-4 w-full">
+          <a
+            href="/BennettA_Resume.pdf"
+            download
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-center"
+          >
+            Download Resume 📄
+          </a>
+          <a
+            href="https://www.linkedin.com/in/bennett-m-anderson/"
+            target="_blank"
+            className="px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition dark:bg-gray-800 dark:text-white dark:hover:bg-gray-900 text-center"
+          >
+            LinkedIn 🔗
+          </a>
+        </div>
+      </section>
 
       {/* RIGHT: Scrolling content */}
-      <section className="md:w-2/3 p-8 space-y-12 overflow-y-auto">
+      <section className="md:w-2/3 w-full p-8 space-y-12 overflow-y-auto">
         {/* Featured Projects */}
         <div>
           <motion.h2
@@ -123,7 +121,7 @@ export default function HomePage() {
                   target="_blank"
                   className="text-blue-600 hover:underline"
                 >
-                  View Project 
+                  View Project
                 </a>
               </motion.div>
             ))}
@@ -156,7 +154,7 @@ export default function HomePage() {
                   target="_blank"
                   className="text-blue-600 hover:underline"
                 >
-                  View on GitHub 
+                  View on GitHub
                 </a>
               </motion.div>
             ))}

@@ -32,14 +32,18 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`flex justify-between items-center px-8 py-4 border-b transition-colors duration-300 ${
+      className={`flex justify-between items-center px-6 py-4 border-b transition-colors duration-300 ${
         dark
           ? "bg-neutral-900 text-white border-neutral-700"
           : "bg-white text-neutral-900 border-neutral-200"
       }`}
     >
-      <h1 className="text-xl font-semibold">Hosted on Vercel & Coded in TypeScript</h1>
+      {/* Heading text hidden on small screens */}
+      <h1 className="text-xl font-semibold hidden sm:block">
+        Hosted on Vercel & Coded in TypeScript
+      </h1>
 
+      {/* Nav links + dark/light toggle */}
       <div className="flex gap-6 items-center">
         <Link href="/">Home</Link>
         <Link href="/projects">Projects</Link>

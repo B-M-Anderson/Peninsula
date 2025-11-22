@@ -27,7 +27,7 @@ export default function Navbar() {
     html.classList.toggle("light", !dark);
   }, [dark]);
 
-  // Scroll-hide behavior for both desktop (panel) and mobile (window)
+  // Scroll-hide behavior for desktop
   useEffect(() => {
     let panel: HTMLElement | null = document.getElementById("scroll-panel");
     let lastY = 0;
@@ -60,14 +60,15 @@ export default function Navbar() {
     <nav
       className={`
         fixed top-0 left-0 w-full z-50
-        flex justify-between items-center px-6 py-4
+        hidden sm:flex        /* <-- hide on mobile, show from sm: up */
+        justify-between items-center px-6 py-4
         border-b transition-all duration-400 ease-in-out
         ${hidden ? "opacity-0 -translate-y-full backdrop-blur-md" : "opacity-100 translate-y-0 backdrop-blur-md"}
         ${dark ? "bg-neutral-900 text-white border-neutral-700" : "bg-white text-neutral-900 border-neutral-200"}
       `}
     >
       {/* Branding / title */}
-      <h1 className="text-xl font-semibold hidden sm:block">
+      <h1 className="text-xl font-semibold">
         Bennett M. Anderson
       </h1>
 

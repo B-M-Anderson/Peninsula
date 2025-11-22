@@ -6,9 +6,22 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function SkillsSection() {
   const [mounted, setMounted] = useState(false);
   const [openCategory, setOpenCategory] = useState<number | null>(null);
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+
+    // Function to check if <html> has dark class
+    const checkDark = () => setDark(document.documentElement.classList.contains("dark"));
+
+    // Initial check
+    checkDark();
+
+    // Observe class changes on <html> for dark/light mode updates
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
   }, []);
 
   const categories = [
@@ -64,10 +77,12 @@ export default function SkillsSection() {
     },
   ];
 
-  const strongColor =
-    "bg-green-100 dark:bg-green-800 text-green-900 dark:text-green-100";
-  const normalColor =
-    "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100";
+  const strongColor = dark
+    ? "bg-green-800 text-green-100"
+    : "bg-green-100 text-green-900";
+  const normalColor = dark
+    ? "bg-gray-800 text-gray-100"
+    : "bg-gray-200 text-gray-900";
 
   const toggle = (index: number) =>
     setOpenCategory(openCategory === index ? null : index);
@@ -90,16 +105,18 @@ export default function SkillsSection() {
               {/* Category button */}
               <button
                 onClick={() => toggle(index)}
-                className="w-full flex justify-between items-center p-4 text-left bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className={`w-full flex justify-between items-center p-4 text-left transition-colors ${
+                  dark
+                    ? "bg-gray-800 hover:bg-gray-700"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
               >
-                <span className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
+                <span className={`font-semibold text-lg`}>
                   {cat.name}
                 </span>
 
-                {/* Hydration-safe arrow */}
-                <span className="text-xl text-gray-900 dark:text-white">
-                  {mounted && (openCategory === index ? "▲" : "▼")}
-                </span>
+                {/* Arrow */}
+                <span className="text-xl">{mounted && (openCategory === index ? "▲" : "▼")}</span>
               </button>
 
               {/* Dropdown */}
@@ -110,7 +127,7 @@ export default function SkillsSection() {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="p-4 space-y-2 bg-gray-50 dark:bg-gray-900"
+                    className={dark ? "p-4 space-y-2 bg-gray-900" : "p-4 space-y-2 bg-gray-50"}
                   >
                     {sortedSkills.map((skill) => (
                       <div

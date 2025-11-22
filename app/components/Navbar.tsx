@@ -27,7 +27,7 @@ export default function Navbar() {
     html.classList.toggle("light", !dark);
   }, [dark]);
 
-  // Scroll-hide behavior
+  // Scroll-hide behavior for both desktop (panel) and mobile (window)
   useEffect(() => {
     let panel: HTMLElement | null = document.getElementById("scroll-panel");
     let lastY = 0;

@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pt-14"> 
+      {/* 👆 Add pt-24 to push everything below the fixed navbar */}
+
       {/* Full-width animated header/banner */}
       <motion.header
         initial={{ y: -100, opacity: 0 }}
@@ -31,7 +33,9 @@ export default function ContactPage() {
       {/* Page content */}
       <main className="max-w-2xl mx-auto py-16 px-6 flex flex-col items-center">
         <p className="mb-4 text-center">
-          Feel free to reach out to me via email, phone, or connect with me on LinkedIn. If using phone or email, please provide context in your first message or it will likely be ignored.
+          Feel free to reach out to me via email, phone, or connect with me on LinkedIn. 
+          If using phone or email, please provide context in your first message or it 
+          will likely be ignored.
         </p>
 
         <ul className="space-y-4 text-center">

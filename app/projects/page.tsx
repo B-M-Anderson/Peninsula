@@ -4,7 +4,7 @@ export default function ProjectsPage() {
       <h1 className="text-3xl font-bold mb-8">Projects & Publications</h1>
 
       {/* Example project entry */}
-      <div className="mb-8 p-6 border rounded-lg shadow dark:border-gray-700">
+      <div className="mb-8 p-6 pt-16 border rounded-lg shadow dark:border-gray-700">
         <h2 className="text-xl font-semibold mb-2">Bennett-Anderson.com</h2>
         <p className="opacity-80 whitespace-pre-line">
     You're looking at this one! <br /><br />

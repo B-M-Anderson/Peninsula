@@ -48,9 +48,11 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
-      {/* LEFT: About Me */}
-      <section className="md:w-1/3 w-full p-8 flex flex-col items-center text-center border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700">
+<main className="flex flex-col md:flex-row h-screen">
+  {/* LEFT: About Me */}
+  <section
+    className="md:w-1/3 w-full p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700h h-full overflow-hidden"
+  >
         <Image
           src="/profile.jpeg"
           alt="Profile picture"
@@ -106,8 +108,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* RIGHT: Scrolling content */}
-      <section className="md:w-2/3 w-full p-8 space-y-12 overflow-y-auto">
+      <section
+    id="scroll-panel"
+    className="md:w-2/3 w-full p-8 pt-[100px] /* adds space under navbar */ space-y-12 overflow-y-auto h-full"
+  >
         {/* Featured Projects */}
         <div>
           <motion.h2

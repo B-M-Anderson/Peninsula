@@ -91,8 +91,8 @@ export default function Navbar() {
 
 
       <h1 className="text-xl font-semibold hidden sm:block">
-        Hosted on Vercel & Coded in TypeScript
-      </h1>
+        Bennett M. Anderson 
+              </h1>
 
       <div className="flex gap-6 items-center">
         <Link href="/">Home</Link>

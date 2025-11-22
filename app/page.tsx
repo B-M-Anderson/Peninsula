@@ -18,8 +18,8 @@ type Repo = {
 const featuredProjects = [
   {
     name: "Portfolio Website",
-    description: "This website! Built with Next.js, Tailwind, and TypeScript.",
-    path: "/projects", // internal route instead of external URL
+    description: "This website! Built with Next.js, Tailwind, and TypeScript. Hosted on Vercel with a custom domain from Squarespace. More in 'projects' section",
+    path: "/projects",
   },
 ];
 
@@ -50,7 +50,9 @@ export default function HomePage() {
   return (
     <main className="flex flex-col md:flex-row md:h-screen">
       {/* LEFT: About Me */}
-      <section className="w-full md:w-1/3 md:sticky md:top-0 p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700">
+      <section
+        className="w-full md:w-1/3 p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pt-[80px] md:pt-0" // <-- mobile only padding for navbar
+      >
         <Image
           src="/profile.jpeg"
           alt="Profile picture"
@@ -105,7 +107,7 @@ export default function HomePage() {
       {/* RIGHT: Scrolling content */}
       <section
         id="scroll-panel"
-        className="w-full md:w-2/3 p-8 pt-24 md:pt-16 space-y-12 overflow-y-auto h-full"
+        className="w-full md:w-2/3 p-8 pt-16 md:pt-16 space-y-12 overflow-y-auto h-full"
       >
         {/* Featured Projects */}
         <div>

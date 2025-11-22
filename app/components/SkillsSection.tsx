@@ -16,6 +16,8 @@ export default function SkillsSection() {
       name: "Computational Tools",
       skills: [
         { name: "MATLAB", strong: true },
+        { name: "SolidWorks", strong: true },
+        { name: "Git & GitHub", strong: false },
         { name: "TypeScript", strong: false },
         { name: "React / Next.js", strong: false },
         { name: "Tailwind CSS", strong: false },
@@ -30,6 +32,8 @@ export default function SkillsSection() {
         { name: "Cloning & Transformation", strong: true },
         { name: "PCR & Gel Electrophoresis", strong: true },
         { name: "PRISM", strong: false },
+        { name: "SnapGene", strong: true },
+        { name: "PyMOL", strong: false },
         { name: "CRISPR Gene Editing Concepts", strong: false },
         { name: "gRNA Design", strong: false },
         { name: "Sequence Alignment", strong: false },
@@ -42,7 +46,9 @@ export default function SkillsSection() {
         { name: "Data Analysis", strong: true },
         { name: "Visualization", strong: false },
         { name: "Experimental Design", strong: true },
+        { name: "LaTeX", strong: true },
         { name: "Statistics", strong: false },
+        { name: "Microsoft Office Suite", strong: true },
       ],
     },
     {

@@ -27,32 +27,35 @@ export default function Navbar() {
     html.classList.toggle("light", !dark);
   }, [dark]);
 
-  // Scroll-hide behavior for desktop
+  // Scroll-hide behavior (desktop: scroll-panel, mobile: window)
   useEffect(() => {
-    let panel: HTMLElement | null = document.getElementById("scroll-panel");
+    const isMobile = window.innerWidth < 640; // Tailwind sm breakpoint
     let lastY = 0;
 
-    const handleScroll = () => {
-      const y = panel ? panel.scrollTop : window.scrollY;
+    const getY = () => {
+      if (isMobile) return window.scrollY;
+      const panel = document.getElementById("scroll-panel");
+      return panel?.scrollTop ?? 0;
+    };
 
+    const handleScroll = () => {
+      const y = getY();
       if (y < 20) {
         setHidden(false);
         lastY = y;
         return;
       }
-
       if (y > lastY) setHidden(true);
       else setHidden(false);
-
       lastY = y;
     };
 
-    if (panel) panel.addEventListener("scroll", handleScroll);
-    else window.addEventListener("scroll", handleScroll);
+    if (isMobile) window.addEventListener("scroll", handleScroll);
+    else document.getElementById("scroll-panel")?.addEventListener("scroll", handleScroll);
 
     return () => {
-      if (panel) panel.removeEventListener("scroll", handleScroll);
-      else window.removeEventListener("scroll", handleScroll);
+      if (isMobile) window.removeEventListener("scroll", handleScroll);
+      else document.getElementById("scroll-panel")?.removeEventListener("scroll", handleScroll);
     };
   }, [pathname]);
 
@@ -60,15 +63,14 @@ export default function Navbar() {
     <nav
       className={`
         fixed top-0 left-0 w-full z-50
-        hidden sm:flex        /* <-- hide on mobile, show from sm: up */
-        justify-between items-center px-6 py-4
+        flex justify-between items-center px-6 py-4
         border-b transition-all duration-400 ease-in-out
         ${hidden ? "opacity-0 -translate-y-full backdrop-blur-md" : "opacity-100 translate-y-0 backdrop-blur-md"}
         ${dark ? "bg-neutral-900 text-white border-neutral-700" : "bg-white text-neutral-900 border-neutral-200"}
       `}
     >
       {/* Branding / title */}
-      <h1 className="text-xl font-semibold">
+      <h1 className="text-xl font-semibold hidden sm:block">
         Bennett M. Anderson
       </h1>
 

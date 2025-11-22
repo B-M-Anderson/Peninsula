@@ -48,11 +48,9 @@ export default function HomePage() {
   }, []);
 
   return (
-<main className="flex flex-col md:flex-row h-screen">
-  {/* LEFT: About Me */}
-  <section
-    className="md:w-1/3 w-full p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700h h-full overflow-hidden"
-  >
+    <main className="flex flex-col md:flex-row md:h-screen">
+      {/* LEFT: About Me */}
+      <section className="w-full md:w-1/3 md:sticky md:top-0 p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700">
         <Image
           src="/profile.jpeg"
           alt="Profile picture"
@@ -69,49 +67,46 @@ export default function HomePage() {
           About Me
         </motion.h2>
         <p className="text-lg leading-relaxed opacity-90 mb-6">
-          I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the pursuit of the betterment of global health.
+          I'm a biomedical engineering student working to improve my skills,
+          computational and otherwise, to become the best engineer/scientist I
+          can in the pursuit of the betterment of global health.
         </p>
 
         {/* Buttons */}
-        <div className="flex flex-col gap-4 mt-4 w-full">
-          <div className="flex flex-col gap-4 mt-4 w-full">
-   {/* Resume button: dark blue */}
-  <a
-    href="/BennettA_Resume.pdf"
-    download
-    className="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 transition-colors duration-300 text-center"
-  >
-    Download Resume 📄
-  </a>
+        <div className="flex flex-col gap-4 w-full">
+          <a
+            href="/BennettA_Resume.pdf"
+            download
+            className="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 transition-colors duration-300 text-center"
+          >
+            Download Resume 📄
+          </a>
 
-  {/* LinkedIn button: gray */}
-  <a
-    href="https://www.linkedin.com/in/bennett-m-anderson/"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors duration-300 text-center"
-  >
-    LinkedIn 🔗
-  </a>
+          <a
+            href="https://www.linkedin.com/in/bennett-m-anderson/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors duration-300 text-center"
+          >
+            LinkedIn 🔗
+          </a>
 
-  {/* GitHub button: dark green */}
-  <a
-    href="https://github.com/B-M-Anderson"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="px-4 py-2 bg-green-800 text-white rounded hover:bg-green-700 transition-colors duration-300 text-center"
-  >
-    GitHub 🌐
-  </a>
-
-</div>
+          <a
+            href="https://github.com/B-M-Anderson"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-green-800 text-white rounded hover:bg-green-700 transition-colors duration-300 text-center"
+          >
+            GitHub 🌐
+          </a>
         </div>
       </section>
 
+      {/* RIGHT: Scrolling content */}
       <section
-    id="scroll-panel"
-    className="md:w-2/3 w-full p-8 pt-[100px] /* adds space under navbar */ space-y-12 overflow-y-auto h-full"
-  >
+        id="scroll-panel"
+        className="w-full md:w-2/3 p-8 pt-24 md:pt-16 space-y-12 overflow-y-auto h-full"
+      >
         {/* Featured Projects */}
         <div>
           <motion.h2
@@ -125,27 +120,26 @@ export default function HomePage() {
           <div className="grid gap-6">
             {featuredProjects.map((project, idx) => (
               <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * idx, duration: 0.6 }}
-              className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
-            >
-              <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
-              <p className="opacity-80 mb-2">{project.description}</p>
-              <Link
-              href={project.path}
-              className="text-blue-600 hover:underline"
-            >
-              Move To Projects ⯈
-              </Link>
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * idx, duration: 0.6 }}
+                className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
+              >
+                <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
+                <p className="opacity-80 mb-2">{project.description}</p>
+                <Link
+                  href={project.path}
+                  className="text-blue-600 hover:underline"
+                >
+                  Move To Projects ⯈
+                </Link>
               </motion.div>
-  ))}
-</div>
-
+            ))}
+          </div>
         </div>
 
-        {/* GitHub Feed */}
+        {/* GitHub Repositories */}
         <div>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}

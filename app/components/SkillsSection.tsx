@@ -43,12 +43,14 @@ export default function SkillsSection() {
     {
       name: "Data & Analysis",
       skills: [
-        { name: "Data Analysis", strong: true },
+        { name: "MATLAB", strong: true },
+        { name: "PRISM", strong: true },
         { name: "Visualization", strong: false },
         { name: "Experimental Design", strong: true },
         { name: "LaTeX", strong: true },
         { name: "Statistics", strong: false },
-        { name: "Microsoft Office Suite", strong: true },
+        { name: "Python", strong: false },
+        { name: "Excel / Microsoft Office Suite", strong: true },
       ],
     },
     {

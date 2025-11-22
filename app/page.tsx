@@ -18,7 +18,8 @@ type Repo = {
 const featuredProjects = [
   {
     name: "Portfolio Website",
-    description: "This website! Built with Next.js, Tailwind, and TypeScript. Hosted on Vercel with a custom domain from Squarespace. More in 'projects' section",
+    description:
+      "This website! Built with Next.js, Tailwind, and TypeScript. Hosted on Vercel with a custom domain from Squarespace. More in 'projects' section",
     path: "/projects",
   },
 ];
@@ -34,7 +35,9 @@ const catPhotos = [
 
 export default function HomePage() {
   const [repos, setRepos] = useState<Repo[]>([]);
+  const [dark, setDark] = useState(false);
 
+  // Fetch GitHub repos
   useEffect(() => {
     fetch("https://api.github.com/users/B-M-Anderson/repos")
       .then((res) => res.json())
@@ -47,17 +50,27 @@ export default function HomePage() {
       .catch(console.error);
   }, []);
 
+  // Detect system dark mode
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    setDark(media.matches);
+
+    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
+    media.addEventListener("change", handler);
+    return () => media.removeEventListener("change", handler);
+  }, []);
+
   return (
     <main className="flex flex-col md:flex-row md:h-screen w-full max-w-full">
-  {/* LEFT: About Me */}
-  <section
-    className="w-full md:w-1/3
-      p-4 sm:p-8
-      flex flex-col items-center justify-center text-center
-      border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700
-      pt-[80px] md:pt-0
-      max-w-full"
-  >
+      {/* LEFT: About Me */}
+      <section
+        className="w-full md:w-1/3
+          p-4 sm:p-8
+          flex flex-col items-center justify-center text-center
+          border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700
+          pt-[80px] md:pt-0
+          max-w-full"
+      >
         <Image
           src="/profile.jpeg"
           alt="Profile picture"
@@ -81,28 +94,43 @@ export default function HomePage() {
 
         {/* Buttons */}
         <div className="flex flex-col gap-4 w-full">
+          {/* Resume */}
           <a
             href="/BennettA_Resume.pdf"
             download
-            className="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 transition-colors duration-300 text-center"
+            className={`px-4 py-2 rounded-lg text-white shadow-sm transition-all duration-300 text-center transform ${
+              dark
+                ? "bg-gradient-to-r from-blue-900 to-blue-700 hover:from-blue-700 hover:to-blue-500 hover:scale-105"
+                : "bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 hover:scale-105"
+            }`}
           >
             Download Resume 📄
           </a>
 
+          {/* LinkedIn */}
           <a
             href="https://www.linkedin.com/in/bennett-m-anderson/"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors duration-300 text-center"
+            className={`px-4 py-2 rounded-lg text-white shadow-sm transition-all duration-300 text-center transform ${
+              dark
+                ? "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 hover:scale-105"
+                : "bg-gradient-to-r from-gray-500 to-gray-400 hover:from-gray-400 hover:to-gray-300 hover:scale-105"
+            }`}
           >
             LinkedIn 🔗
           </a>
 
+          {/* GitHub */}
           <a
             href="https://github.com/B-M-Anderson"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-green-800 text-white rounded hover:bg-green-700 transition-colors duration-300 text-center"
+            className={`px-4 py-2 rounded-lg text-white shadow-sm transition-all duration-300 text-center transform ${
+              dark
+                ? "bg-gradient-to-r from-green-900 to-green-700 hover:from-green-700 hover:to-green-500 hover:scale-105"
+                : "bg-gradient-to-r from-green-700 to-green-500 hover:from-green-500 hover:to-green-300 hover:scale-105"
+            }`}
           >
             GitHub 🌐
           </a>
@@ -111,12 +139,9 @@ export default function HomePage() {
 
       {/* RIGHT: Scrolling content */}
       <section
-    id="scroll-panel"
-    className="w-full md:w-2/3
-      p-4 sm:p-8 pt-[16px] md:pt-16
-      space-y-12 overflow-y-auto h-full
-      max-w-full"
-  >
+        id="scroll-panel"
+        className="w-full md:w-2/3 p-4 sm:p-8 pt-[16px] md:pt-16 space-y-12 overflow-y-auto h-full max-w-full"
+      >
         {/* Featured Projects */}
         <div>
           <motion.h2
@@ -138,10 +163,7 @@ export default function HomePage() {
               >
                 <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
                 <p className="opacity-80 mb-2">{project.description}</p>
-                <Link
-                  href={project.path}
-                  className="text-blue-600 hover:underline"
-                >
+                <Link href={project.path} className="text-blue-600 hover:underline">
                   Move To Projects ⯈
                 </Link>
               </motion.div>
@@ -170,11 +192,7 @@ export default function HomePage() {
               >
                 <h3 className="text-xl font-semibold mb-2">{repo.name}</h3>
                 <p className="opacity-80 mb-2">{repo.description}</p>
-                <a
-                  href={repo.html_url}
-                  target="_blank"
-                  className="text-blue-600 hover:underline"
-                >
+                <a href={repo.html_url} target="_blank" className="text-blue-600 hover:underline">
                   View on GitHub
                 </a>
               </motion.div>
@@ -182,6 +200,7 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Skills Section */}
         <SkillsSection />
 
         {/* Cat Photo Album */}
@@ -192,7 +211,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-3xl font-bold mb-6"
           >
-            My Cat Penrose😺 :3
+            My Cat Penrose 😺 :3
           </motion.h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {catPhotos.map((photo, idx) => (

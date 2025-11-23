@@ -27,9 +27,9 @@ export default function Navbar() {
     html.classList.toggle("light", !dark);
   }, [dark]);
 
-  // Scroll-hide behavior (desktop: scroll-panel, mobile: window)
+  // Scroll-hide behavior
   useEffect(() => {
-    const isMobile = window.innerWidth < 640; // Tailwind sm breakpoint
+    const isMobile = window.innerWidth < 640;
     let lastY = 0;
 
     const getY = () => {
@@ -75,15 +75,15 @@ export default function Navbar() {
       </h1>
 
       {/* Navigation links */}
-      <div className="flex gap-6 items-center text-lg">
-        <Link href="/">Home</Link>
-        <Link href="/projects">Projects</Link>
-        <Link href="/contact">Contact</Link>
+      <div className="flex gap-4 sm:gap-6 items-center text-lg font-medium">
+        <Link href="/" className="hover:opacity-80 transition">Home</Link>
+        <Link href="/projects" className="hover:opacity-80 transition">Projects</Link>
+        <Link href="/contact" className="hover:opacity-80 transition">Contact</Link>
 
         {/* Dark/light toggle */}
         <button
           onClick={() => setDark(!dark)}
-          className="p-2 rounded-xl border border-neutral-400 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition"
+          className="p-2.5 rounded-lg border border-neutral-400 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition"
         >
           {dark ? <Sun size={20} /> : <Moon size={20} />}
         </button>

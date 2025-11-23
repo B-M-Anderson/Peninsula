@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown } from "lucide-react"; // make sure lucide-react is installed
+
 type Project = {
   title: string;
   description: string;
   githubUrl?: string;
-  date: string; // <-- add a date field
+  date: string;
 };
 
 const projects: Project[] = [
@@ -23,14 +26,20 @@ Note: my learning of textscript website development sourced a lot of early infor
 Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted. 
 The more I do and improve this website, the more I continue to learn to do on my own!`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
-    date: "November 22, 2025", // <-- input date here
+    date: "November 22, 2025",
   },
-  // Add more projects here with your own dates
+  // Add more projects here
 ];
 
 export default function ProjectsPage() {
+  const [expanded, setExpanded] = useState<number | null>(null);
+
+  const toggleExpand = (idx: number) => {
+    setExpanded(expanded === idx ? null : idx);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto py-18 px-6 space-y-8">
+    <div className="max-w-4xl mx-auto py-18 px-6 space-y-4">
       <h1 className="text-3xl font-bold mb-8 text-center">
         Projects & Publications
       </h1>
@@ -38,25 +47,41 @@ export default function ProjectsPage() {
       {projects.map((project, idx) => (
         <div
           key={idx}
-          className="relative mb-8 p-6 pt-16 border rounded-lg shadow dark:border-gray-700"
+          className="relative border rounded-lg shadow dark:border-gray-700"
         >
-          {/* Date in top-right */}
-          <div className="absolute top-4 right-4 text-sm text-gray-500 dark:text-gray-400">
-            {project.date}
-          </div>
+          <button
+            onClick={() => toggleExpand(idx)}
+            className="w-full flex items-center justify-between p-6 focus:outline-none"
+          >
+            <div className="flex flex-col text-left">
+              <h2 className="text-xl font-semibold">{project.title}</h2>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {project.date}
+              </span>
+            </div>
 
-          <h2 className="text-xl font-semibold mb-2">{project.title}</h2>
-          <p className="opacity-80 whitespace-pre-line">{project.description}</p>
+            <ChevronDown
+              className={`h-6 w-6 text-gray-500 transition-transform duration-200 ${
+                expanded === idx ? "rotate-180" : ""
+              }`}
+            />
+          </button>
 
-          {project.githubUrl && (
-            <a
-              href={project.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-block text-blue-600 hover:underline"
-            >
-              View on GitHub
-            </a>
+          {expanded === idx && (
+            <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <p className="opacity-80 whitespace-pre-line">{project.description}</p>
+
+              {project.githubUrl && (
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-block text-blue-600 hover:underline"
+                >
+                  View on GitHub
+                </a>
+              )}
+            </div>
           )}
         </div>
       ))}

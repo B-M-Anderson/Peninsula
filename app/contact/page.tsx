@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen flex flex-col pt-14"> 
+    <div className="min-h-screen flex flex-col pt-22"> 
       {/* 👆 Add pt-24 to push everything below the fixed navbar */}
 
       {/* Full-width animated header/banner */}

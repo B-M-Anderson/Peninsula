@@ -30,7 +30,7 @@ The more I do and improve this website, the more I continue to learn to do on my
 
 export default function ProjectsPage() {
   return (
-    <div className="max-w-4xl mx-auto py-16 px-6 space-y-8">
+    <div className="max-w-4xl mx-auto py-18 px-6 space-y-8">
       <h1 className="text-3xl font-bold mb-8 text-center">
         Projects & Publications
       </h1>

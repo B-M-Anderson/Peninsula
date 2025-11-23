@@ -70,12 +70,12 @@ export default function Navbar() {
       `}
     >
       {/* Branding / title */}
-      <h1 className="text-xl font-semibold hidden sm:block">
+      <h1 className="text-2xl font-semibold hidden sm:block">
         Bennett M. Anderson
       </h1>
 
       {/* Navigation links */}
-      <div className="flex gap-6 items-center">
+      <div className="flex gap-6 items-center text-lg">
         <Link href="/">Home</Link>
         <Link href="/projects">Projects</Link>
         <Link href="/contact">Contact</Link>

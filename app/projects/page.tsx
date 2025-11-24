@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Camera, Video } from "lucide-react";
+
+// New: Add media tags to each project
+// media: "photo" | "video" | "both" | "none" | undefined
 
 type Project = {
   title: string;
@@ -9,54 +12,56 @@ type Project = {
   githubUrl?: string;
   date: string;
   skills: string[];
+  media?: "photo" | "video" | "both" | "none";
 };
 
 const projects: Project[] = [
   {
     title: "Bennett-Anderson.com",
-    description:`You're looking at this one! 
+    description: `You're looking at this one!
 
-My personal website, designed for desktop and mobile use, built from scratch using Next.js, TypeScript, and Tailwind CSS. 
-Deployed & hosted by Vercel with a custom domain from Squarespace. 
-It features an auto-detecting dark mode toggle, a screen-size responsive navigation bar (that retracts) & homepage + other designs & animations, all intended to showcase my projects and skills. 
+My personal website, designed for desktop and mobile use, built from scratch using Next.js, TypeScript, and Tailwind CSS.
+Deployed & hosted by Vercel with a custom domain from Squarespace.
+It features an auto-detecting dark mode toggle, a screen-size responsive navigation bar (that retracts) & homepage + other designs & animations, all intended to showcase my projects and skills.
 
-Feel free to explore the code on my GitHub in my first public repository! 
+Feel free to explore the code on my GitHub in my first public repository!
 (It took some time to realize I didn't need to push every update to see how it works, and I still have to for mobile testing, so early commits are messy and abundant.)
 
-Note: my learning of textscript website development sourced a lot of early information from LLM-AIs. 
-Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted. 
-The more I do and improve this website, the more I continue to learn to do on my own!`,
+Note: my learning of textscript website development sourced a lot of early information from LLM-AIs.
+Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted.
+The more I do and improve this website, the more I continue to learn to do on my own!
+`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
     date: "November 22, 2025",
-skills: [
-  "Web Development",
-  "UI Design",
-  "Responsive Design",
-  "Git/GitHub",
-  "Next.js",
-  "TypeScript",
-  "Tailwind CSS",
-  "Framer Motion",
-  "Vercel"
-],
+    skills: [
+      "Web Development",
+      "UI Design",
+      "Responsive Design",
+      "Git/GitHub",
+      "Next.js",
+      "TypeScript",
+      "Tailwind CSS",
+      "Framer Motion",
+      "Vercel",
+    ],
+    media: "none",
   },
-
   {
     title: "MP3 Merger / Cross-Fader",
-    description:`A Python tool for blending multiple MP3 files together with smooth crossfades, dynamic EQ adjustments, and volume visualization. 
+    description: `A quick Python project for blending multiple MP3 files with smooth crossfades,
+dynamic EQ tweaks, and audio visualization. Likely to be updated in the future!.
 
-Section update and video demo coming soon!`,
+~(Section update & video demo coming soon)`,
     githubUrl: "https://github.com/B-M-Anderson/mp3-Playlist-Crossfader",
     date: "November 24, 2025",
-skills: [
-  "Python",
-  "Audio Processing",
-  "Git/GitHub",
-  "pydub",
-  "matplotlib"
-],
+    skills: [
+      "Python", 
+      "Audio Processing", 
+      "Git/GitHub", 
+      "pydub", 
+      "matplotlib"],
+    media: "video",
   },
-  // Add more projects here
 ];
 
 export default function ProjectsPage() {
@@ -65,12 +70,13 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     const checkDark = () => setDark(document.documentElement.classList.contains("dark"));
-
-    checkDark(); // initial check
+    checkDark();
 
     const observer = new MutationObserver(checkDark);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
     return () => observer.disconnect();
   }, []);
 
@@ -78,26 +84,52 @@ export default function ProjectsPage() {
     setExpanded(expanded === idx ? null : idx);
   };
 
-  // Badge colors
   const badgeBg = dark ? "bg-purple-800" : "bg-purple-200";
   const badgeBorder = dark ? "border-purple-600" : "border-purple-300";
-  const badgeText = "text-current"; // inherits main text color (black/light, white/dark)
+  const badgeText = "text-current";
+
+  const renderMediaTag = (media?: Project["media"]) => {
+    if (!media || media === "none") return null;
+
+    const base = "flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full border opacity-75";
+    const style = `${base} ${dark ? "border-gray-600" : "border-gray-300"}`;
+
+    if (media === "photo")
+      return (
+        <span className={style}>
+          <Camera className="w-4 h-4" /> Photo Demo
+        </span>
+      );
+    if (media === "video")
+      return (
+        <span className={style}>
+          <Video className="w-4 h-4" /> Video Demo
+        </span>
+      );
+    if (media === "both")
+      return (
+        <span className={style}>
+          <Camera className="w-4 h-4" /> <Video className="w-4 h-4" /> Photo & Video
+        </span>
+      );
+  };
 
   return (
     <div className="max-w-4xl mx-auto py-18 px-6 space-y-6">
       <h1 className="text-3xl font-bold mb-8 text-center">Projects & Publications</h1>
 
       {projects.map((project, idx) => (
-        <div
-          key={idx}
-          className="relative border rounded-lg shadow dark:border-gray-700"
-        >
+        <div key={idx} className="relative border rounded-lg shadow dark:border-gray-700">
           <button
             onClick={() => toggleExpand(idx)}
             className="w-full flex items-center justify-between p-6 focus:outline-none"
           >
             <div className="flex flex-col text-left">
-              <h2 className="text-xl font-semibold">{project.title}</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                <h2 className="text-xl font-semibold">{project.title}</h2>
+                {renderMediaTag(project.media)}
+              </div>
+
               <span className="text-sm text-gray-500 dark:text-gray-400">{project.date}</span>
             </div>
 
@@ -112,9 +144,8 @@ export default function ProjectsPage() {
             <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-600">
               <p className="opacity-90 whitespace-pre-line mb-4">{project.description}</p>
 
-              {/* Highlighted Skills above GitHub link */}
               <div className="mb-4">
-                <h3 className="text-sm pt-4 font-semibold text-current mb-2">Highlighted Skills:</h3>
+                <h3 className="text-sm pt-4 font-semibold mb-2">Highlighted Skills:</h3>
                 <div className="flex flex-wrap gap-3">
                   {project.skills.map((skill, i) => (
                     <span

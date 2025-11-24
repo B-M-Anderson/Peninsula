@@ -40,6 +40,22 @@ skills: [
   "Vercel"
 ],
   },
+
+  {
+    title: "MP3 Merger / Cross-Fader",
+    description:`A Python tool for blending multiple MP3 files together with smooth crossfades, dynamic EQ adjustments, and volume visualization. 
+
+Section update and video demo coming soon!`,
+    githubUrl: "https://github.com/B-M-Anderson/mp3-Playlist-Crossfader",
+    date: "November 24, 2025",
+skills: [
+  "Python",
+  "Audio Processing",
+  "Git/GitHub",
+  "pydub",
+  "matplotlib"
+],
+  },
   // Add more projects here
 ];
 

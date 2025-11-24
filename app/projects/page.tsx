@@ -14,13 +14,18 @@ type Project = {
 const projects: Project[] = [
   {
     title: "Bennett-Anderson.com",
-    description: `You're looking at this one! 
+    description:`You're looking at this one! 
 
 My personal website, designed for desktop and mobile use, built from scratch using Next.js, TypeScript, and Tailwind CSS. 
 Deployed & hosted by Vercel with a custom domain from Squarespace. 
 It features an auto-detecting dark mode toggle, a screen-size responsive navigation bar (that retracts) & homepage + other designs & animations, all intended to showcase my projects and skills. 
 
-Feel free to explore the code on my GitHub in my first public repository!`,
+Feel free to explore the code on my GitHub in my first public repository! 
+(It took some time to realize I didn't need to push every update to see how it works, and I still have to for mobile testing, so early commits are messy and abundant.)
+
+Note: my learning of textscript website development sourced a lot of early information from LLM-AIs. 
+Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted. 
+The more I do and improve this website, the more I continue to learn to do on my own!`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
     date: "November 22, 2025",
 skills: [

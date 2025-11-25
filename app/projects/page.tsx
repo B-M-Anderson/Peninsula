@@ -51,6 +51,7 @@ The more I do and improve this website, the more I continue to learn to do on my
     completion: 85,
     thumbnailUrl: "/thumbnails/favicon.png",
   },
+
   {
     title: "MP3 Merger / Cross-Fader",
     description: `A quick Python project for blending multiple MP3 files with smooth crossfades,
@@ -65,6 +66,25 @@ dynamic EQ tweaks, and audio visualization. Made to give a gift CD some personal
     aiUsage: 60,
     completion: 65,
     thumbnailUrl: "/thumbnails/mp3.png",
+  },
+  
+  {
+    title: "Custom Cat-Tree for Penny",
+    description: `A 3D-modeled (and soon hand made) cat tree designed specifically for Penny to enjoy next to my desk while I work.
+    
+Features multiple levels, scratching posts, and a cozy hideaway along with a bed *just* above desk-level to keep her entertained and comfortable.
+
+Customer feedback: TBD
+~photos and build process coming soon!
+    `,
+    githubUrl: "https://github.com/B-M-Anderson/cat-tree",
+    date: "November 25, 2025",
+    skills: ["SolidWorks", "3D Modeling", "CAD", "Feline UX Design", "Hand-Manufacturing"],
+    importantSkills: ["SolidWorks", "Feline UX Design"],
+    media: "photo",
+    aiUsage: 0,
+    completion: 35,
+    thumbnailUrl: "/thumbnails/CatTree.png",
   },
 ];
 

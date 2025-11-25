@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ChevronDown, Camera, Video, Info } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDown, Camera, Video } from "lucide-react";
 
 // media: "photo" | "video" | "both" | "none" | undefined
 type Project = {
@@ -10,8 +10,11 @@ type Project = {
   githubUrl?: string;
   date: string;
   skills: string[];
+  importantSkills?: string[];
   media?: "photo" | "video" | "both" | "none";
   aiUsage?: number; // 0–100
+  completion?: number; // 0–100
+  thumbnailUrl?: string; // optional thumbnail
 };
 
 const projects: Project[] = [
@@ -28,8 +31,7 @@ Feel free to explore the code on my GitHub in my first public repository!
 
 Note: my learning of textscript website development sourced a lot of early information from LLM-AIs.
 Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted.
-The more I do and improve this website, the more I continue to learn to do on my own!
-`,
+The more I do and improve this website, the more I continue to learn to do on my own!`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
     date: "November 22, 2025",
     skills: [
@@ -43,8 +45,14 @@ The more I do and improve this website, the more I continue to learn to do on my
       "Framer Motion",
       "Vercel",
     ],
+    importantSkills: ["Web Development",
+      "UI Design",
+      "Responsive Design",
+      "Git/GitHub"],
     media: "none",
     aiUsage: 70,
+    completion: 85,
+    thumbnailUrl: "/thumbnails/favicon.png",
   },
   {
     title: "MP3 Merger / Cross-Fader",
@@ -55,11 +63,13 @@ dynamic EQ tweaks, and audio visualization. Likely to be updated in the future!.
     githubUrl: "https://github.com/B-M-Anderson/mp3-Playlist-Crossfader",
     date: "November 24, 2025",
     skills: ["Python", "Audio Processing", "Git/GitHub", "pydub", "matplotlib"],
+    importantSkills: ["Python", "Audio Processing"],
     media: "video",
     aiUsage: 58,
+    completion: 65,
+    thumbnailUrl: "/thumbnails/mp3.png",
   },
 ];
-
 
 export default function ProjectsPage() {
   const [expanded, setExpanded] = useState<number[]>([]);
@@ -84,11 +94,14 @@ export default function ProjectsPage() {
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   };
-function AIUsageMeter({ value }: { value: number }) {
+
+function ProgressBar({ value, label }: { value: number; label: string }) {
   const normalized = Math.max(0, Math.min(100, Math.round(value)));
   const [dark, setDark] = useState(false);
+  const barRef = useRef<HTMLDivElement>(null);
 
-  // Track dark mode dynamically
+  const [circleLeft, setCircleLeft] = useState("0%");
+
   useEffect(() => {
     const checkDark = () =>
       setDark(document.documentElement.classList.contains("dark"));
@@ -103,49 +116,56 @@ function AIUsageMeter({ value }: { value: number }) {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (barRef.current) {
+      const width = barRef.current.offsetWidth;
+      const pos = (normalized / 100) * width;
+      setCircleLeft(`${pos}px`);
+    }
+  }, [normalized, barRef.current]);
+
+  // Determine bar fill color based on label
+  const barGradient = label.toLowerCase().includes("ai")
+    ? "linear-gradient(90deg, #16a34a 0%, #4ade80 50%, #86efac 100%)" // green
+    : "linear-gradient(90deg, #7c3aed 0%, #a78bfa 50%, #c4b5fd 100%)"; // purple
+
   return (
-    <div className="mt-10">
-      {/* Hover group wrapper */}
-      <div className="relative w-full group">
-
-        {/* Thin bar */}
+    <div className="mt-4 relative w-full group">
+      {/* Track */}
+      <div
+        ref={barRef}
+        className={`w-full h-2.5 rounded-full transition-colors duration-200 ${
+          dark ? "bg-gray-700" : "bg-gray-300"
+        }`}
+      >
         <div
-          className={`w-full h-2.5 rounded-full transition-colors duration-200
-                      ${dark ? "bg-gray-700 group-hover:bg-gray-600" : "bg-gray-300 group-hover:bg-gray-400"}`}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-700 ease-out"
-            style={{
-              width: `${normalized}%`,
-              background: "linear-gradient(90deg, #16a34a 0%, #4ade80 50%, #86efac 100%)",
-            }}
-          />
-        </div>
-
-        {/* Overlay circle */}
-        <div
-          className={`absolute w-3 h-3 rounded-full transition-all duration-700 ease-out
-                      ${dark ? "bg-gray-600" : "bg-gray-200"}`}
+          className="h-full rounded-full"
           style={{
-            top: "50%",
-            left: `calc(${normalized}% - 6px)`,
-            transform: "translateY(-50%)",
+            width: `${normalized}%`,
+            background: barGradient,
           }}
         />
+      </div>
 
-        {/* Tooltip */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-8 opacity-0 group-hover:opacity-100
-                        pointer-events-none transition-opacity duration-200 px-2 py-1 text-xs rounded-md
-                        bg-gray-800 text-white dark:bg-gray-200 dark:text-black shadow-md">
-          AI usage estimate: ~{normalized}%
+      {/* Circle overlay with hover tooltip */}
+      <div
+        className={`absolute w-3 h-3 rounded-full ${dark ? "bg-gray-600" : "bg-gray-200"}`}
+        style={{
+          top: "15%",
+          left: circleLeft,
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-800 dark:bg-gray-200 text-white dark:text-black text-xs px-2 py-1 rounded-md pointer-events-none">
+          {normalized}%
         </div>
       </div>
 
       {/* Labels */}
-      <div className="flex justify-between text-xs mt-3 opacity-70 px-1">
-        <span>none</span>
-        <span>Estimated LLM-AI Usage</span>
-        <span>lots</span>
+      <div className="flex justify-between text-xs mt-1 opacity-70 px-1">
+        <span>0%</span>
+        <span>{label}</span>
+        <span>100%</span>
       </div>
     </div>
   );
@@ -153,13 +173,8 @@ function AIUsageMeter({ value }: { value: number }) {
 
 
 
-  const badgeBg = dark ? "bg-purple-800" : "bg-purple-200";
-  const badgeBorder = dark ? "border-purple-600" : "border-purple-300";
-  const badgeText = "text-current";
-
   const renderMediaTag = (media?: Project["media"]) => {
     if (!media || media === "none") return null;
-
     const base =
       "flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full border opacity-75";
     const style = `${base} ${dark ? "border-gray-600" : "border-gray-300"}`;
@@ -193,6 +208,14 @@ function AIUsageMeter({ value }: { value: number }) {
       {projects.map((project, idx) => {
         const isOpen = expanded.includes(idx);
 
+        // sort skills: important first
+        const sortedSkills = project.skills.sort((a, b) => {
+          const important = project.importantSkills || [];
+          if (important.includes(a) && !important.includes(b)) return -1;
+          if (!important.includes(a) && important.includes(b)) return 1;
+          return 0;
+        });
+
         return (
           <div
             key={idx}
@@ -205,9 +228,17 @@ function AIUsageMeter({ value }: { value: number }) {
               <div className="flex flex-col text-left">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
                   <h2 className="text-xl font-semibold">{project.title}</h2>
+                  <h2 className = "translate-y-2">
+                  {project.thumbnailUrl && (
+                    <img
+                      src={project.thumbnailUrl}
+                      alt={`${project.title} thumbnail`}
+                      className="w-12 h-12 object-cover rounded ml-2"/>
+                  )}</h2>
+                  <h2 className = "translate-y-2">
                   {renderMediaTag(project.media)}
+                  </h2>
                 </div>
-
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {project.date}
                 </span>
@@ -227,23 +258,45 @@ function AIUsageMeter({ value }: { value: number }) {
                 </p>
 
                 <div className="mb-4">
-                  <h3 className="text-sm pt-4 font-semibold mb-2">
-                    Highlighted Skills:
-                  </h3>
+                  <h3 className="text-sm pt-4 font-semibold mb-2">Skills:</h3>
                   <div className="flex flex-wrap gap-3">
-                    {project.skills.map((skill, i) => (
-                      <span
-                        key={i}
-                        className={`px-5 py-2 text-sm font-medium rounded-full border ${badgeBg} ${badgeBorder} ${badgeText}`}
-                      >
-                        {skill}
-                      </span>
-                    ))}
-</div>
-                    {project.aiUsage !== undefined && (
-                  <AIUsageMeter value={project.aiUsage} />
-                )}
-                  
+                    {sortedSkills.map((skill, i) => {
+                      const isImportant = project.importantSkills?.includes(skill);
+                      const badgeBg = isImportant
+                        ? dark
+                          ? "bg-purple-800"
+                          : "bg-purple-200"
+                        : dark
+                        ? "bg-gray-700"
+                        : "bg-gray-200";
+                      const badgeBorder = isImportant
+                        ? dark
+                          ? "border-purple-600"
+                          : "border-purple-300"
+                        : dark
+                        ? "border-gray-600"
+                        : "border-gray-300";
+
+                      return (
+                        <span
+                          key={i}
+                          className={`px-5 py-2 text-sm font-medium rounded-full border ${badgeBg} ${badgeBorder}`}
+                        >
+                          {skill}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <div className="pt-4">
+                  {project.completion !== undefined && (
+                    <ProgressBar value={project.completion} 
+                    label="Completion" 
+                    />
+                  )}
+                  {project.aiUsage !== undefined && (
+                    <ProgressBar value={project.aiUsage} label="Estimated AI Usage" />
+                  )}
+                </div>
                 </div>
 
                 {project.githubUrl && (

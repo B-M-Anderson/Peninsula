@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, Camera, Video } from "lucide-react";
+import { ChevronDown, Camera, Video, Info } from "lucide-react";
 
 // media: "photo" | "video" | "both" | "none" | undefined
 type Project = {
@@ -11,6 +11,7 @@ type Project = {
   date: string;
   skills: string[];
   media?: "photo" | "video" | "both" | "none";
+  aiUsage?: number; // 0–100
 };
 
 const projects: Project[] = [
@@ -43,6 +44,7 @@ The more I do and improve this website, the more I continue to learn to do on my
       "Vercel",
     ],
     media: "none",
+    aiUsage: 70,
   },
   {
     title: "MP3 Merger / Cross-Fader",
@@ -54,8 +56,10 @@ dynamic EQ tweaks, and audio visualization. Likely to be updated in the future!.
     date: "November 24, 2025",
     skills: ["Python", "Audio Processing", "Git/GitHub", "pydub", "matplotlib"],
     media: "video",
+    aiUsage: 58,
   },
 ];
+
 
 export default function ProjectsPage() {
   const [expanded, setExpanded] = useState<number[]>([]);
@@ -75,14 +79,79 @@ export default function ProjectsPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Allows more than one section open
   const toggleExpand = (idx: number) => {
     setExpanded((prev) =>
-      prev.includes(idx)
-        ? prev.filter((i) => i !== idx) // close
-        : [...prev, idx] // open
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   };
+function AIUsageMeter({ value }: { value: number }) {
+  const normalized = Math.max(0, Math.min(100, Math.round(value)));
+  const [dark, setDark] = useState(false);
+
+  // Track dark mode dynamically
+  useEffect(() => {
+    const checkDark = () =>
+      setDark(document.documentElement.classList.contains("dark"));
+    checkDark();
+
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="mt-10">
+      {/* Hover group wrapper */}
+      <div className="relative w-full group">
+
+        {/* Thin bar */}
+        <div
+          className={`w-full h-2.5 rounded-full transition-colors duration-200
+                      ${dark ? "bg-gray-700 group-hover:bg-gray-600" : "bg-gray-300 group-hover:bg-gray-400"}`}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{
+              width: `${normalized}%`,
+              background: "linear-gradient(90deg, #16a34a 0%, #4ade80 50%, #86efac 100%)",
+            }}
+          />
+        </div>
+
+        {/* Overlay circle */}
+        <div
+          className={`absolute w-3 h-3 rounded-full transition-all duration-700 ease-out
+                      ${dark ? "bg-gray-600" : "bg-gray-200"}`}
+          style={{
+            top: "50%",
+            left: `calc(${normalized}% - 6px)`,
+            transform: "translateY(-50%)",
+          }}
+        />
+
+        {/* Tooltip */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-8 opacity-0 group-hover:opacity-100
+                        pointer-events-none transition-opacity duration-200 px-2 py-1 text-xs rounded-md
+                        bg-gray-800 text-white dark:bg-gray-200 dark:text-black shadow-md">
+          AI usage estimate: ~{normalized}%
+        </div>
+      </div>
+
+      {/* Labels */}
+      <div className="flex justify-between text-xs mt-3 opacity-70 px-1">
+        <span>none</span>
+        <span>Estimated LLM-AI Usage</span>
+        <span>lots</span>
+      </div>
+    </div>
+  );
+}
+
+
 
   const badgeBg = dark ? "bg-purple-800" : "bg-purple-200";
   const badgeBorder = dark ? "border-purple-600" : "border-purple-300";
@@ -170,7 +239,11 @@ export default function ProjectsPage() {
                         {skill}
                       </span>
                     ))}
-                  </div>
+</div>
+                    {project.aiUsage !== undefined && (
+                  <AIUsageMeter value={project.aiUsage} />
+                )}
+                  
                 </div>
 
                 {project.githubUrl && (

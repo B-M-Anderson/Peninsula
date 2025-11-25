@@ -172,11 +172,13 @@ export default function ProjectsPage() {
     <div className="max-w-4xl mx-auto py-18 px-6 space-y-6">
       <h1 className="text-3xl font-bold mb-8 text-center">Projects & Publications</h1>
 
-      {/* Sort Dropdown - now on the left */}
+      {/* Sort Dropdown - now on the left, reacts to dark/light mode */}
 <div className="flex justify-start mb-4 relative">
   <button
     onClick={() => setSortOpen((prev) => !prev)}
-    className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-1 rounded-full text-sm flex items-center gap-2 focus:outline-none"
+    className={`px-4 py-1 rounded-full text-sm flex items-center gap-2 focus:outline-none ${
+      dark ? "bg-gray-700 text-gray-200" : "bg-gray-200 text-gray-700"
+    }`}
   >
     Sort:{" "}
     <span className="font-semibold">
@@ -191,7 +193,11 @@ export default function ProjectsPage() {
   </button>
 
   {sortOpen && (
-    <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg z-10">
+    <div
+      className={`absolute left-0 mt-2 w-48 rounded-md shadow-lg z-10 border ${
+        dark ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"
+      }`}
+    >
       {[
         { value: "date-new", label: "Date: New → Old" },
         { value: "date-old", label: "Date: Old → New" },
@@ -204,7 +210,11 @@ export default function ProjectsPage() {
             setSortBy(option.value as typeof sortBy);
             setSortOpen(false);
           }}
-          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+          className={`w-full text-left px-4 py-2 text-sm transition-colors duration-150 ${
+            dark
+              ? "hover:bg-gray-700 text-gray-200"
+              : "hover:bg-gray-100 text-gray-700"
+          }`}
         >
           {option.label}
         </button>
@@ -212,6 +222,7 @@ export default function ProjectsPage() {
     </div>
   )}
 </div>
+
 
 
       {sortedProjects.map((project, idx) => {

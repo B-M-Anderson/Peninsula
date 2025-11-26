@@ -183,7 +183,7 @@ export default function HomePage() {
                 className="relative p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
               >
                 {/* Thumbnail */}
-                <div className="absolute top-4 right-4 w-12 h-12 overflow-hidden rounded-lg shadow">
+                <div className="absolute bottom-4 right-4 w-12 h-12 overflow-hidden rounded-lg shadow">
                   <Image
                     src={`/thumbnails/${repo.name.replace(/\s+/g, "")}.png`}
                     alt={`${repo.name} thumbnail`}

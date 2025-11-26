@@ -25,6 +25,15 @@ const featuredProjects = [
   },
 ];
 
+const catPhotos = [
+  "/cats/Penny1.jpeg",
+  "/cats/Penny2.jpeg",
+  "/cats/Penny3.jpeg",
+  "/cats/Penny4.jpeg",
+  "/cats/Penny5.jpeg",
+  "/cats/Penny6.jpeg",
+];
+
 export default function HomePage() {
   const [repos, setRepos] = useState<Repo[]>([]);
   const [dark, setDark] = useState(false);
@@ -216,7 +225,39 @@ export default function HomePage() {
 
         {/* Skills Section */}
         <SkillsSection />
+
+        {/* Cat Photo Album */}
+        <div>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl font-bold mb-6"
+          >
+            My Cat Penrose 😺 :3
+          </motion.h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {catPhotos.map((photo, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * idx, duration: 0.6 }}
+                className="overflow-hidden rounded-lg shadow"
+              >
+                <Image
+                  src={photo}
+                  alt={`Cat ${idx + 1}`}
+                  width={400}
+                  height={400}
+                  className="object-cover w-full h-full"
+                />
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
     </main>
+    
   );
 }

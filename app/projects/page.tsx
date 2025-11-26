@@ -20,7 +20,18 @@ type Project = {
 const projects: Project[] = [
   {
     title: "Bennett-Anderson.com",
-    description: `You're looking at this one!...`,
+    description: `You're looking at this one!
+
+My personal website, designed for desktop and mobile use, built from scratch using Next.js, TypeScript, and Tailwind CSS.
+Deployed & hosted by Vercel with a custom domain from Squarespace.
+It features an auto-detecting dark mode toggle, a screen-size responsive navigation bar (that retracts) & homepage + other designs & animations, all intended to showcase my projects and skills.
+
+Feel free to explore the code on my GitHub in my first public repository!
+(It took some time to realize I didn't need to push every update to see how it works, and I still have to for mobile testing, so early commits are messy and abundant.)
+
+Note: my learning of textscript website development sourced a lot of early information from LLM-AIs.
+Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted.
+The more I do and improve this website, the more I continue to learn to do on my own!`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
     date: "November 22, 2025",
     skills: [
@@ -34,7 +45,7 @@ const projects: Project[] = [
       "Framer Motion",
       "Vercel",
     ],
-    importantSkills: ["Web Development", "UI Design", "Responsive Design", "Git/GitHub"],
+    importantSkills: ["TypeScript", "Web Development", "UI Design", "Responsive Design", "Git/GitHub"],
     media: "none",
     aiUsage: 55,
     completion: 85,
@@ -43,7 +54,10 @@ const projects: Project[] = [
   },
   {
     title: "MP3 Merger / Cross-Fader",
-    description: `A quick Python project for blending multiple MP3 files...`,
+    description: `A quick Python project for blending multiple MP3 files with smooth crossfades,
+dynamic EQ tweaks, and audio visualization. Made to give a gift CD some personal touch. Likely to be updated soon in the future!.
+
+~(Section update & video demo coming soon)`,
     githubUrl: "https://github.com/B-M-Anderson/mp3-Playlist-Crossfader",
     date: "November 24, 2025",
     skills: ["Python", "Audio Processing", "Git/GitHub", "pydub", "matplotlib"],
@@ -56,7 +70,12 @@ const projects: Project[] = [
   },
   {
     title: "Custom Cat-Tree for Penny",
-    description: `A 3D-modeled (and soon hand made) cat tree designed specifically for Penny...`,
+    description: `A 3D-modeled (and soon hand made) cat tree designed specifically for Penny to enjoy next to my desk while I work.
+
+Features multiple levels, scratching posts, and a cozy hideaway along with a bed *just* above desk-level to keep her entertained and comfortable.
+
+Customer feedback: TBD
+~photos and build process coming soon!`,
     githubUrl: "https://github.com/B-M-Anderson/Desk-Side-Cat-Tree",
     date: "November 25, 2025",
     skills: ["SolidWorks", "3D Modeling", "CAD", "Feline UX Design", "Hand-Manufacturing"],
@@ -271,7 +290,7 @@ export default function ProjectsPage() {
   <div className="group relative w-full text-center cursor-default">
     <span
       className={`text-xs font-bold py-1 block rounded ${
-        dark ? "bg-orange-400/75 text-black" : "bg-orange-400/40 text-black"
+        dark ? "bg-orange-400/75 text-white" : "bg-orange-400/40 text-black"
       }`}
     >
       WIP

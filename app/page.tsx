@@ -13,6 +13,7 @@ type Repo = {
   html_url: string;
   fork: boolean;
   owner: { login: string };
+  language?: string;
 };
 
 const featuredProjects = [
@@ -22,15 +23,6 @@ const featuredProjects = [
       "This website! Built with Next.js, Tailwind, and TypeScript. Hosted on Vercel with a custom domain from Squarespace. More in 'projects' section",
     path: "/projects",
   },
-];
-
-const catPhotos = [
-  "/cats/Penny1.jpeg",
-  "/cats/Penny2.jpeg",
-  "/cats/Penny3.jpeg",
-  "/cats/Penny4.jpeg",
-  "/cats/Penny5.jpeg",
-  "/cats/Penny6.jpeg",
 ];
 
 export default function HomePage() {
@@ -159,7 +151,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * idx, duration: 0.6 }}
-                className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
+                className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow relative"
               >
                 <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
                 <p className="opacity-80 mb-2">{project.description}</p>
@@ -179,7 +171,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="text-3xl font-bold mb-6"
           >
-            GitHub Repositories ⚡
+            GitHub Repositories⚡
           </motion.h2>
           <div className="grid gap-6">
             {repos.map((repo, idx) => (
@@ -188,11 +180,33 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * idx, duration: 0.6 }}
-                className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
+                className="relative p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
               >
-                <h3 className="text-xl font-semibold mb-2">{repo.name}</h3>
+                {/* Thumbnail */}
+                <div className="absolute top-4 right-4 w-12 h-12 overflow-hidden rounded-lg shadow">
+                  <Image
+                    src={`/thumbnails/${repo.name.replace(/\s+/g, "")}.png`}
+                    alt={`${repo.name} thumbnail`}
+                    width={48}
+                    height={48}
+                    className="object-cover w-full h-full"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "/thumbnails/default.png";
+                    }}
+                  />
+                </div>
+
+                <h3 className="text-xl font-semibold mb-1">{repo.name}</h3>
+                {repo.language && (
+                  <span className="text-xs opacity-70 mb-2 block">{repo.language}</span>
+                )}
                 <p className="opacity-80 mb-2">{repo.description}</p>
-                <a href={repo.html_url} target="_blank" className="text-blue-600 hover:underline">
+                <a
+                  href={repo.html_url}
+                  target="_blank"
+                  className="text-blue-600 hover:underline"
+                >
                   View on GitHub
                 </a>
               </motion.div>
@@ -202,37 +216,6 @@ export default function HomePage() {
 
         {/* Skills Section */}
         <SkillsSection />
-
-        {/* Cat Photo Album */}
-        <div>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl font-bold mb-6"
-          >
-            My Cat Penrose 😺 :3
-          </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {catPhotos.map((photo, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * idx, duration: 0.6 }}
-                className="overflow-hidden rounded-lg shadow"
-              >
-                <Image
-                  src={photo}
-                  alt={`Cat ${idx + 1}`}
-                  width={400}
-                  height={400}
-                  className="object-cover w-full h-full"
-                />
-              </motion.div>
-            ))}
-          </div>
-        </div>
       </section>
     </main>
   );

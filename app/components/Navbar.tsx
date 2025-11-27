@@ -69,10 +69,34 @@ export default function Navbar() {
         ${dark ? "bg-neutral-900 text-white border-neutral-700" : "bg-white text-neutral-900 border-neutral-200"}
       `}
     >
-      {/* Branding / title */}
-      <h1 className="text-2xl font-semibold hidden sm:block">
-        Bennett M. Anderson
-      </h1>
+<div className="flex items-center gap-3 min-w-0 flex-shrink overflow-hidden">
+
+  {/* Full name on large screens */}
+  <span className="hidden lg:block text-2xl font-semibold whitespace-nowrap flex-shrink">
+    Bennett M. Anderson
+  </span>
+
+  {/* Abbreviation on small+medium; hidden on large */}
+  <span className="block lg:hidden text-xl font-semibold whitespace-nowrap flex-shrink-0">
+    BA
+  </span>
+
+  {/* Company software note */}
+  <span
+    className={`
+      text-xs font-thin opacity-70 pl-3
+      hidden sm:block
+      whitespace-normal
+      flex-shrink
+      overflow-hidden
+      text-ellipsis
+      ${dark ? "text-neutral-400" : "text-neutral-600"}
+    `}
+    style={{ maxWidth: "100%" }}
+  >
+    NOTE: Company security softwares may limit or block functionality.
+  </span>
+</div>
 
       {/* Navigation links */}
       <div className="flex gap-4 sm:gap-6 items-center text-lg font-medium">

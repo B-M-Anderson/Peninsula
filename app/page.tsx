@@ -189,22 +189,22 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * idx, duration: 0.6 }}
-                className="relative p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
+                className="relative p-6 pr-20 border border-gray-200 dark:border-gray-700 rounded-lg shadow"
               >
                 {/* Thumbnail */}
-                <div className="absolute bottom-4 right-4 w-12 h-12 overflow-hidden rounded-lg shadow">
-                  <Image
-                    src={`/thumbnails/${repo.name.replace(/\s+/g, "")}.png`}
-                    alt={`${repo.name} thumbnail`}
-                    width={48}
-                    height={48}
-                    className="object-cover w-full h-full"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src =
-                        "/thumbnails/default.png";
-                    }}
-                  />
-                </div>
+<div className="absolute top-1/2 -translate-y-1/2 right-4 w-12 h-12 overflow-hidden rounded-lg shadow">
+  <Image
+    src={`/thumbnails/${repo.name.replace(/\s+/g, "")}.png`}
+    alt={`${repo.name} thumbnail`}
+    width={48}
+    height={48}
+    className="object-cover w-full h-full"
+    onError={(e) => {
+      (e.currentTarget as HTMLImageElement).src =
+        "/thumbnails/default.png";
+    }}
+  />
+</div>
 
                 <h3 className="text-xl font-semibold mb-1">{repo.name}</h3>
                 {repo.language && (

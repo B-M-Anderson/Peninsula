@@ -20,7 +20,13 @@ const featuredProjects = [
   {
     name: "Portfolio Website",
     description:
-      "This website! Built with Next.js, Tailwind, and TypeScript. Hosted on Vercel with a custom domain from Squarespace. More in 'projects' section",
+      "This website! Built with Next.js, Tailwind, and TypeScript. Hosted on Vercel with a custom domain from Squarespace. More in 'projects' section.",
+    path: "/projects",
+  },
+  {
+    name: "Resume, Redesigned!",
+    description:
+      "As dowloadable in the 'About Me' section or Github, My resume redesigned fully in LaTeX, compiled with XeLaTeX using AltaCV document class. More in  'projects' section.",
     path: "/projects",
   },
 ];

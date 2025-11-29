@@ -14,6 +14,7 @@ type Project = {
   aiUsage?: number;
   completion?: number;
   thumbnailUrl?: string;
+  imageUrl?: "/Previews/BennettAndersonResume1.png",
   wip?: boolean;
 };
 
@@ -52,6 +53,7 @@ The more I do and improve this website, the more I continue to learn to do on my
     thumbnailUrl: "/thumbnails/favicon.png",
     wip: false,
   },
+
   {
     title: "MP3 Merger / Cross-Fader",
     description: `A quick Python project for blending multiple MP3 files with smooth crossfades,
@@ -68,6 +70,7 @@ dynamic EQ tweaks, and audio visualization. Made to give a gift CD some personal
     thumbnailUrl: "/thumbnails/mp3.png",
     wip: true,
   },
+
   {
     title: "Custom Cat-Tree for Penny",
     description: `A 3D-modeled (and soon hand made) cat tree designed specifically for Penny to enjoy next to my desk while I work.
@@ -85,6 +88,27 @@ Customer feedback: TBD
     completion: 35,
     thumbnailUrl: "/thumbnails/CatTree.png",
     wip: true,
+  },
+
+  {
+    title: "Resume Refresh",
+    description: `Simple resume refresh using LaTeX to produce a clean, modern design that highlights my skills and experience effectively.
+
+    Project intended to demonstate proficiency in LaTeX document creation and design.
+Compiled in XeLaTeX using using AltaCV document class, 
+Will be instated for all future applicable use-cases.
+
+Visible on my mainpage as a downloadable PDF.`,
+    githubUrl: "https://github.com/B-M-Anderson/resume-latex",
+    date: "November 28, 2025",
+    skills: ["LaTeX", "Attention to Detail", "Technical Comm.", "Document Design", "Information Structuring"],
+    importantSkills: ["LaTeX", "Technical Comm."],
+    media: "photo",
+    aiUsage: 30,
+    completion: 100,
+    thumbnailUrl: "/thumbnails/resume.png",
+    imageUrl: "/Previews/BennettAndersonResume1.png",
+    wip: false,
   },
 ];
 
@@ -284,7 +308,15 @@ export default function ProjectsPage() {
 
             {isOpen && (
               <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-600 space-y-4">
-                
+                {project.imageUrl && (
+  <div className="w-full flex justify-center">
+    <img
+      src={project.imageUrl}
+      alt="Project Preview"
+      className="w-102 h-102 object-cover rounded-xl shadow-lg border dark:border-gray-700"
+    />
+  </div>
+)}
                 {/* WIP Bar inside dropdown */}
 {project.wip && (
   <div className="group relative w-full text-center cursor-default">

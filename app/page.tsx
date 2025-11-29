@@ -97,7 +97,7 @@ export default function HomePage() {
         <div className="flex flex-col gap-4 w-full">
           {/* Resume */}
           <a
-            href="/BennettA_Resume.pdf"
+            href="/ResumeBennettAnderson.pdf"
             download
             className={`px-4 py-2 rounded-lg text-white shadow-sm transition-all duration-300 text-center transform ${
               dark
@@ -256,6 +256,20 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+        {/* optimal setup note */}
+  <p
+    className={`
+    text-sm font-thin opacity-70
+    w-full text-center mt-8
+    transform -translate-y-4
+    ${dark ? "text-neutral-300" : "text-neutral-600"}
+    `}
+    style={{ maxWidth: "100%" }}
+>
+NOTE:
+This website is optimized for desktop dark-mode viewing.<br />
+Other viewing options should uphold functionality at the cost of aesthetics
+  </p>
       </section>
     </main>
     

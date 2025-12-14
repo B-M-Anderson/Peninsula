@@ -14,8 +14,11 @@ type Project = {
   aiUsage?: number;
   completion?: number;
   thumbnailUrl?: string;
-  imageUrl?: "/Previews/BennettAndersonResume1.png",
+  imageUrl?: "/Previews/BennettAndersonResume1.png";
   wip?: boolean;
+  terminated?: boolean;
+  completed?: boolean;
+  ongoing?: boolean;
 };
 
 const projects: Project[] = [
@@ -52,6 +55,9 @@ The more I do and improve this website, the more I continue to learn to do on my
     completion: 85,
     thumbnailUrl: "/thumbnails/favicon.png",
     wip: false,
+    ongoing: true,
+    terminated: false,
+    completed: false,
   },
 
   {
@@ -68,7 +74,10 @@ dynamic EQ tweaks, and audio visualization. Made to give a gift CD some personal
     aiUsage: 60,
     completion: 65,
     thumbnailUrl: "/thumbnails/mp3.png",
-    wip: true,
+    wip: false,
+    ongoing: true,
+    terminated: false,
+    completed: false,
   },
 
   {
@@ -87,7 +96,10 @@ Customer feedback: TBD
     aiUsage: 0,
     completion: 35,
     thumbnailUrl: "/thumbnails/CatTree.png",
-    wip: true,
+    wip: false,
+    ongoing: false,
+    terminated: true,
+    completed: false,
   },
 
   {
@@ -109,6 +121,9 @@ Visible on my mainpage as a downloadable PDF.`,
     thumbnailUrl: "/thumbnails/resume.png",
     imageUrl: "/Previews/BennettAndersonResume1.png",
     wip: false,
+    ongoing: false,
+    terminated: false,
+    completed: true,
   },
 ];
 
@@ -200,7 +215,7 @@ export default function ProjectsPage() {
 
   const renderMediaTag = (media?: Project["media"]) => {
     if (!media || media === "none") return null;
-    const base = "flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full border opacity-75";
+    const base = "flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full border opacity-75 whitespace-nowrap";
     const style = `${base} ${dark ? "border-gray-600" : "border-gray-300"}`;
 
     if (media === "photo") return <span className={style}><Camera className="w-4 h-4" /> Photo Demo</span>;
@@ -271,6 +286,32 @@ export default function ProjectsPage() {
           return 0;
         });
 
+        // Helper to render full-width status bars with tooltips
+        const renderFullWidthStatus = (label: string, type: 'wip' | 'terminated' | 'completed' | 'ongoing') => {
+            const bgClass =
+                type === 'terminated' ? (dark ? "bg-red-400/75 text-white" : "bg-red-400/40 text-black") :
+                type === 'completed' ? (dark ? "bg-green-400/75 text-white" : "bg-green-400/40 text-black") :
+                type === 'ongoing' ? (dark ? "bg-blue-400/75 text-white" : "bg-blue-400/40 text-black") :
+                (dark ? "bg-orange-400/75 text-white" : "bg-orange-400/40 text-black"); // wip
+
+            let tooltipText = "";
+            if (type === 'wip') tooltipText = "This project is not yet usable";
+            if (type === 'terminated') tooltipText = "This project has been discontinued. The goal has been solved alternatively or is no longer relevant.";
+            if (type === 'completed') tooltipText = "This project is working as intended and will not be receiving regular further updates.";
+            if (type === 'ongoing') tooltipText = "This project is working, but will continue to receive updates and improvements.";
+
+            return (
+                <div className="group relative w-full text-center cursor-default">
+                    <span className={`text-xs font-bold py-1 block rounded ${bgClass}`}>
+                        {label}
+                    </span>
+                    <span className="absolute left-1/2 -translate-x-1/2 -top-6 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none w-max max-w-[250px] z-20 dark:bg-gray-200 dark:text-black">
+                        {tooltipText}
+                    </span>
+                </div>
+            );
+        };
+
         return (
           <div key={idx} className="relative border rounded-lg shadow dark:border-gray-700">
             <button
@@ -295,7 +336,6 @@ export default function ProjectsPage() {
                     </div>
                   )}
                 </div>
-
                 <span className="text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">{project.date}</span>
               </div>
 
@@ -309,30 +349,21 @@ export default function ProjectsPage() {
             {isOpen && (
               <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-600 space-y-4">
                 {project.imageUrl && (
-  <div className="w-full flex justify-center">
-    <img
-      src={project.imageUrl}
-      alt="Project Preview"
-      className="w-102 h-102 object-cover rounded-xl shadow-lg border dark:border-gray-700"
-    />
-  </div>
-)}
-                {/* WIP Bar inside dropdown */}
-{project.wip && (
-  <div className="group relative w-full text-center cursor-default">
-    <span
-      className={`text-xs font-bold py-1 block rounded ${
-        dark ? "bg-orange-400/75 text-white" : "bg-orange-400/40 text-black"
-      }`}
-    >
-      WIP
-    </span>
-    <span className="absolute left-1/2 -translate-x-1/2 -top-6 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none">
-      This project is not yet usable
-    </span>
-  </div>
-)}
+                  <div className="w-full flex justify-center">
+                    <img
+                      src={project.imageUrl}
+                      alt="Project Preview"
+                      className="w-102 h-102 object-cover rounded-xl shadow-lg border dark:border-gray-700"
+                    />
+                  </div>
+                )}
 
+                {/* Status Bars - Full Width inside Dropdown */}
+                {project.terminated && renderFullWidthStatus("Terminated", "terminated")}
+                {project.completed && renderFullWidthStatus("Completed", "completed")}
+                {project.ongoing && renderFullWidthStatus("Ongoing", "ongoing")}
+                {project.wip && renderFullWidthStatus("WIP", "wip")}
+                {/* End Status Bars */}
 
                 <p className="opacity-90 whitespace-pre-line">{project.description}</p>
 
@@ -388,6 +419,22 @@ export default function ProjectsPage() {
           </div>
         );
       })}
+
+      {/* FIXED LOCATION: The paragraph is now inside the function scope so 'dark' is accessible */}
+      <p
+        className={`
+            text-sm font-thin opacity-70
+            w-full text-center mt-8
+            transform -translate-y-4
+            ${dark ? "text-neutral-300" : "text-neutral-600"}
+        `}
+        style={{ maxWidth: "100%" }}
+      >
+        NOTE:
+        Some features unavailable in mobile viewing.<br />
+        Mouse - hover over features on desktop for more details.
+      </p>
+
     </div>
   );
 }

@@ -19,6 +19,7 @@ type Project = {
   terminated?: boolean;
   completed?: boolean;
   ongoing?: boolean;
+  shelved?: boolean;
 };
 
 const projects: Project[] = [
@@ -58,6 +59,7 @@ The more I do and improve this website, the more I continue to learn to do on my
     ongoing: true,
     terminated: false,
     completed: false,
+    shelved: false,
   },
 
   {
@@ -78,6 +80,7 @@ dynamic EQ tweaks, and audio visualization. Made to give a gift CD some personal
     ongoing: true,
     terminated: false,
     completed: false,
+    shelved: false,
   },
 
   {
@@ -98,8 +101,9 @@ Customer feedback: TBD
     thumbnailUrl: "/thumbnails/CatTree.png",
     wip: false,
     ongoing: false,
-    terminated: true,
+    terminated: false,
     completed: false,
+    shelved: true,
   },
 
   {
@@ -124,6 +128,7 @@ Visible on my mainpage as a downloadable PDF.`,
     ongoing: false,
     terminated: false,
     completed: true,
+    shelved: false,
   },
 ];
 
@@ -287,11 +292,12 @@ export default function ProjectsPage() {
         });
 
         // Helper to render full-width status bars with tooltips
-        const renderFullWidthStatus = (label: string, type: 'wip' | 'terminated' | 'completed' | 'ongoing') => {
+        const renderFullWidthStatus = (label: string, type: 'wip' | 'terminated' | 'completed' | 'ongoing' | 'shelved') => {
             const bgClass =
                 type === 'terminated' ? (dark ? "bg-red-400/75 text-white" : "bg-red-400/40 text-black") :
                 type === 'completed' ? (dark ? "bg-green-400/75 text-white" : "bg-green-400/40 text-black") :
                 type === 'ongoing' ? (dark ? "bg-blue-400/75 text-white" : "bg-blue-400/40 text-black") :
+                type === 'shelved' ? (dark ? "bg-yellow-400/75 text-white" : "bg-yellow-400/40 text-black") :
                 (dark ? "bg-orange-400/75 text-white" : "bg-orange-400/40 text-black"); // wip
 
             let tooltipText = "";
@@ -299,6 +305,7 @@ export default function ProjectsPage() {
             if (type === 'terminated') tooltipText = "This project has been discontinued. The goal has been solved alternatively or is no longer relevant.";
             if (type === 'completed') tooltipText = "This project is working as intended and will not be receiving regular further updates.";
             if (type === 'ongoing') tooltipText = "This project is working, but will continue to receive updates and improvements.";
+            if (type === 'shelved') tooltipText = "This project is on hold and may be revisited upon completion of higher priority tasks.";
 
             return (
                 <div className="group relative w-full text-center cursor-default">
@@ -363,6 +370,7 @@ export default function ProjectsPage() {
                 {project.completed && renderFullWidthStatus("Completed", "completed")}
                 {project.ongoing && renderFullWidthStatus("Ongoing", "ongoing")}
                 {project.wip && renderFullWidthStatus("WIP", "wip")}
+                {project.shelved && renderFullWidthStatus("Shelved", "shelved")}
                 {/* End Status Bars */}
 
                 <p className="opacity-90 whitespace-pre-line">{project.description}</p>

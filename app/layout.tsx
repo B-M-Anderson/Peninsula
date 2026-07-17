@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen transition-colors duration-300 scanlines">
+    <html lang="en" className="dark overflow-x-hidden">
+      <body className="min-h-screen overflow-x-hidden transition-colors duration-300 scanlines">
         <VaultGate>
           <Navbar />
           <main className="p-8">{children}</main>

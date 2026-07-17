@@ -150,7 +150,8 @@ export default function HomePage() {
           </div>
 
           {/* mobile: horizontal strand spanning full width below the profile card */}
-          <div className="md:hidden mt-6 w-full h-32">
+          {/* full-bleed: the parent is a centered flex column, so a 100vw child centers on the viewport → edge-to-edge */}
+          <div className="md:hidden mt-6 h-32 w-screen">
             <AsciiDna mode="horizontal" onSummon={summonVault} />
           </div>
         </section>

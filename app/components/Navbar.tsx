@@ -1,25 +1,14 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Moon, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-function subscribeColorScheme(cb: () => void) {
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
-  media.addEventListener("change", cb);
-  return () => media.removeEventListener("change", cb);
-}
-
 export default function Navbar() {
-  // System preference is the default; the toggle sets a manual override.
-  const systemDark = useSyncExternalStore(
-    subscribeColorScheme,
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
-    () => false
-  );
+  // Dark by default (cyber-bio aesthetic); the toggle sets a manual override.
   const [override, setOverride] = useState<boolean | null>(null);
-  const dark = override ?? systemDark;
+  const dark = override ?? true;
 
   const [hidden, setHidden] = useState(false);
   const pathname = usePathname();

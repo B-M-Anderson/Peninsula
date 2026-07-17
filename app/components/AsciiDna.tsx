@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
-// ASCII double helix that fills its container. Two clean mirrored sine strands
-// with ladder rungs and crossover markers read clearly as DNA; glitch arrives
-// in periodic bursts (sideways tears + corruption storms) rather than constant
-// noise. Pure text; inherits theme colors.
+// Messy glitchy ASCII double helix that fills its container. Two sine strands
+// with drifting amplitude, desyncing phase, horizontal tears, row dropouts and
+// static bursts — deliberately dense and uneven. Pure text; inherits theme colors.
 // mode="vertical" runs the wave down the box; "horizontal" runs it across.
 
-const GLITCH_CHARS = ["░", "▒", "▓", "█", "/", "\\", "|", "_", "~", "^", "*"];
+const STRAND_A = ["#", "@", "0", "*", "%", "&"];
+const STRAND_B = ["o", "+", "=", ":", "*", "."];
+const RUNG = ["─", "·", "-", "="];
+const GLITCH_CHARS = ["░", "▒", "▓", "█", "/", "\\", "|", "_", "·", "~", "^"];
 
 // monospace metrics at text-[10px] leading-[11px]
 const CHAR_W = 6;
@@ -74,15 +76,13 @@ export default function AsciiDna({
       const L = mode === "horizontal" ? cols : rows;
       const C = mode === "horizontal" ? rows : cols;
       const center = (C - 1) / 2;
-      const amp = center * (0.82 + 0.06 * Math.sin(t * 0.5)); // gentle breathe, stays legible
-      const wavelength = 11 + 1.5 * Math.sin(t * 0.25);
-      const k = (Math.PI * 2) / wavelength;
+      const baseAmp = center * 0.86;
 
-      // glitch burst: gated windows where the helix tears and corrupts
-      const burstId = Math.floor(t * 1.4);
-      const glitching = rnd(burstId, 7) < 0.26;
-      const tearBand = Math.floor(rnd(burstId, 3) * Math.max(1, L / 6));
-      const tearAmt = rnd(burstId, 9) > 0.5 ? 3 : -3;
+      // layered, non-repeating global modulation
+      const ampMod = 0.68 + 0.24 * Math.sin(t * 0.7) + 0.14 * Math.sin(t * 1.93 + 1.1);
+      const phaseDrift = Math.sin(t * 0.45) * 0.9 + Math.sin(t * 0.17) * 0.4; // strands desync from π
+      const waveK = (Math.PI * 2) / (14 + 4 * Math.sin(t * 0.29)); // twist rate breathes
+      const rungPulse = 0.3 + 0.35 * (0.5 + 0.5 * Math.sin(t * 0.8));
 
       const put = (main: number, cross: number, ch: string) => {
         const c = Math.round(cross);
@@ -92,45 +92,51 @@ export default function AsciiDna({
       };
 
       for (let i = 0; i < L; i++) {
-        const p = i * k + t;
-        const inTear = glitching && Math.floor(i / 6) === tearBand;
-        const shift = inTear ? tearAmt : 0;
+        // horizontal "tear": bands of the main axis jump sideways
+        const band = Math.floor(i / 5);
+        const tear = rnd(band, step) < 0.12 ? (rnd(band + 3, step) > 0.5 ? 2 : -2) : 0;
 
-        const x1 = center + Math.sin(p) * amp + shift;
-        const x2 = center + Math.sin(p + Math.PI) * amp + shift; // clean mirror → obvious double helix
-        const lo = Math.min(x1, x2);
-        const hi = Math.max(x1, x2);
+        // full dropout: an occasional dead / static row
+        const drop = rnd(i, step + 7);
+        if (drop < 0.035) {
+          if (drop < 0.017) {
+            const n = 1 + Math.floor(rnd(i, step) * 4);
+            for (let k = 0; k < n; k++) {
+              const cc = Math.floor(rnd(i + k, step) * C);
+              put(i, cc, GLITCH_CHARS[Math.floor(rnd(k, i + step) * GLITCH_CHARS.length)]);
+            }
+          }
+          continue; // strands skip this row entirely
+        }
 
-        // ladder rungs every 3 rows — the base-pair look
-        if (i % 3 === 0 && hi - lo > 1.2) {
-          for (let x = Math.round(lo) + 1; x < Math.round(hi); x++) {
-            put(i, x, rnd(x, i) < 0.85 ? "-" : "=");
+        const phase = i * waveK + t;
+        const ampNoise = 0.8 + 0.35 * rnd(i, step + 2);
+        const amp = baseAmp * ampMod * ampNoise;
+        const j1 = rnd(i, step) < 0.25 ? (rnd(i + 7, step) > 0.5 ? 1 : -1) : 0;
+        const j2 = rnd(i + 13, step) < 0.25 ? (rnd(i + 3, step) > 0.5 ? 1 : -1) : 0;
+
+        const p1 = center + Math.sin(phase) * amp + tear + j1;
+        const p2 = center + Math.sin(phase + Math.PI + phaseDrift) * amp + tear + j2;
+
+        const lo = Math.min(p1, p2);
+        const hi = Math.max(p1, p2);
+        if (hi - lo > 2) {
+          for (let x = Math.ceil(lo) + 1; x < hi; x++) {
+            if (rnd(x, i + step) < rungPulse) {
+              put(i, x, RUNG[Math.floor(rnd(x, i) * RUNG.length)]);
+            }
           }
         }
-
-        if (hi - lo <= 1.4) {
-          // strands cross — draw the X pinch
-          put(i, (x1 + x2) / 2, "X");
-        } else {
-          // backbones — mostly stable chars so the strands read continuous
-          put(i, x1, rnd(i, step) < 0.12 ? "@" : "#");
-          put(i, x2, rnd(i + 5, step) < 0.12 ? "0" : "o");
-        }
-
-        // faint constant shimmer when calm; heavier handled by burst below
-        if (!glitching && rnd(i, step + 2) < 0.02) {
-          put(i, Math.floor(rnd(i, step) * C), GLITCH_CHARS[Math.floor(rnd(i, step) * GLITCH_CHARS.length)]);
-        }
+        put(i, p1, STRAND_A[Math.floor(rnd(i, step) * STRAND_A.length)]);
+        put(i, p2, STRAND_B[Math.floor(rnd(i + 5, step) * STRAND_B.length)]);
       }
 
-      // burst corruption storm across the whole field
-      if (glitching) {
-        const n = Math.floor(rows * cols * 0.03);
-        for (let m = 0; m < n; m++) {
-          const ry = Math.floor(rnd(m, burstId) * rows);
-          const rx = Math.floor(rnd(m + 13, burstId) * cols);
-          grid[ry][rx] = GLITCH_CHARS[Math.floor(rnd(m, ry + step) * GLITCH_CHARS.length)];
-        }
+      // scattered static bursts across the whole field
+      const bursts = Math.floor(rows * cols * 0.006);
+      for (let n = 0; n < bursts; n++) {
+        const ry = Math.floor(rnd(n, step) * rows);
+        const rx = Math.floor(rnd(n + 31, step) * cols);
+        grid[ry][rx] = GLITCH_CHARS[Math.floor(rnd(n, ry + step) * GLITCH_CHARS.length)];
       }
 
       el.textContent = grid.map((r) => r.join("")).join("\n");

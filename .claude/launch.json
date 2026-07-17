@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "C:\\Users\\benne\\OneDrive\\Desktop\\GitHubLinked\\Peninsula\\.claude\\dev-wrapper.cmd",
+      "runtimeArgs": [],
+      "port": 3000
+    }
+  ]
+}

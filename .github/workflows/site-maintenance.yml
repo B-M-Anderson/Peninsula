@@ -1,0 +1,94 @@
+name: Weekly Site Health Report
+
+# Strictly read-only: lints, type-checks, builds, audits, and scans for broken
+# media/sitemap drift, then reports via the job summary and (if anything needs
+# attention) a GitHub issue. Never commits, pushes, merges, or bumps dependencies.
+
+on:
+  schedule:
+    - cron: "0 13 * * 1" # Every Monday 13:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: npm run lint 2>&1 | tee lint.log
+
+      - name: Type check
+        id: typecheck
+        continue-on-error: true
+        run: npx tsc --noEmit 2>&1 | tee typecheck.log
+
+      - name: Build
+        id: build
+        continue-on-error: true
+        run: npm run build 2>&1 | tee build.log
+
+      - name: Dependency audit
+        id: audit
+        continue-on-error: true
+        run: npm audit 2>&1 | tee audit.log
+
+      - name: Outdated dependencies
+        id: outdated
+        continue-on-error: true
+        run: npm outdated 2>&1 | tee outdated.log
+
+      - name: Sitemap & media reference check
+        id: media
+        continue-on-error: true
+        run: node scripts/site-health-check.mjs 2>&1 | tee media.log
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "# Weekly Site Health Report — $(date -u +%Y-%m-%d)" >> "$GITHUB_STEP_SUMMARY"
+          for section in lint typecheck build audit outdated media; do
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "## ${section}" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            tail -c 4000 "${section}.log" >> "$GITHUB_STEP_SUMMARY" || echo "(no output captured)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Open issue if anything needs attention
+        if: |
+          steps.lint.outcome == 'failure' ||
+          steps.typecheck.outcome == 'failure' ||
+          steps.build.outcome == 'failure' ||
+          steps.media.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const sections = ['lint', 'typecheck', 'build', 'audit', 'outdated', 'media'];
+            let body = `Automated weekly read-only health check flagged something. This workflow never modifies content or dependencies — it only reports.\n\n`;
+            for (const s of sections) {
+              const log = fs.existsSync(`${s}.log`) ? fs.readFileSync(`${s}.log`, 'utf8').slice(-3000) : '(no output)';
+              body += `### ${s}\n\`\`\`\n${log}\n\`\`\`\n\n`;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Weekly site health report — ${new Date().toISOString().slice(0, 10)}`,
+              body,
+              labels: ['maintenance'],
+            });

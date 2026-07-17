@@ -1,24 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Moon, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+function subscribeColorScheme(cb: () => void) {
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener("change", cb);
+  return () => media.removeEventListener("change", cb);
+}
+
 export default function Navbar() {
-  const [dark, setDark] = useState(false);
+  // System preference is the default; the toggle sets a manual override.
+  const systemDark = useSyncExternalStore(
+    subscribeColorScheme,
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
+    () => false
+  );
+  const [override, setOverride] = useState<boolean | null>(null);
+  const dark = override ?? systemDark;
+
   const [hidden, setHidden] = useState(false);
   const pathname = usePathname();
-
-  // Detect system preference
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    setDark(media.matches);
-
-    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
-    media.addEventListener("change", handler);
-    return () => media.removeEventListener("change", handler);
-  }, []);
 
   // Apply dark/light class to <html>
   useEffect(() => {
@@ -59,57 +63,59 @@ export default function Navbar() {
     };
   }, [pathname]);
 
+  const linkClass = (href: string) =>
+    `font-term transition hover:opacity-80 ${
+      pathname === href
+        ? "text-bio-green dark:text-phos glow"
+        : ""
+    }`;
+
   return (
     <nav
       className={`
         fixed top-0 left-0 w-full z-50
         flex justify-between items-center px-6 py-4
-        border-b transition-all duration-400 ease-in-out
-        ${hidden ? "opacity-0 -translate-y-full backdrop-blur-md" : "opacity-100 translate-y-0 backdrop-blur-md"}
-        ${dark ? "bg-neutral-900 text-white border-neutral-700" : "bg-white text-neutral-900 border-neutral-200"}
+        transition-all duration-400 ease-in-out backdrop-blur-md
+        ${hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"}
+        bg-bio-bg/90 text-bio-fg
+        dark:bg-abyss/90 dark:text-phos-bright
       `}
     >
-<div className="flex items-center gap-3 min-w-0 flex-shrink overflow-hidden">
+      <div className="flex items-center gap-3 min-w-0 flex-shrink overflow-hidden">
+        {/* Full name on large screens */}
+        <span className="hidden lg:block font-term text-xl font-semibold whitespace-nowrap flex-shrink">
+          <span className="text-bio-green dark:text-phos glow">bennett@anderson</span>
+          <span className="opacity-50">:~$</span>
+          <span className="cursor-blink text-bio-green dark:text-phos">▮</span>
+        </span>
 
-  {/* Full name on large screens */}
-  <span className="hidden lg:block text-2xl font-semibold whitespace-nowrap flex-shrink">
-    Bennett M. Anderson
-  </span>
+        {/* Abbreviation on small+medium; hidden on large */}
+        <span className="block lg:hidden font-term text-lg font-semibold whitespace-nowrap flex-shrink-0">
+          <span className="text-bio-green dark:text-phos glow">BA</span>
+          <span className="opacity-50">:~$</span>
+        </span>
 
-  {/* Abbreviation on small+medium; hidden on large */}
-  <span className="block lg:hidden text-xl font-semibold whitespace-nowrap flex-shrink-0">
-    BA
-  </span>
-
-  {/* Company software note */}
-  <span
-    className={`
-      text-xs font-thin opacity-70 pl-3
-      hidden sm:block
-      whitespace-normal
-      flex-shrink
-      overflow-hidden
-      text-ellipsis
-      ${dark ? "text-neutral-400" : "text-neutral-600"}
-    `}
-    style={{ maxWidth: "100%" }}
-  >
-    NOTE: Company security softwares may limit or block functionality.
-  </span>
-</div>
+        {/* Status readout */}
+        <span className="font-term text-[11px] opacity-60 pl-3 hidden sm:flex items-center gap-2 whitespace-nowrap flex-shrink overflow-hidden text-ellipsis">
+          <span className="inline-block w-2 h-2 rounded-full bg-bio-green dark:bg-phos bio-pulse" />
+          {"// corp. security software may limit some features"}
+        </span>
+      </div>
 
       {/* Navigation links */}
-      <div className="flex gap-4 sm:gap-6 items-center text-lg font-medium">
-        <Link href="/" className="hover:opacity-80 transition">Home</Link>
-        <Link href="/projects" className="hover:opacity-80 transition">Projects</Link>
-        <Link href="/contact" className="hover:opacity-80 transition">Contact</Link>
+      <div className="flex gap-4 sm:gap-6 items-center text-base">
+        <Link href="/" className={linkClass("/")}>~/home</Link>
+        <Link href="/projects" className={linkClass("/projects")}>~/projects</Link>
+        <Link href="/ask" className={linkClass("/ask")}>~/ask</Link>
+        <Link href="/contact" className={linkClass("/contact")}>~/contact</Link>
 
         {/* Dark/light toggle */}
         <button
-          onClick={() => setDark(!dark)}
-          className="p-2.5 rounded-lg border border-neutral-400 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition"
+          onClick={() => setOverride(!dark)}
+          aria-label="Toggle dark mode"
+          className="p-2 rounded-lg hover:bg-bio-surface dark:hover:bg-abyss-surface transition opacity-80 hover:opacity-100"
         >
-          {dark ? <Sun size={20} /> : <Moon size={20} />}
+          {dark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
     </nav>

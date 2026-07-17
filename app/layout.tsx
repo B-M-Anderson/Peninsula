@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import VaultGate from "./components/VaultGate";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
@@ -11,12 +12,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen transition-colors duration-300">
-        <Navbar />
-        <main className="p-8">{children}</main>
+      <body className="min-h-screen transition-colors duration-300 scanlines">
+        <VaultGate>
+          <Navbar />
+          <main className="p-8">{children}</main>
+        </VaultGate>
         <Analytics />
       </body>
     </html>
   );
 }
-

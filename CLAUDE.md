@@ -13,6 +13,8 @@ Personal portfolio site (Next.js 16 + TypeScript + Tailwind v4), deployed on Ver
 - **Lint**: `eslint-config-next` 16 enforces `react-hooks/set-state-in-effect` — don't seed state via `setState` in `useEffect`; use `useSyncExternalStore` (see Navbar/AsciiDna/vault page for the pattern) or `useMemo` for derived state.
 - **Dev-server quirk**: if styling looks stale after big CSS changes, restart the dev server — Turbopack has served stale CSS from cache before.
 - **JSX gotcha**: a literal `//` at the start of JSX text is parsed as a comment (`react/jsx-no-comment-textnodes` lint error). Wrap terminal-style `// comment` UI text in a string expression: `{"// text"}`.
+- **Layout padding — do NOT re-add global padding to `app/layout.tsx`.** The root `<main>` is intentionally padding-free. Every page supplies its own (`px-6` + `max-w-* mx-auto`, or the homepage's per-section `p-4 sm:p-8`). A global `p-8` there boxes the homepage's `md:h-screen` full-viewport layout inside a 32px frame, pushing total height past 100vh and producing **two competing scrollbars** on desktop (outer page + the internal `#scroll-panel`). If you add a new page, give it its own padding.
+- **Full-bleed elements**: the mobile DNA strip uses `w-screen` inside a centered flex column (the flex centering does the edge-to-edge positioning — no negative-margin hacks needed, and it's independent of ancestor padding). `overflow-x-hidden` on `<html>` and `<body>` is required alongside it, because `100vw` includes the scrollbar width and would otherwise force a horizontal scrollbar.
 
 ## Pages & routes (current)
 

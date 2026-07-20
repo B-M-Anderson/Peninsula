@@ -38,7 +38,8 @@ There is no `typecheck` script yet — type-checking is currently only enforced 
 ## 3. App Router structure
 
 Root layout: [app/layout.tsx](app/layout.tsx)
-- Sets `<html lang="en">`, mounts `<Navbar />` above `{children}`, wraps content in `<main className="p-8">`, and mounts Vercel `<Analytics />` at the end of `<body>`.
+- Sets `<html lang="en">`, mounts `<Navbar />` above `{children}`, wraps content in a bare `<main>`, and mounts Vercel `<Analytics />` at the end of `<body>`.
+- **(July 2026)** `<html>` carries `dark overflow-x-hidden` (dark is the default theme) and `<body>` carries `overflow-x-hidden`. The root `<main>` has **no padding** — see the layout-padding note in [CLAUDE.md](CLAUDE.md); adding one causes a double scrollbar on the homepage.
 - `metadata`: title `"B. A."`, description `"Personal portfolio of B. Anderson"`.
 
 ### `/` — [app/page.tsx](app/page.tsx)

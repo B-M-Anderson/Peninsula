@@ -22,13 +22,6 @@ type Repo = {
 
 const featuredProjects = [
   {
-    name: "Local-LLM Site Concierge",
-    tag: "wip",
-    description:
-      "An AI assistant for this site, running on a small language model on my own desktop — no cloud inference. Architecture specced, build underway.",
-    path: "/projects",
-  },
-  {
     name: "Portfolio Website",
     tag: "ongoing",
     description:
@@ -121,10 +114,9 @@ export default function HomePage() {
             </motion.h2>
             <p className="font-term text-sm opacity-60 mb-4">Bennett M. Anderson</p>
             <p className="text-base leading-relaxed opacity-90 mb-6 text-left">
-              Biomedical engineering student splicing together wet-lab
-              instincts and computational skills — with the end goal of
-              engineering better outcomes for global health. Currently
-              culturing: code, bacteria, and one very demanding cat.
+              I&apos;m a biomedical engineering student working to improve my skills,
+              computational and otherwise, to become the best engineer/scientist I
+              can in the pursuit of the betterment of global health.
             </p>
 
             {/* Links — pure text, no chrome */}

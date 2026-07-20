@@ -19,37 +19,6 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    title: "Local-LLM Site Concierge",
-    description: `An AI assistant for this site, answered by a small language model running locally on my desktop PC — no cloud inference.
-
-Visitors will be able to ask questions about me, my projects, and my background; the site relays them through an outbound-only job queue to my machine, where a local model (Ollama) generates answers grounded in the same content already published here. If my desktop is offline, the site degrades gracefully to plain links.
-
-Planned stack: Ollama serving a small quantized instruct model (3-8B) on the desktop GPU, an outbound-only job queue as the relay (Upstash Redis), and a single structured markdown doc about me stuffed into the system prompt for grounding. Live status (online/offline, model, host) is shown on the ask page.
-
-Currently in the architecture/security-design phase: relay design, rate limiting, prompt-injection guardrails, and offline fallback are specced; the on-site status readout and chat shell are already live.`,
-    date: "July 15, 2026",
-    skills: [
-      "Local LLMs",
-      "Ollama",
-      "System Design",
-      "Next.js",
-      "API Routes",
-      "Security Design",
-      "Queueing",
-    ],
-    importantSkills: ["Local LLMs", "System Design", "Security Design"],
-    media: "none",
-    aiUsage: 70,
-    completion: 10,
-    thumbnailUrl: "/thumbnails/default.png",
-    wip: true,
-    ongoing: false,
-    terminated: false,
-    completed: false,
-    shelved: false,
-  },
-
-  {
     title: "Bennett-Anderson.com",
     description: `You're looking at this one!
 

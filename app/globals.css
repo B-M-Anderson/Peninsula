@@ -60,6 +60,15 @@ body {
   font-family: var(--font-term);
 }
 
+/* horizontally scrollable without a visible scrollbar (mobile nav links) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* phosphor glow — heavier than v1 */
 .glow {
   text-shadow:

@@ -63,7 +63,7 @@ export default function Navbar() {
     <nav
       className={`
         fixed top-0 left-0 w-full z-50
-        flex justify-between items-center px-6 py-4
+        flex justify-between items-center gap-3 px-4 sm:px-6 py-4
         transition-all duration-400 ease-in-out backdrop-blur-md
         ${hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"}
         bg-bio-bg/90 text-bio-fg
@@ -91,18 +91,21 @@ export default function Navbar() {
         </span>
       </div>
 
-      {/* Navigation links */}
-      <div className="flex gap-4 sm:gap-6 items-center text-base">
-        <Link href="/" className={linkClass("/")}>~/home</Link>
-        <Link href="/projects" className={linkClass("/projects")}>~/projects</Link>
-        <Link href="/ask" className={linkClass("/ask")}>~/ask</Link>
-        <Link href="/contact" className={linkClass("/contact")}>~/contact</Link>
+      {/* Navigation links + toggle. On narrow screens the links scroll
+          horizontally between the pinned identity (left) and toggle (right). */}
+      <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+        <div className="flex gap-4 sm:gap-6 items-center text-base overflow-x-auto no-scrollbar min-w-0">
+          <Link href="/" className={`${linkClass("/")} whitespace-nowrap flex-shrink-0`}>~/home</Link>
+          <Link href="/projects" className={`${linkClass("/projects")} whitespace-nowrap flex-shrink-0`}>~/projects</Link>
+          <Link href="/ask" className={`${linkClass("/ask")} whitespace-nowrap flex-shrink-0`}>~/ask</Link>
+          <Link href="/contact" className={`${linkClass("/contact")} whitespace-nowrap flex-shrink-0`}>~/contact</Link>
+        </div>
 
-        {/* Dark/light toggle */}
+        {/* Dark/light toggle — always pinned, never scrolls away */}
         <button
           onClick={() => setOverride(!dark)}
           aria-label="Toggle dark mode"
-          className="p-2 rounded-lg hover:bg-bio-surface dark:hover:bg-abyss-surface transition opacity-80 hover:opacity-100"
+          className="flex-shrink-0 p-2 rounded-lg hover:bg-bio-surface dark:hover:bg-abyss-surface transition opacity-80 hover:opacity-100"
         >
           {dark ? <Sun size={18} /> : <Moon size={18} />}
         </button>

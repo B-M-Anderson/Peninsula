@@ -24,7 +24,7 @@ export default function StripeBand({ title, subtitle, offset = "88px", size = "m
   // Fluid type so long titles (e.g. a full name) stay on one line on phones
   // instead of wrapping into the band below. Bands use min-height so any wrap
   // grows the band rather than clipping it.
-  const titleSize = sm ? "var(--text-xl)" : "clamp(24px, 6vw, 44px)";
+  const titleSize = sm ? "var(--text-xl)" : "clamp(22px, 7.6vw, 44px)";
   const subSize = sm ? "var(--text-xs)" : "clamp(13px, 3.4vw, 18px)";
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Moon, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -13,15 +13,34 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 
+// Theme store: the effective ground follows a saved override, or the browser's
+// prefers-color-scheme when there's no override.
+function subscribeTheme(cb: () => void) {
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  mq.addEventListener("change", cb);
+  window.addEventListener("themechange", cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    mq.removeEventListener("change", cb);
+    window.removeEventListener("themechange", cb);
+    window.removeEventListener("storage", cb);
+  };
+}
+
+function readTheme(): "light" | "dark" {
+  const saved = localStorage.getItem("theme");
+  if (saved === "light" || saved === "dark") return saved;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export default function Navbar() {
-  // Brown ground by default; the toggle switches to the eggshell (light) ground.
-  const [override, setOverride] = useState<boolean | null>(null);
-  const dark = override ?? true;
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark");
+  const dark = theme === "dark";
 
   const [hidden, setHidden] = useState(false);
   const pathname = usePathname();
 
-  // Apply dark/light class to <html>
+  // Keep the <html> ground class in sync at runtime (toggle or OS change).
   useEffect(() => {
     const html = document.documentElement;
     html.classList.toggle("dark", dark);
@@ -59,6 +78,16 @@ export default function Navbar() {
       else document.getElementById("scroll-panel")?.removeEventListener("scroll", handleScroll);
     };
   }, [pathname]);
+
+  // Toggle sets an explicit override (persisted); clearing it would fall back to
+  // the browser preference again.
+  const toggleTheme = () => {
+    const next = dark ? "light" : "dark";
+    try {
+      localStorage.setItem("theme", next);
+    } catch {}
+    window.dispatchEvent(new Event("themechange"));
+  };
 
   return (
     <nav
@@ -106,9 +135,9 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Ground toggle — always pinned, never scrolls away */}
+        {/* Ground toggle — overrides the browser preference; always pinned */}
         <button
-          onClick={() => setOverride(!dark)}
+          onClick={toggleTheme}
           aria-label="Toggle light and dark ground"
           className="flex-shrink-0 p-2 transition-colors"
           style={{ borderRadius: "var(--radius-sm)", color: "var(--text-muted)" }}

@@ -77,11 +77,21 @@ function ProjectCard({ p }: { p: Project }) {
 
 export default function HomePage() {
   return (
-    <div>
-      {/* Hero — sunken ground, grain overlay, the two-band motif, dapple at foot */}
+    // One continuous sunken, grained field — hero and content share a ground so
+    // "about me" and the rest read as a single panel. A single full-bleed dapple
+    // sits at the true foot (fixed height, not % of this tall page).
+    <div
+      className="md-grain md-dapple"
+      style={{
+        position: "relative",
+        background: "var(--surface-sunken)",
+        overflow: "hidden",
+        ["--dapple-height" as string]: "150px",
+      } as React.CSSProperties}
+    >
+      {/* Hero — the two-band motif; no divider dapple, so it flows into the content */}
       <header
-        className="md-grain md-dapple"
-        style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", paddingBottom: "var(--space-11)" }}
+        style={{ position: "relative", overflow: "hidden", paddingBottom: "var(--space-11)" }}
       >
         <StripeBand offset="104px" title={SITE_NAME} subtitle="Biomedical engineering · Iowa State University" />
         <div
@@ -122,9 +132,8 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Content — page ground, dapple at the true foot */}
+      {/* Content — shares the hero's ground; the foot dapple lives on the wrapper */}
       <main
-        className="md-dapple"
         style={{ maxWidth: "var(--max-width)", margin: "0 auto", padding: "var(--space-10) var(--space-9) var(--space-11)" }}
       >
         <div className="md-above" style={{ display: "flex", flexDirection: "column", gap: "var(--space-11)" }}>

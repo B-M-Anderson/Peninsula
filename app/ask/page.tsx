@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Send } from "lucide-react";
 import StripeBand from "../components/brand/StripeBand";
 import { TextLink } from "../components/ui";
+import { CONCIERGE_PRIORITY_CODE } from "../data/site";
 
 type Status = {
   online: boolean;
@@ -36,6 +37,7 @@ export default function AskPage() {
   const [lines, setLines] = useState<Line[]>([{ from: "bot", text: GREETING }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [priority, setPriority] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
 
@@ -53,13 +55,28 @@ export default function AskPage() {
   const ask = async (raw: string) => {
     const q = raw.trim();
     if (!q || busy) return;
+
+    // Priority passphrase: unlock the fast lane instead of asking a question.
+    if (q === CONCIERGE_PRIORITY_CODE) {
+      setInput("");
+      setPriority(true);
+      setLines((l) => [
+        ...l,
+        { from: "sys", text: "Priority access on — your questions now jump the queue and skip limits." },
+      ]);
+      return;
+    }
+
     setInput("");
     setBusy(true);
     setLines((l) => [...l, { from: "you", text: q }]);
     try {
       const res = await fetch("/api/concierge/ask", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(priority ? { "x-concierge-priority": CONCIERGE_PRIORITY_CODE } : {}),
+        },
         body: JSON.stringify({ question: q.slice(0, MAX) }),
       });
       const data = await res.json();
@@ -135,16 +152,34 @@ export default function AskPage() {
                 borderBottom: "1px solid var(--border-subtle)",
               }}
             >
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "var(--text-3xs)",
-                  letterSpacing: "var(--tracking-label)",
-                  textTransform: "uppercase",
-                  color: "var(--text-faint)",
-                }}
-              >
-                Concierge
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-3)" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "var(--text-3xs)",
+                    letterSpacing: "var(--tracking-label)",
+                    textTransform: "uppercase",
+                    color: "var(--text-faint)",
+                  }}
+                >
+                  Concierge
+                </span>
+                {priority && (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "var(--text-3xs)",
+                      letterSpacing: "var(--tracking-label)",
+                      textTransform: "uppercase",
+                      color: "var(--action-primary-fg)",
+                      background: "var(--action-primary-bg)",
+                      borderRadius: "var(--radius-sm)",
+                      padding: "2px 6px",
+                    }}
+                  >
+                    Priority
+                  </span>
+                )}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-2)" }}>
                 <span

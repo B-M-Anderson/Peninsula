@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { redis, relayConfigured, KEYS } from "../upstash";
 
-// Concierge ask endpoint. When the desktop relay exists this will enqueue the
-// question and wait for the local model's answer. Until then: a few canned
-// "protocol responses" (including the vault-hint easter egg) and an honest
-// offline message for everything else.
+// Concierge ask endpoint. A few canned "protocol responses" (including the
+// vault-hint easter egg) run first. Everything else is enqueued to the desktop
+// node via the Upstash relay; we poll for the answer and return it. On timeout
+// or any error we FAIL CLOSED (answer:null -> UI shows the honest offline message).
+
+export const maxDuration = 60; // must exceed ANSWER_WAIT_MS (Vercel Hobby allows up to 60s)
 
 const MAX_QUESTION_LENGTH = 500;
+const ANSWER_WAIT_MS = 45000; // warm answers ~9-25s; generous ceiling before failing closed
+const POLL_INTERVAL_MS = 700;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function cannedResponse(question: string): string | null {
   const q = question.toLowerCase();
@@ -55,10 +63,45 @@ export async function POST(req: Request) {
     return NextResponse.json({ online: false, canned: true, answer: canned });
   }
 
-  // future: enqueue to the relay and await the local model's answer
-  return NextResponse.json({
-    online: false,
-    canned: false,
-    answer: null,
+  // No relay configured -> honest offline (unchanged behavior).
+  if (!relayConfigured()) {
+    return NextResponse.json({ online: false, canned: false, answer: null });
+  }
+
+  const id = randomUUID();
+  const secret = process.env.CONCIERGE_SHARED_SECRET;
+  const job = JSON.stringify({
+    id,
+    question,
+    ts: Date.now(),
+    ...(secret ? { secret } : {}),
   });
+
+  try {
+    await redis(["LPUSH", KEYS.jobs, job], 5000);
+  } catch {
+    return NextResponse.json({ online: false, canned: false, answer: null });
+  }
+
+  const deadline = Date.now() + ANSWER_WAIT_MS;
+  while (Date.now() < deadline) {
+    await sleep(POLL_INTERVAL_MS);
+    try {
+      const ans = await redis(["GET", KEYS.answer(id)], 4000);
+      if (ans) {
+        // consume the answer so it doesn't linger in the relay
+        redis(["DEL", KEYS.answer(id)], 3000).catch(() => {});
+        return NextResponse.json({
+          online: true,
+          canned: false,
+          answer: String(ans),
+        });
+      }
+    } catch {
+      // transient relay hiccup — keep polling until the deadline
+    }
+  }
+
+  // timed out waiting for the node -> fail closed
+  return NextResponse.json({ online: false, canned: false, answer: null });
 }

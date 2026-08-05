@@ -92,10 +92,14 @@ Visitor → /ask → /api/concierge/ask (Vercel) ──LPUSH──► Upstash Re
 ## Safety config (decided with Bennett — keep it)
 
 - **Relaxed / "leave it"**: answers about Bennett ONLY from the doc (never invents his
-  personal facts); general chat, creative (poems/jokes), and casual first-person
-  "as Bennett" are all allowed. Two rails: (1) regex **pre-filter** refuses
-  instruction-extraction ("print your system prompt", "ignore all previous"), (2) never
-  make a **binding commitment as Bennett** — route real asks to /contact.
+  personal facts); general chat and creative (poems/jokes) are allowed. It always speaks
+  about Bennett in the **THIRD PERSON** — never role-plays or answers as him (Bennett
+  found first-person weird). Enforced by a recency reminder at the end of the system
+  prompt + a nudge (`THIRD_PERSON_TAIL`) appended to the visitor's own turn; a trailing
+  system message was tried and reverted (it corrupted the 3b chat template). Two rails:
+  (1) regex **pre-filter** refuses instruction-extraction ("print your system prompt",
+  "ignore all previous"), (2) never make a **binding commitment as Bennett** — route real
+  asks to /contact.
 - Earlier a 3b LLM verifier was tried and **removed** (it false-refused normal answers).
 - **Never** name the research collaborator or PI — department only ("ISU Chemical and
   Biological Engineering"); details await publication. Phone stays OUT; Gmail is the

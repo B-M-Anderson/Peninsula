@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { Send } from "lucide-react";
+import StripeBand from "../components/brand/StripeBand";
+import { TextLink } from "../components/ui";
 
 type Status = {
   online: boolean;
@@ -13,16 +16,28 @@ type Status = {
   latencyMs?: number | null;
 };
 
-type ChatLine = { from: "you" | "node" | "sys"; text: string };
+type Line = { from: "you" | "bot" | "sys"; text: string };
+
+const GREETING =
+  "Ask me about Bennett — his work, his projects, the cat, what he's after next. I only know what he's put out in the open.";
+
+const SUGGESTIONS = [
+  "What's Bennett working on now?",
+  "What's he looking for after graduation?",
+  "What are his projects?",
+  "Tell me about Penny.",
+  "What's he best at?",
+];
+
+const MAX = 500;
 
 export default function AskPage() {
   const [status, setStatus] = useState<Status | null>(null);
-  const [lines, setLines] = useState<ChatLine[]>([
-    { from: "sys", text: "channel open. ask about bennett — projects, background, the cat." },
-  ]);
+  const [lines, setLines] = useState<Line[]>([{ from: "bot", text: GREETING }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     fetch("/api/concierge/status")
@@ -32,11 +47,11 @@ export default function AskPage() {
   }, []);
 
   useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-  }, [lines]);
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
+  }, [lines, busy]);
 
-  const send = async () => {
-    const q = input.trim();
+  const ask = async (raw: string) => {
+    const q = raw.trim();
     if (!q || busy) return;
     setInput("");
     setBusy(true);
@@ -45,123 +60,254 @@ export default function AskPage() {
       const res = await fetch("/api/concierge/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q.slice(0, MAX) }),
       });
       const data = await res.json();
       if (data.answer) {
-        setLines((l) => [...l, { from: "node", text: data.answer }]);
+        setLines((l) => [...l, { from: "bot", text: data.answer }]);
       } else {
         setLines((l) => [
           ...l,
           {
             from: "sys",
-            text: "node offline — the desktop that runs me is powered down or not yet wired up. try Projects or Contact in the meantime.",
+            text: "The desktop that runs this is asleep or not wired up right now — it keeps its own hours. Try Projects or Contact in the meantime.",
           },
         ]);
       }
     } catch {
-      setLines((l) => [...l, { from: "sys", text: "transmission failed. try again." }]);
+      setLines((l) => [...l, { from: "sys", text: "That didn't go through. Give it another try." }]);
     }
     setBusy(false);
   };
 
-  const fromColor = (from: ChatLine["from"]) =>
-    from === "you"
-      ? "var(--text-accent)"
-      : from === "node"
-      ? "var(--text-strong)"
-      : "var(--text-faint)";
+  const asked = lines.some((l) => l.from === "you");
+  const online = status?.online === true;
+  const pill =
+    status === null
+      ? { dot: "var(--text-faint)", label: "Connecting…", pulse: true }
+      : online
+      ? { dot: "var(--status-complete)", label: "Online", pulse: true }
+      : { dot: "var(--status-wip)", label: "Offline — the desktop's asleep", pulse: false };
 
   return (
-    <div className="max-w-3xl mx-auto pt-24 pb-16 px-6 font-term">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-        <h1 className="text-3xl font-bold" style={{ color: "var(--text-accent)" }}>
-          &gt; ask --local
-        </h1>
-        <p className="text-sm opacity-70 mt-3 leading-relaxed max-w-xl">
-          this is (going to be) a small language model running on my own desktop
-          at home — no cloud inference, no third-party AI service. questions get
-          relayed to my machine, answered there, and sent back. it only knows
-          what i&apos;ve published about myself.
-        </p>
+    <div>
+      <header
+        className="md-grain"
+        style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}
+      >
+        <StripeBand offset="80px" title="Ask" subtitle="A small model on my desktop, answering for me" />
+      </header>
 
-        {/* status readout */}
-        <div className="mt-8 text-sm">
-          <p className="opacity-50 mb-2">&gt; node --status</p>
-          {!status && <p className="opacity-50">polling…</p>}
-          {status && (
-            <div className="space-y-1 pl-4">
-              <p>
-                <span className="opacity-50">link:</span>{" "}
-                {status.online ? (
-                  <span style={{ color: "var(--status-complete)" }}>● ONLINE</span>
-                ) : (
-                  <span style={{ color: "var(--status-wip)" }}>○ OFFLINE</span>
-                )}
-              </p>
-              <p><span className="opacity-50">model:</span> {status.model ?? "—"}</p>
-              <p><span className="opacity-50">runtime:</span> {status.runtime}</p>
-              <p><span className="opacity-50">host:</span> {status.host}</p>
-              {status.latencyMs != null && (
-                <p><span className="opacity-50">latency:</span> {status.latencyMs}ms</p>
-              )}
-              {status.note && <p className="opacity-50">{"// "}{status.note}</p>}
-            </div>
-          )}
-        </div>
+      <main
+        className="md-dapple"
+        style={{ position: "relative", minHeight: "60vh", padding: "clamp(28px, 6vw, 64px) clamp(18px, 5vw, 48px)" }}
+      >
+        <div
+          className="md-above"
+          style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-6)" }}
+        >
+          <p style={{ margin: 0, fontSize: "var(--text-md)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
+            No cloud, no third-party AI. A small model runs on my desktop at home, answers your
+            question, and goes back to sleep. It only speaks from what I&apos;ve published — and it
+            talks about me, not as me.
+          </p>
 
-        {/* chat log */}
-        <div className="mt-10">
-          <p className="opacity-50 text-sm mb-2">&gt; session.log</p>
+          {/* chat panel */}
           <div
-            ref={logRef}
-            className="rounded p-4 h-72 overflow-y-auto text-sm space-y-3"
-            style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}
+            style={{
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-lg)",
+              background: "var(--surface-card)",
+              boxShadow: "var(--shadow-sm)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
           >
-            {lines.map((line, i) => (
-              <div key={i}>
-                <span className="opacity-70" style={{ color: fromColor(line.from) }}>
-                  {line.from === "you" ? "you@web" : line.from === "node" ? "node@desktop" : "sys"}
-                  {" ▸ "}
-                </span>
-                <span className="whitespace-pre-line opacity-90">{line.text}</span>
+            {/* header: identity + live status */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "var(--space-4)",
+                padding: "var(--space-4) var(--space-5)",
+                borderBottom: "1px solid var(--border-subtle)",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "var(--text-3xs)",
+                  letterSpacing: "var(--tracking-label)",
+                  textTransform: "uppercase",
+                  color: "var(--text-faint)",
+                }}
+              >
+                Concierge
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-2)" }}>
+                <span
+                  aria-hidden
+                  className={pill.pulse && !reduce ? "md-pulse" : undefined}
+                  style={{ width: 7, height: 7, borderRadius: "50%", background: pill.dot, flex: "0 0 auto" }}
+                />
+                <span style={{ fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>{pill.label}</span>
+              </span>
+            </div>
+
+            {/* messages */}
+            <div
+              ref={logRef}
+              aria-live="polite"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-4)",
+                padding: "var(--space-5)",
+                height: "min(56vh, 440px)",
+                overflowY: "auto",
+              }}
+            >
+              {lines.map((line, i) => {
+                if (line.from === "sys") {
+                  return (
+                    <p
+                      key={i}
+                      style={{ margin: 0, alignSelf: "center", maxWidth: "90%", textAlign: "center", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-faint)" }}
+                    >
+                      {line.text}
+                    </p>
+                  );
+                }
+                const you = line.from === "you";
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: reduce ? 0 : 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: [0.16, 0.84, 0.44, 1] }}
+                    style={{
+                      alignSelf: you ? "flex-end" : "flex-start",
+                      maxWidth: "86%",
+                      padding: "10px 14px",
+                      borderRadius: 14,
+                      borderBottomRightRadius: you ? 4 : 14,
+                      borderBottomLeftRadius: you ? 14 : 4,
+                      background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
+                      color: you ? "var(--action-primary-fg)" : "var(--text-body)",
+                      border: you ? "none" : "1px solid var(--border-subtle)",
+                      fontSize: "var(--text-sm)",
+                      lineHeight: "var(--leading-relaxed)",
+                      whiteSpace: "pre-line",
+                    }}
+                  >
+                    {line.text}
+                  </motion.div>
+                );
+              })}
+
+              {busy && (
+                <div
+                  style={{
+                    alignSelf: "flex-start",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "var(--space-3)",
+                    padding: "10px 14px",
+                    borderRadius: 14,
+                    borderBottomLeftRadius: 4,
+                    background: "var(--surface-sunken)",
+                    border: "1px solid var(--border-subtle)",
+                  }}
+                >
+                  <span style={{ display: "inline-flex", gap: 4 }}>
+                    {[0, 1, 2].map((d) => (
+                      <span
+                        key={d}
+                        className={reduce ? undefined : "md-pulse"}
+                        style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-accent)", animationDelay: `${d * 0.2}s` }}
+                      />
+                    ))}
+                  </span>
+                  <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                    thinking — it&apos;s a real machine at home, give it a few seconds
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* starter questions — only before the first ask */}
+            {!asked && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", padding: "0 var(--space-5) var(--space-4)" }}>
+                {SUGGESTIONS.map((s) => (
+                  <button key={s} type="button" onClick={() => ask(s)} disabled={busy} className="md-btn md-btn-secondary md-btn-sm">
+                    {s}
+                  </button>
+                ))}
               </div>
-            ))}
-            {busy && <p className="opacity-40">…</p>}
-          </div>
-          <div className="flex items-center gap-2 mt-3 text-sm">
-            <span style={{ color: "var(--text-accent)" }}>&gt;</span>
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="type a question…"
-              className="flex-1 bg-transparent outline-none placeholder:opacity-30"
-              maxLength={500}
-              spellCheck={false}
-            />
-            <button onClick={send} className="opacity-60 hover:opacity-100 transition">
-              [send]
-            </button>
-          </div>
-        </div>
+            )}
 
-        {/* planned stack */}
-        <div className="mt-12 text-sm opacity-70 leading-relaxed">
-          <p className="opacity-70">&gt; cat planned-stack.txt</p>
-          <div className="pl-4 mt-2 space-y-1">
-            <p>runtime: Ollama on the desktop GPU — simplest local-model server there is</p>
-            <p>model: a small instruct model (3–8B, quantized) — fast enough for chat</p>
-            <p>relay: outbound-only job queue — the desktop polls out; nothing on the home network is exposed</p>
-            <p>grounding: one structured markdown doc about me, stuffed into the system prompt</p>
-            <p>fallback: if the desktop is asleep, you get honest OFFLINE + links, never a fake answer</p>
+            {/* composer */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                ask(input);
+              }}
+              style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-4) var(--space-5)", borderTop: "1px solid var(--border-subtle)" }}
+            >
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value.slice(0, MAX))}
+                placeholder="Ask about Bennett…"
+                aria-label="Ask about Bennett"
+                enterKeyHint="send"
+                autoComplete="off"
+                disabled={busy}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  background: "var(--surface-sunken)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "12px 14px",
+                  fontFamily: "var(--font-body)",
+                  fontSize: 16,
+                  color: "var(--text-body)",
+                  outline: "none",
+                }}
+              />
+              <button
+                type="submit"
+                aria-label="Send question"
+                disabled={busy || input.trim().length === 0}
+                className="md-btn md-btn-primary"
+                style={{ opacity: busy || input.trim().length === 0 ? 0.5 : 1, minHeight: 44 }}
+              >
+                <Send size={16} />
+                <span>Ask</span>
+              </button>
+            </form>
           </div>
-        </div>
 
-        <p className="text-xs opacity-40 mt-10">
-          {"// the node keeps a few cached records even while offline. some of them are about the cat."}
-        </p>
-      </motion.div>
+          {/* char counter + escape hatches */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
+            <span style={{ display: "inline-flex", gap: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
+              Not what you&apos;re after? <TextLink href="/projects">Projects</TextLink>
+              <TextLink href="/contact">Contact</TextLink>
+            </span>
+            {input.length > 0 && (
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip)" : "var(--text-faint)" }}>
+                {input.length}/{MAX}
+              </span>
+            )}
+          </div>
+
+          <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-faint)", lineHeight: "var(--leading-relaxed)" }}>
+            Even asleep, it remembers a few things. Mostly about the cat.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

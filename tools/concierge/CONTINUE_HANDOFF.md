@@ -3,6 +3,26 @@
 Written by the desktop Claude Code instance for the **laptop** instance to pick up.
 Read this top to bottom, then continue from "What's left."
 
+## ▶ How this finishes (read first)
+
+**For Bennett:** the node runs itself — Ollama + the poller are systemd services with
+linger on, so they auto-start on boot and restart on crash. The only manual step left is
+scoping the two Upstash env vars to Vercel's **Preview** environment and redeploying
+(details below). After that, just tell an assistant **"continue"** — this desktop session
+or a fresh one on the laptop — and it verifies and finishes (merges PR #9 after your OK).
+
+**For the continuing assistant (desktop or laptop):**
+1. On the desktop: `bash tools/concierge/verify.sh` — proves node + relay round-trip
+   (independent of Vercel). On the laptop there's no `.env.concierge`, so skip to step 2
+   and rely on Bennett's browser test / the node log.
+2. Confirm Bennett's env fix landed: trigger a preview redeploy
+   (`git commit --allow-empty -m redeploy && git push` on `concierge/grounding-doc`, or
+   Vercel → Redeploy), then confirm the deployed `/ask` reaches the node — watch
+   `journalctl --user -u concierge-poller -f` while Bennett tries the preview `/ask` in
+   his browser, OR use a Vercel "Protection Bypass for Automation" token to curl it.
+3. When the preview answers **and** Bennett approves → `gh pr merge 9 --squash` (or his
+   preferred merge). That deploys production. **Never merge without his explicit OK.**
+
 ## TL;DR — current state (2026-08-04)
 
 The AI concierge behind `/ask` on bennett-anderson.com is **built and working**; it

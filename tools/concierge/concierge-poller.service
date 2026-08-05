@@ -1,0 +1,22 @@
+[Unit]
+Description=bennett-anderson.com concierge poller (Ollama <- Upstash relay)
+# Wait for network; Ollama is optional at start (the poller retries if it's not up yet).
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=bennett
+WorkingDirectory=/home/bennett/Peninsula/tools/concierge
+ExecStart=/usr/bin/python3 /home/bennett/Peninsula/tools/concierge/poller.py
+# Reads secrets itself from ./.env.concierge (gitignored, 600).
+Restart=always
+RestartSec=5
+# Light hardening — it only needs outbound HTTPS + localhost Ollama.
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/bennett/Peninsula/tools/concierge
+
+[Install]
+WantedBy=multi-user.target

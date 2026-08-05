@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { redis, relayConfigured, KEYS } from "../upstash";
+import { CONCIERGE_PRIORITY_CODE } from "../../../data/site";
 
 // Concierge ask endpoint. A few canned "protocol responses" (including the
 // vault-hint easter egg) run first. Everything else is enqueued to the desktop
@@ -68,17 +69,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ online: false, canned: false, answer: null });
   }
 
+  // Priority pass: the /ask box sends this header once someone has unlocked the
+  // fast lane. Priority jobs RPUSH to the tail so the poller's BRPOP grabs them
+  // next — ahead of everyone already queued — and they skip any request limits.
+  const priority = req.headers.get("x-concierge-priority") === CONCIERGE_PRIORITY_CODE;
+
   const id = randomUUID();
   const secret = process.env.CONCIERGE_SHARED_SECRET;
   const job = JSON.stringify({
     id,
     question,
     ts: Date.now(),
+    priority,
     ...(secret ? { secret } : {}),
   });
 
   try {
-    await redis(["LPUSH", KEYS.jobs, job], 5000);
+    await redis([priority ? "RPUSH" : "LPUSH", KEYS.jobs, job], 5000);
   } catch {
     return NextResponse.json({ online: false, canned: false, answer: null });
   }

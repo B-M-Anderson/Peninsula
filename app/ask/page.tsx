@@ -19,22 +19,21 @@ type Status = {
 
 type Line = { from: "you" | "bot" | "sys"; text: string };
 
-const GREETING =
-  "Ask me about Bennett — his work, his projects, the cat, what he's after next. I only know what he's put out in the open.";
-
-const SUGGESTIONS = [
-  "What's Bennett working on now?",
-  "What's he looking for after graduation?",
-  "What are his projects?",
-  "Tell me about Penny.",
-  "What's he best at?",
+// Short topics for the empty state; each fires a fuller question.
+const TOPICS: { label: string; q: string }[] = [
+  { label: "His research", q: "What research is Bennett doing right now?" },
+  { label: "Projects", q: "What are Bennett's projects?" },
+  { label: "After graduation", q: "What is Bennett looking for after he graduates?" },
+  { label: "Penny", q: "Tell me about Penny the cat." },
+  { label: "Strengths", q: "What is Bennett best at?" },
 ];
 
 const MAX = 500;
+const EASE: [number, number, number, number] = [0.16, 0.84, 0.44, 1];
 
 export default function AskPage() {
   const [status, setStatus] = useState<Status | null>(null);
-  const [lines, setLines] = useState<Line[]>([{ from: "bot", text: GREETING }]);
+  const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [priority, setPriority] = useState(false);
@@ -87,7 +86,7 @@ export default function AskPage() {
           ...l,
           {
             from: "sys",
-            text: "The desktop that runs this is asleep or not wired up right now — it keeps its own hours. Try Projects or Contact in the meantime.",
+            text: "The desktop that runs this is asleep right now — it keeps its own hours. Try Projects or Contact in the meantime.",
           },
         ]);
       }
@@ -97,7 +96,6 @@ export default function AskPage() {
     setBusy(false);
   };
 
-  const asked = lines.some((l) => l.from === "you");
   const online = status?.online === true;
   const pill =
     status === null
@@ -105,6 +103,8 @@ export default function AskPage() {
       : online
       ? { dot: "var(--status-complete)", label: "Online", pulse: true }
       : { dot: "var(--status-wip)", label: "Offline — the desktop's asleep", pulse: false };
+
+  const empty = lines.length === 0;
 
   return (
     <div>
@@ -119,18 +119,12 @@ export default function AskPage() {
         className="md-dapple"
         style={{ position: "relative", minHeight: "60vh", padding: "clamp(28px, 6vw, 64px) clamp(18px, 5vw, 48px)" }}
       >
-        <div
-          className="md-above"
-          style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-6)" }}
-        >
-          <p style={{ margin: 0, fontSize: "var(--text-md)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-            No cloud, no third-party AI. A small model runs on my desktop at home, answers your
-            question, and goes back to sleep. It only speaks from what I&apos;ve published — and it
-            talks about me, not as me.
-          </p>
-
+        <div className="md-above" style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
           {/* chat panel */}
-          <div
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: EASE }}
             style={{
               border: "1px solid var(--border-subtle)",
               borderRadius: "var(--radius-lg)",
@@ -165,7 +159,10 @@ export default function AskPage() {
                   Concierge
                 </span>
                 {priority && (
-                  <span
+                  <motion.span
+                    initial={reduce ? false : { opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: EASE }}
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "var(--text-3xs)",
@@ -178,7 +175,7 @@ export default function AskPage() {
                     }}
                   >
                     Priority
-                  </span>
+                  </motion.span>
                 )}
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-2)" }}>
@@ -191,7 +188,7 @@ export default function AskPage() {
               </span>
             </div>
 
-            {/* messages */}
+            {/* messages / topic picker */}
             <div
               ref={logRef}
               aria-live="polite"
@@ -204,46 +201,89 @@ export default function AskPage() {
                 overflowY: "auto",
               }}
             >
-              {lines.map((line, i) => {
-                if (line.from === "sys") {
-                  return (
-                    <p
-                      key={i}
-                      style={{ margin: 0, alignSelf: "center", maxWidth: "90%", textAlign: "center", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-faint)" }}
-                    >
-                      {line.text}
-                    </p>
-                  );
-                }
-                const you = line.from === "you";
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: reduce ? 0 : 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, ease: [0.16, 0.84, 0.44, 1] }}
+              {empty ? (
+                <motion.div
+                  initial={reduce ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-5)", textAlign: "center" }}
+                >
+                  <span
                     style={{
-                      alignSelf: you ? "flex-end" : "flex-start",
-                      maxWidth: "86%",
-                      padding: "10px 14px",
-                      borderRadius: 14,
-                      borderBottomRightRadius: you ? 4 : 14,
-                      borderBottomLeftRadius: you ? 14 : 4,
-                      background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
-                      color: you ? "var(--action-primary-fg)" : "var(--text-body)",
-                      border: you ? "none" : "1px solid var(--border-subtle)",
-                      fontSize: "var(--text-sm)",
-                      lineHeight: "var(--leading-relaxed)",
-                      whiteSpace: "pre-line",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "var(--text-3xs)",
+                      letterSpacing: "var(--tracking-label)",
+                      textTransform: "uppercase",
+                      color: "var(--text-faint)",
                     }}
                   >
-                    {line.text}
-                  </motion.div>
-                );
-              })}
+                    Pick a topic — or just ask
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-2)", maxWidth: 460 }}>
+                    {TOPICS.map((t, i) => (
+                      <motion.button
+                        key={t.label}
+                        type="button"
+                        onClick={() => ask(t.q)}
+                        disabled={busy}
+                        className="md-btn md-btn-secondary md-btn-sm"
+                        initial={reduce ? false : { opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + i * 0.06, duration: 0.3, ease: EASE }}
+                      >
+                        {t.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              ) : (
+                lines.map((line, i) => {
+                  if (line.from === "sys") {
+                    return (
+                      <motion.p
+                        key={i}
+                        initial={reduce ? false : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.25 }}
+                        style={{ margin: 0, alignSelf: "center", maxWidth: "90%", textAlign: "center", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-faint)" }}
+                      >
+                        {line.text}
+                      </motion.p>
+                    );
+                  }
+                  const you = line.from === "you";
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: reduce ? 0 : 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, ease: EASE }}
+                      style={{
+                        alignSelf: you ? "flex-end" : "flex-start",
+                        maxWidth: "86%",
+                        padding: "10px 14px",
+                        borderRadius: 14,
+                        borderBottomRightRadius: you ? 4 : 14,
+                        borderBottomLeftRadius: you ? 14 : 4,
+                        background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
+                        color: you ? "var(--action-primary-fg)" : "var(--text-body)",
+                        border: you ? "none" : "1px solid var(--border-subtle)",
+                        fontSize: "var(--text-sm)",
+                        lineHeight: "var(--leading-relaxed)",
+                        whiteSpace: "pre-line",
+                      }}
+                    >
+                      {line.text}
+                    </motion.div>
+                  );
+                })
+              )}
 
               {busy && (
-                <div
+                <motion.div
+                  initial={reduce ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
                   style={{
                     alignSelf: "flex-start",
                     display: "inline-flex",
@@ -266,22 +306,11 @@ export default function AskPage() {
                     ))}
                   </span>
                   <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                    thinking — it&apos;s a real machine at home, give it a few seconds
+                    thinking — real machine at home, give it a few seconds
                   </span>
-                </div>
+                </motion.div>
               )}
             </div>
-
-            {/* starter questions — only before the first ask */}
-            {!asked && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", padding: "0 var(--space-5) var(--space-4)" }}>
-                {SUGGESTIONS.map((s) => (
-                  <button key={s} type="button" onClick={() => ask(s)} disabled={busy} className="md-btn md-btn-secondary md-btn-sm">
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* composer */}
             <form
@@ -323,12 +352,12 @@ export default function AskPage() {
                 <span>Ask</span>
               </button>
             </form>
-          </div>
+          </motion.div>
 
-          {/* char counter + escape hatches */}
+          {/* footer: escape hatches + counter */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
             <span style={{ display: "inline-flex", gap: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
-              Not what you&apos;re after? <TextLink href="/projects">Projects</TextLink>
+              <TextLink href="/projects">Projects</TextLink>
               <TextLink href="/contact">Contact</TextLink>
             </span>
             {input.length > 0 && (
@@ -337,10 +366,6 @@ export default function AskPage() {
               </span>
             )}
           </div>
-
-          <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--text-faint)", lineHeight: "var(--leading-relaxed)" }}>
-            Even asleep, it remembers a few things. Mostly about the cat.
-          </p>
         </div>
       </main>
     </div>

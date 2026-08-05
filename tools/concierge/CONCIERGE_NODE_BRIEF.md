@@ -53,7 +53,12 @@ speak from. The whole doc is small; **put it verbatim into the system prompt**
 (no chunked RAG needed — that only adds retrieval misses).
 
 **Env vars** (set in Vercel + on this machine): Upstash REST URL + token, an
-optional shared secret, and `CONCIERGE_STATUS_URL`.
+optional shared secret, and `CONCIERGE_STATUS_URL`. **Secrets live in
+`tools/concierge/.env.local`** (gitignored — never commit it); copy the shape
+from `tools/concierge/.env.example`. On this machine that file may already hold a
+Redis credential — check it. NOTE: a **read-only** token can only read; the
+poller and the ask route need a **read-write** token to enqueue jobs and write
+answers.
 
 ---
 

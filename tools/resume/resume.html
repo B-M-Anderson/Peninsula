@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bennett M. Anderson — Resume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..600&family=Hanken+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+    --font-body: "Hanken Grotesk", "Helvetica Neue", Helvetica, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    --brown-900: #2A190D;
+    --brown-800: #3A2412;
+    --brown-700: #4E3018;
+    --brown-600: #6B4420;
+    --tan-500: #A98A5C;
+    --tan-400: #BE9E70;
+    --cream-50: #FAF4E9;
+    --brown-a16: rgba(42, 25, 13, 0.16);
+    --dapple-color: rgba(42, 25, 13, 0.20);
+    --dapple-height: 20%;
+  }
+  @page { size: 8.5in 11in; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #eceae6; }
+  .page {
+    width: 8.5in;
+    height: 11in;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  /* Dappling: one shallow strip at the foot, densest in the bottom 5-10%. */
+  .md-dapple::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--dapple-height);
+    pointer-events: none;
+    z-index: 2;
+    background-image:
+      radial-gradient(ellipse 5.4px 4.1px at 22% 62%, var(--dapple-color) 99%, transparent 100%),
+      radial-gradient(circle at 68% 27%, var(--dapple-color) 3.4px, transparent 4px),
+      radial-gradient(ellipse 3.5px 5.2px at 45% 84%, var(--dapple-color) 99%, transparent 100%),
+      radial-gradient(circle at 87% 71%, var(--dapple-color) 4.6px, transparent 5.3px),
+      radial-gradient(ellipse 4.7px 3.2px at 9% 33%, var(--dapple-color) 99%, transparent 100%),
+      radial-gradient(ellipse 4.2px 3.1px at 33% 88%, var(--dapple-color) 99%, transparent 100%),
+      radial-gradient(circle at 76% 91%, var(--dapple-color) 3.6px, transparent 4.2px);
+    background-size: 118px 96px, 83px 71px, 149px 121px, 101px 89px, 67px 61px, 54px 46px, 71px 39px;
+    background-position: 0 0, 29px 13px, 17px 47px, 41px 9px, 11px 31px, 23px 5px, 47px 3px;
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
+  }
+  h1, h2, h3, p, ul { margin: 0; }
+</style>
+</head>
+<body>
+<section class="page md-light md-dapple" style="background: var(--cream-50); color: var(--brown-800); font-family: var(--font-body); overflow: hidden; border-radius: 0;">
+
+    <div style="position: relative; z-index: 3; display: flex; flex-direction: column; height: 100%;">
+
+      <div style="height: 22px;"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 100%; box-sizing: border-box; height: 60px; display: flex; align-items: center; padding: 0 30px; background: var(--tan-400); color: var(--brown-900);">
+          <h1 style="margin: 0; font-family: var(--font-display); font-size: 34px; font-weight: 500; line-height: 1; letter-spacing: -0.015em; white-space: nowrap;">Bennett M. Anderson</h1>
+        </div>
+        <div style="width: 100%; box-sizing: border-box; height: 26px; display: flex; align-items: center; padding: 0 30px; background: var(--tan-500); color: var(--brown-900);">
+          <p style="margin: 0; font-size: 12.5px; font-weight: 500; line-height: 1; white-space: nowrap;">Ames, IA • bmarc@iastate.edu • 815-821-9604 • Bennett-Anderson.com</p>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 14px; padding: 11px 30px 0; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.01em; white-space: nowrap; color: var(--brown-600);">
+        <span>bmarc@iastate.edu</span>
+        <span>815-821-9604</span>
+        <span>Ames, IA</span>
+        <span>linkedin.com/in/bennett-m-anderson</span>
+        <span>github.com/B-M-Anderson</span>
+      </div>
+
+      <div style="margin: 14px 30px 0; padding: 9px 0; border-top: 1px solid var(--brown-a16); border-bottom: 1px solid var(--brown-a16); text-align: center; font-size: 12px; line-height: 1.4; color: rgba(42,25,13,0.72);">
+        All Personal Projects &amp; Publications Available for Viewing<br>@ Bennett-Anderson.com
+      </div>
+
+      <div style="display: flex; gap: 26px; padding: 20px 30px 0; align-items: flex-start;">
+
+        <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 17px;">
+
+          <section style="display: flex; flex-direction: column; gap: 9px;">
+            <h2 style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--brown-700); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--brown-800);">Practical Experience</h2>
+            <div>
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em;">Undergraduate Research Assistant</h3>
+              <p style="margin: 2px 0 0; font-size: 12px; font-weight: 600; line-height: 1.3;">ISU Department of Chemical and Biological Engineering</p>
+              <p style="margin: 3px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--brown-600);">Jan 2025 – Present</p>
+            </div>
+            <ul style="margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86); text-wrap: pretty;">
+              <li>Designs experiments for identifying genetic knockdowns and validating selections.</li>
+              <li>Performs transformations, minipreps, PCR, gels, and other standard protocols.</li>
+              <li>Uses MATLAB/Python for low-bp alignment of noisy genomic sequences.</li>
+              <li>Uses PyMOL for ligand binding + structural comparison.</li>
+              <li>Collaborates with graduate student, meets with PI, and presents semesterly.</li>
+              <li>BSL-1 trained with strong microbiology/biochemistry fundamentals.</li>
+            </ul>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 9px;">
+            <h2 style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--brown-700); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--brown-800);">Highlight / Recent Personal Project</h2>
+            <div>
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em;">Bennett-Anderson.com</h3>
+              <p style="margin: 2px 0 0; font-size: 12px; font-weight: 600; line-height: 1.3;">Personal Website</p>
+            </div>
+            <ul style="margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86); text-wrap: pretty;">
+              <li>Designed and deployed a responsive portfolio site using Next.js, TypeScript, and Tailwind CSS.</li>
+              <li>Implemented multi-device compatability of features, dark mode toggles, animated navigation, and project showcase with GitHub integration in a system designed for easy expansion.</li>
+              <li>Hosted on Vercel with custom domain; demonstrates full-stack web development, UI design, and adaptive ability to quickly become productive with unfamilliar tools.</li>
+            </ul>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 9px;">
+            <h2 style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--brown-700); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--brown-800);">ISU Leadership Activities</h2>
+            <div>
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em;">Peer Mentor, BME 1040</h3>
+              <p style="margin: 3px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--brown-600);">Jul 2024 – Dec 2024</p>
+            </div>
+            <ul style="margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86); text-wrap: pretty;">
+              <li>Led a roughly 20 freshmen class; weekly custom lesson plans.</li>
+              <li>Held 1:1 goal-planning and support sessions.</li>
+              <li>Coordinated and conducted events fostering positive faculty and student relationships.</li>
+            </ul>
+            <div style="margin-top: 4px;">
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em;">Lap Simulation &amp; Testing Engineer</h3>
+              <p style="margin: 2px 0 0; font-size: 12px; font-weight: 600; line-height: 1.3;">ISU FSAE Team</p>
+              <p style="margin: 3px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--brown-600);">Aug 2023 – Nov 2024</p>
+            </div>
+            <ul style="margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86); text-wrap: pretty;">
+              <li>Programmed MATLAB acceleration simulation to influence top-level design choices.</li>
+              <li>Modeled parts in SolidWorks for concept demos.</li>
+              <li>Mentored new members; contributed to test days.</li>
+            </ul>
+          </section>
+        </div>
+
+        <div style="flex: 0 0 214px; display: flex; flex-direction: column; gap: 17px;">
+
+          <section style="display: flex; flex-direction: column; gap: 6px;">
+            <h2 style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--brown-700); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--brown-800);">Education</h2>
+            <div>
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 500; line-height: 1.22; letter-spacing: -0.01em;">B.S. in Biomedical Engineering</h3>
+              <p style="margin: 3px 0 0; font-size: 12px; font-weight: 600; line-height: 1.3;">Iowa State University - 3.53/4.00</p>
+              <p style="margin: 3px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--brown-600);">Expected May 2027</p>
+            </div>
+            <ul style="margin: 0; padding-left: 15px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86);">
+              <li>Minor in Pharmacology</li>
+            </ul>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 9px;">
+            <h2 style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--brown-700); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--brown-800);">Skills &amp; Software</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">MATLAB</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">Python</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">LaTeX</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">SnapGene</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">PyMOL</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">SolidWorks</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">Experimental Design</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">Genomic Data Alignment</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">Protein Visualization</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">Microbiology Techniques</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">Technical Presentation</span>
+              <span style="padding: 3px 9px; border: 1px solid var(--brown-a16); border-radius: 0; font-size: 11.5px; line-height: 1.3; white-space: nowrap; color: var(--brown-800);">Git/GitHub</span>
+            </div>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 9px;">
+            <h2 style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid var(--brown-700); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--brown-800);">Local Involvement</h2>
+            <div>
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em;">Tutor</h3>
+              <p style="margin: 2px 0 0; font-size: 12px; font-weight: 600; line-height: 1.3;">Iowa State University</p>
+              <p style="margin: 3px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--brown-600);">Feb 2025 – May 2025</p>
+              <ul style="margin: 5px 0 0; padding-left: 15px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86); text-wrap: pretty;">
+                <li>Supported students in physics and biology.</li>
+              </ul>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em;">Model</h3>
+              <p style="margin: 2px 0 0; font-size: 12px; font-weight: 600; line-height: 1.3;">ISU Fashion Show</p>
+              <p style="margin: 3px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--brown-600);">Jan 2024 – Apr 2024</p>
+              <ul style="margin: 5px 0 0; padding-left: 15px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86); text-wrap: pretty;">
+                <li>Walked runway for 2 outfits + designer set.</li>
+                <li>Collaborated with designers + directors.</li>
+              </ul>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em;">Volunteer</h3>
+              <p style="margin: 2px 0 0; font-size: 12px; font-weight: 600; line-height: 1.3;">Food at First</p>
+              <p style="margin: 3px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--brown-600);">2023 – 2024</p>
+              <ul style="margin: 5px 0 0; padding-left: 15px; font-size: 12px; line-height: 1.35; color: rgba(42,25,13,0.86); text-wrap: pretty;">
+                <li>Helped provide food for community members in need.</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; padding: 8px 30px 12px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em; color: rgba(42,25,13,0.46);">Document personally designed in LaTeX</div>
+    </div>
+  </section>
+</body>
+</html>

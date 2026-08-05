@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# resume build tool — keep resume.html + print-resume.mjs, ignore deps & outputs
+/tools/resume/node_modules
+/tools/resume/package.json
+/tools/resume/package-lock.json
+/tools/resume/ResumeBennettAnderson.pdf
+/tools/resume/resume-preview.png
+/tools/resume/make-thumb.mjs
+/tools/resume/ba-thumb.png

@@ -55,7 +55,7 @@ export default function AskPage() {
           ...l,
           {
             from: "sys",
-            text: "node offline — the desktop that runs me is powered down or not yet wired up. try ~/projects or ~/contact in the meantime.",
+            text: "node offline — the desktop that runs me is powered down or not yet wired up. try Projects or Contact in the meantime.",
           },
         ]);
       }
@@ -67,15 +67,15 @@ export default function AskPage() {
 
   const fromColor = (from: ChatLine["from"]) =>
     from === "you"
-      ? "text-bio-cyan dark:text-cyto"
+      ? "var(--text-accent)"
       : from === "node"
-      ? "text-bio-green dark:text-phos"
-      : "text-bio-dim dark:text-phos-dim";
+      ? "var(--text-strong)"
+      : "var(--text-faint)";
 
   return (
     <div className="max-w-3xl mx-auto pt-24 pb-16 px-6 font-term">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-        <h1 className="text-3xl font-bold text-bio-green dark:text-phos glow glitch">
+        <h1 className="text-3xl font-bold" style={{ color: "var(--text-accent)" }}>
           &gt; ask --local
         </h1>
         <p className="text-sm opacity-70 mt-3 leading-relaxed max-w-xl">
@@ -88,17 +88,15 @@ export default function AskPage() {
         {/* status readout */}
         <div className="mt-8 text-sm">
           <p className="opacity-50 mb-2">&gt; node --status</p>
-          {!status && <p className="opacity-50">polling<span className="cursor-blink">▮</span></p>}
+          {!status && <p className="opacity-50">polling…</p>}
           {status && (
             <div className="space-y-1 pl-4">
               <p>
                 <span className="opacity-50">link:</span>{" "}
                 {status.online ? (
-                  <span className="text-bio-green dark:text-phos glow">
-                    ● ONLINE
-                  </span>
+                  <span style={{ color: "var(--status-complete)" }}>● ONLINE</span>
                 ) : (
-                  <span className="text-red-500 dark:text-red-400">○ OFFLINE</span>
+                  <span style={{ color: "var(--status-wip)" }}>○ OFFLINE</span>
                 )}
               </p>
               <p><span className="opacity-50">model:</span> {status.model ?? "—"}</p>
@@ -117,11 +115,12 @@ export default function AskPage() {
           <p className="opacity-50 text-sm mb-2">&gt; session.log</p>
           <div
             ref={logRef}
-            className="term-panel rounded p-4 h-72 overflow-y-auto text-sm space-y-3"
+            className="rounded p-4 h-72 overflow-y-auto text-sm space-y-3"
+            style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}
           >
             {lines.map((line, i) => (
               <div key={i}>
-                <span className={`${fromColor(line.from)} opacity-70`}>
+                <span className="opacity-70" style={{ color: fromColor(line.from) }}>
                   {line.from === "you" ? "you@web" : line.from === "node" ? "node@desktop" : "sys"}
                   {" ▸ "}
                 </span>
@@ -131,7 +130,7 @@ export default function AskPage() {
             {busy && <p className="opacity-40">…</p>}
           </div>
           <div className="flex items-center gap-2 mt-3 text-sm">
-            <span className="text-bio-green dark:text-phos">&gt;</span>
+            <span style={{ color: "var(--text-accent)" }}>&gt;</span>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}

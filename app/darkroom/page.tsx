@@ -53,7 +53,7 @@ export default function DarkroomPage() {
   return (
     <div className="max-w-4xl mx-auto pt-24 pb-16 px-6 font-term">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-        <h1 className="text-3xl font-bold text-bio-green dark:text-phos glow glitch">
+        <h1 className="text-3xl font-bold" style={{ color: "var(--text-accent)" }}>
           &gt; darkroom
         </h1>
         <p className="text-sm opacity-70 mt-3 max-w-xl leading-relaxed">
@@ -69,20 +69,21 @@ export default function DarkroomPage() {
               ref={fileRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
-              className="text-xs opacity-80 file:font-term file:text-xs file:mr-3 file:px-3 file:py-1.5 file:rounded file:border-0 file:bg-bio-green/15 file:text-bio-green dark:file:bg-phos/15 dark:file:text-phos file:cursor-pointer"
+              className="text-xs opacity-80 file:font-term file:text-xs file:mr-3 file:px-3 file:py-1.5 file:rounded file:border-0 file:bg-[var(--action-primary-bg)] file:text-[var(--action-primary-fg)] file:cursor-pointer"
             />
             <input
               type="password"
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="access code"
-              className="bg-transparent border-b border-bio-line dark:border-phos/30 outline-none text-sm w-40 placeholder:opacity-30"
+              className="bg-transparent border-b outline-none text-sm w-40 placeholder:opacity-30"
+              style={{ borderColor: "var(--border-default)" }}
               autoComplete="off"
             />
             <button
               onClick={upload}
               disabled={busy}
-              className="text-left opacity-70 hover:opacity-100 hover:glow transition disabled:opacity-30"
+              className="text-left opacity-70 hover:opacity-100 transition disabled:opacity-30"
             >
               [develop]
             </button>
@@ -98,7 +99,7 @@ export default function DarkroomPage() {
         {/* the wall */}
         <div className="mt-12">
           <p className="opacity-50 text-sm mb-4">&gt; ls prints/ ({gallery.photos.length})</p>
-          {gallery.loading && <p className="text-sm opacity-40 pl-4">developing<span className="cursor-blink">▮</span></p>}
+          {gallery.loading && <p className="text-sm opacity-40 pl-4">developing…</p>}
           {!gallery.loading && gallery.photos.length === 0 && (
             <p className="text-sm opacity-40 pl-4">[ the wall is bare ]</p>
           )}

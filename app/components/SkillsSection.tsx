@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Accordion, Chip, type AccordionItem } from "./ui";
 
 const categories = [
   {
@@ -57,71 +56,26 @@ const categories = [
 ];
 
 export default function SkillsSection() {
-  const [openCategory, setOpenCategory] = useState<number | null>(null);
+  const items: AccordionItem[] = categories.map((cat) => {
+    const sorted = [...cat.skills].sort((a, b) => Number(b.strong) - Number(a.strong));
+    return {
+      title: (
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--text-body)" }}>
+          {cat.name}
+        </span>
+      ),
+      meta: String(cat.skills.length),
+      content: (
+        <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+          {sorted.map((s) => (
+            <Chip key={s.name} emphasis={s.strong ? "strong" : "normal"}>
+              {s.name}
+            </Chip>
+          ))}
+        </div>
+      ),
+    };
+  });
 
-  const toggle = (index: number) =>
-    setOpenCategory(openCategory === index ? null : index);
-
-  return (
-    <section>
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="font-term text-2xl font-bold mb-6 text-bio-green dark:text-phos glow"
-      >
-        <span className="text-bio-dim dark:text-phos-dim">&gt;</span> skills --list 🛠️
-      </motion.h2>
-
-      <div className="space-y-4">
-        {categories.map((cat, index) => {
-          const sortedSkills = [...cat.skills].sort(
-            (a, b) => Number(b.strong) - Number(a.strong)
-          );
-
-          return (
-            <div key={cat.name} className="term-panel rounded-lg overflow-hidden">
-              <button
-                onClick={() => toggle(index)}
-                className="w-full flex justify-between items-center p-4 text-left transition-colors hover:bg-bio-surface dark:hover:bg-abyss-surface"
-              >
-                <span className="font-term font-semibold text-base">
-                  <span className="opacity-50">./</span>{cat.name}
-                </span>
-                <span className="font-term text-sm opacity-70">
-                  {openCategory === index ? "[-]" : "[+]"}
-                </span>
-              </button>
-
-              <AnimatePresence initial={false}>
-                {openCategory === index && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="p-4 space-y-2 bg-bio-surface/50 dark:bg-abyss-surface/50"
-                  >
-                    {sortedSkills.map((skill) => (
-                      <div
-                        key={skill.name}
-                        className={`px-4 py-2 rounded-lg text-sm border ${
-                          skill.strong
-                            ? "border-bio-green/40 text-bio-green bg-bio-green/10 dark:border-phos/40 dark:text-phos-bright dark:bg-phos/10 font-medium"
-                            : "border-bio-line dark:border-grid-line opacity-80"
-                        }`}
-                      >
-                        {skill.strong && <span className="font-term mr-2">▸</span>}
-                        {skill.name}
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
+  return <Accordion items={items} defaultOpen={0} />;
 }

@@ -80,7 +80,8 @@ export default function VaultGate({ children }: { children: React.ReactNode }) {
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-lg term-frame p-6 font-term text-sm text-phos glow shadow-2xl"
+            className="w-full max-w-md rounded-lg p-6 font-term text-sm shadow-2xl"
+            style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-default)", color: "var(--text-body)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {BOOT_LINES.slice(0, bootStep).map((line, i) => (
@@ -89,10 +90,10 @@ export default function VaultGate({ children }: { children: React.ReactNode }) {
             {bootStep >= BOOT_LINES.length && (
               <div className="mt-3">
                 {denied > 0 && (
-                  <p className="text-red-400 mb-2">access denied ({denied})</p>
+                  <p className="mb-2" style={{ color: "var(--status-wip)" }}>access denied ({denied})</p>
                 )}
                 <label className="flex items-center gap-2">
-                  <span className="text-phos-bright">ACCESS CODE:</span>
+                  <span style={{ color: "var(--text-accent)" }}>ACCESS CODE:</span>
                   <input
                     ref={inputRef}
                     type="password"
@@ -102,11 +103,11 @@ export default function VaultGate({ children }: { children: React.ReactNode }) {
                       if (e.key === "Enter") submit();
                       if (e.key === "Escape") setOpen(false);
                     }}
-                    className="bg-transparent border-b border-phos/40 outline-none flex-1 text-phos-bright caret-phos-bright"
+                    className="bg-transparent border-b outline-none flex-1"
+                    style={{ borderColor: "var(--border-default)", color: "var(--text-strong)" }}
                     autoComplete="off"
                     spellCheck={false}
                   />
-                  <span className="cursor-blink">▮</span>
                 </label>
                 <p className="opacity-40 mt-4 text-xs">[enter] submit · [esc] disconnect</p>
               </div>

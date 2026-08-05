@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { CONCIERGE_PRIORITY_CODE } from "../data/site";
 
 type Status = {
   online: boolean;
@@ -22,6 +23,7 @@ export default function AskPage() {
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [priority, setPriority] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,13 +40,28 @@ export default function AskPage() {
   const send = async () => {
     const q = input.trim();
     if (!q || busy) return;
+
+    // Priority passphrase: unlock the fast lane instead of sending a question.
+    if (q === CONCIERGE_PRIORITY_CODE) {
+      setInput("");
+      setPriority(true);
+      setLines((l) => [
+        ...l,
+        { from: "sys", text: "priority access enabled — your questions now jump the queue and skip limits." },
+      ]);
+      return;
+    }
+
     setInput("");
     setBusy(true);
     setLines((l) => [...l, { from: "you", text: q }]);
     try {
       const res = await fetch("/api/concierge/ask", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(priority ? { "x-concierge-priority": CONCIERGE_PRIORITY_CODE } : {}),
+        },
         body: JSON.stringify({ question: q }),
       });
       const data = await res.json();
@@ -107,6 +124,12 @@ export default function AskPage() {
               )}
               {status.note && <p className="opacity-50">{"// "}{status.note}</p>}
             </div>
+          )}
+          {priority && (
+            <p className="mt-2 pl-4">
+              <span className="opacity-50">mode:</span>{" "}
+              <span style={{ color: "var(--text-accent)" }}>PRIORITY ▸ fast lane</span>
+            </p>
           )}
         </div>
 

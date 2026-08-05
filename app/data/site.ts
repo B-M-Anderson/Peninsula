@@ -17,6 +17,12 @@ export const CONCIERGE = {
   host: "desktop node · home network · outbound-only relay",
 };
 
+// Priority passphrase for the /ask concierge. Typing this in the ask box grants
+// queue-priority (the question jumps ahead of everyone) and skips any request
+// limits. Soft gate only — it's in the client bundle, so it's not real security;
+// it's a "for now" fast lane for me + friends. Swap for a server-only secret later.
+export const CONCIERGE_PRIORITY_CODE = "Penrose122";
+
 export const GITHUB_USER = "B-M-Anderson";
 export const GITHUB_URL = "https://github.com/B-M-Anderson";
 export const LINKEDIN_URL = "https://www.linkedin.com/in/bennett-m-anderson/";

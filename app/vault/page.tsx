@@ -59,18 +59,19 @@ export default function VaultPage() {
   if (!granted) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 pt-24">
-        <div className="w-full max-w-md term-panel rounded-lg p-6 font-term text-sm">
+        <div className="w-full max-w-md rounded-lg p-6 font-term text-sm" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}>
           <p className="opacity-70">/vault — restricted partition</p>
-          {denied > 0 && <p className="text-red-500 dark:text-red-400 mt-2">access denied ({denied})</p>}
+          {denied > 0 && <p className="mt-2" style={{ color: "var(--status-wip)" }}>access denied ({denied})</p>}
           <label className="flex items-center gap-2 mt-4">
-            <span className="text-bio-green dark:text-phos-bright">ACCESS CODE:</span>
+            <span style={{ color: "var(--text-accent)" }}>ACCESS CODE:</span>
             <input
               ref={inputRef}
               type="password"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submit()}
-              className="bg-transparent border-b border-bio-line dark:border-phos/40 outline-none flex-1"
+              className="bg-transparent border-b outline-none flex-1"
+              style={{ borderColor: "var(--border-default)" }}
               autoComplete="off"
               spellCheck={false}
             />
@@ -87,27 +88,27 @@ export default function VaultPage() {
     <div className="max-w-3xl mx-auto pt-28 pb-16 px-6 font-term">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
         <p className="text-xs opacity-50">/vault mounted · access granted · session-scoped</p>
-        <h1 className="text-3xl font-bold mt-2 text-bio-green dark:text-phos glow">
-          THE VAULT <span className="cursor-blink">▮</span>
+        <h1 className="text-3xl font-bold mt-2" style={{ color: "var(--text-accent)" }}>
+          THE VAULT
         </h1>
 
-        <div className="term-panel rounded-lg p-6 mt-8">
+        <div className="rounded-lg p-6 mt-8" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}>
           <h2 className="text-sm opacity-60 mb-4">&gt; cat currently.log</h2>
           <ul className="space-y-2 text-sm">
-            <li><span className="text-bio-cyan dark:text-cyto">building:</span> {CURRENTLY.building}</li>
-            <li><span className="text-bio-cyan dark:text-cyto">reading:</span> {CURRENTLY.reading}</li>
-            <li><span className="text-bio-cyan dark:text-cyto">listening:</span> {CURRENTLY.listening}</li>
-            <li><span className="text-bio-cyan dark:text-cyto">obsessed with:</span> {CURRENTLY.obsessedWith}</li>
+            <li><span style={{ color: "var(--text-accent)" }}>building:</span> {CURRENTLY.building}</li>
+            <li><span style={{ color: "var(--text-accent)" }}>reading:</span> {CURRENTLY.reading}</li>
+            <li><span style={{ color: "var(--text-accent)" }}>listening:</span> {CURRENTLY.listening}</li>
+            <li><span style={{ color: "var(--text-accent)" }}>obsessed with:</span> {CURRENTLY.obsessedWith}</li>
           </ul>
         </div>
 
-        <div className="term-panel rounded-lg p-6 mt-6">
+        <div className="rounded-lg p-6 mt-6" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}>
           <h2 className="text-sm opacity-60 mb-4">&gt; specimen --info penrose</h2>
           <table className="text-sm w-full">
             <tbody>
               {PENNY_STATS.map(([k, v]) => (
                 <tr key={k}>
-                  <td className="pr-6 py-1 text-bio-magenta dark:text-plasmid whitespace-nowrap align-top">{k}</td>
+                  <td className="pr-6 py-1 whitespace-nowrap align-top" style={{ color: "var(--text-accent)" }}>{k}</td>
                   <td className="py-1 opacity-85">{v}</td>
                 </tr>
               ))}
@@ -115,7 +116,7 @@ export default function VaultPage() {
           </table>
         </div>
 
-        <div className="term-panel rounded-lg p-6 mt-6">
+        <div className="rounded-lg p-6 mt-6" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}>
           <h2 className="text-sm opacity-60 mb-4">&gt; cat lab-note.txt</h2>
           <p className="text-sm opacity-85 leading-relaxed">{CURRENTLY.labNote}</p>
         </div>

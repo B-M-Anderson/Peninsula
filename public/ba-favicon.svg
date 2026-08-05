@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="BA monogram">
+  <defs>
+    <clipPath id="c"><circle cx="60" cy="60" r="52"></circle></clipPath>
+    <clipPath id="b"><rect x="0" y="40" width="120" height="26"></rect></clipPath>
+  </defs>
+  <circle cx="60" cy="60" r="52" fill="#2A190D"></circle>
+  <g clip-path="url(#c)"><rect x="0" y="40" width="120" height="26" fill="#D3B68A"></rect></g>
+  <text x="60" y="78" text-anchor="middle" fill="#F5EBDA" font-family="Newsreader, Iowan Old Style, Georgia, serif" font-size="58" font-weight="500" letter-spacing="-1.5">BA</text>
+  <g clip-path="url(#b)"><text x="60" y="78" text-anchor="middle" fill="#2A190D" font-family="Newsreader, Iowan Old Style, Georgia, serif" font-size="58" font-weight="500" letter-spacing="-1.5">BA</text></g>
+  <circle cx="60" cy="60" r="52" fill="none" stroke="#D3B68A" stroke-width="5"></circle>
+</svg>

@@ -4,9 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Moon, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
+import Mark from "./brand/Mark";
+
+const links = [
+  { href: "/", label: "Home" },
+  { href: "/projects", label: "Projects" },
+  { href: "/ask", label: "Ask" },
+  { href: "/contact", label: "Contact" },
+];
 
 export default function Navbar() {
-  // Dark by default (cyber-bio aesthetic); the toggle sets a manual override.
+  // Brown ground by default; the toggle switches to the eggshell (light) ground.
   const [override, setOverride] = useState<boolean | null>(null);
   const dark = override ?? true;
 
@@ -52,62 +60,60 @@ export default function Navbar() {
     };
   }, [pathname]);
 
-  const linkClass = (href: string) =>
-    `font-term transition hover:opacity-80 ${
-      pathname === href
-        ? "text-bio-green dark:text-phos glow"
-        : ""
-    }`;
-
   return (
     <nav
-      className={`
-        fixed top-0 left-0 w-full z-50
-        flex justify-between items-center gap-3 px-4 sm:px-6 py-4
-        transition-all duration-400 ease-in-out backdrop-blur-md
-        ${hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"}
-        bg-bio-bg/90 text-bio-fg
-        dark:bg-abyss/90 dark:text-phos-bright
-      `}
+      className={`fixed top-0 left-0 w-full z-50 flex justify-between items-center gap-3 px-4 sm:px-6 py-3 transition-all duration-300 ease-in-out ${
+        hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"
+      }`}
+      style={{
+        background: "color-mix(in srgb, var(--surface-page) 88%, transparent)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        borderBottom: "1px solid var(--border-subtle)",
+        color: "var(--text-body)",
+      }}
     >
-      <div className="flex items-center gap-3 min-w-0 flex-shrink overflow-hidden">
-        {/* Full name on large screens */}
-        <span className="hidden lg:block font-term text-xl font-semibold whitespace-nowrap flex-shrink">
-          <span className="text-bio-green dark:text-phos glow">bennett@anderson</span>
-          <span className="opacity-50">:~$</span>
-          <span className="cursor-blink text-bio-green dark:text-phos">▮</span>
+      {/* Left: mark + name */}
+      <Link href="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0" aria-label="Home">
+        <Mark variant="favicon" size={26} tone={dark ? "dark" : "light"} />
+        <span
+          className="hidden sm:block whitespace-nowrap"
+          style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", letterSpacing: "-0.015em", color: "var(--text-strong)" }}
+        >
+          Bennett M. Anderson
         </span>
+      </Link>
 
-        {/* Abbreviation on small+medium; hidden on large */}
-        <span className="block lg:hidden font-term text-lg font-semibold whitespace-nowrap flex-shrink-0">
-          <span className="text-bio-green dark:text-phos glow">BA</span>
-          <span className="opacity-50">:~$</span>
-        </span>
-
-        {/* Status readout */}
-        <span className="font-term text-[11px] opacity-60 pl-3 hidden sm:flex items-center gap-2 whitespace-nowrap flex-shrink overflow-hidden text-ellipsis">
-          <span className="inline-block w-2 h-2 rounded-full bg-bio-green dark:bg-phos bio-pulse" />
-          {"// corp. security software may limit some features"}
-        </span>
-      </div>
-
-      {/* Navigation links + toggle. On narrow screens the links scroll
-          horizontally between the pinned identity (left) and toggle (right). */}
+      {/* Links + toggle. On narrow screens the links scroll horizontally between
+          the pinned identity (left) and the toggle (right). */}
       <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-        <div className="flex gap-4 sm:gap-6 items-center text-base overflow-x-auto no-scrollbar min-w-0">
-          <Link href="/" className={`${linkClass("/")} whitespace-nowrap flex-shrink-0`}>~/home</Link>
-          <Link href="/projects" className={`${linkClass("/projects")} whitespace-nowrap flex-shrink-0`}>~/projects</Link>
-          <Link href="/ask" className={`${linkClass("/ask")} whitespace-nowrap flex-shrink-0`}>~/ask</Link>
-          <Link href="/contact" className={`${linkClass("/contact")} whitespace-nowrap flex-shrink-0`}>~/contact</Link>
+        <div className="flex gap-4 sm:gap-6 items-center overflow-x-auto no-scrollbar min-w-0" style={{ fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" }}>
+          {links.map(({ href, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="whitespace-nowrap flex-shrink-0 pb-0.5 transition-colors"
+                style={{
+                  color: active ? "var(--text-strong)" : "var(--text-muted)",
+                  borderBottom: active ? "1.5px solid var(--text-accent)" : "1.5px solid transparent",
+                }}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Dark/light toggle — always pinned, never scrolls away */}
+        {/* Ground toggle — always pinned, never scrolls away */}
         <button
           onClick={() => setOverride(!dark)}
-          aria-label="Toggle dark mode"
-          className="flex-shrink-0 p-2 rounded-lg hover:bg-bio-surface dark:hover:bg-abyss-surface transition opacity-80 hover:opacity-100"
+          aria-label="Toggle light and dark ground"
+          className="flex-shrink-0 p-2 transition-colors"
+          style={{ borderRadius: "var(--radius-sm)", color: "var(--text-muted)" }}
         >
-          {dark ? <Sun size={18} /> : <Moon size={18} />}
+          {dark ? <Sun size={17} /> : <Moon size={17} />}
         </button>
       </div>
     </nav>

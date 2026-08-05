@@ -1,68 +1,58 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { CONTACT_EMAIL, CONTACT_PHONE, LINKEDIN_URL } from "../data/site";
+import { Mail, Phone, Linkedin, Github, ArrowRight } from "lucide-react";
+import StripeBand from "../components/brand/StripeBand";
+import { Button, TextLink } from "../components/ui";
+import { CONTACT_EMAIL, CONTACT_PHONE, LINKEDIN_URL, GITHUB_URL, GITHUB_USER } from "../data/site";
+
+type Row = { icon: React.ReactNode; label: string; value: string; href?: string };
 
 export default function ContactPage() {
-  return (
-    <div className="min-h-screen flex flex-col pt-22">
-      {/* animated header banner */}
-      <motion.header
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 120, damping: 14 }}
-        className="w-full h-40 flex items-center justify-center relative"
-      >
-        <div className="absolute inset-0 rounded-3xl overflow-hidden term-panel" />
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="font-term text-3xl sm:text-4xl font-bold z-10 text-bio-green dark:text-phos glow"
-        >
-          &gt; open-channel 📬
-        </motion.h1>
-      </motion.header>
+  const rows: Row[] = [
+    { icon: <Mail size={18} />, label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+    { icon: <Phone size={18} />, label: "Phone", value: CONTACT_PHONE },
+    { icon: <Linkedin size={18} />, label: "LinkedIn", value: "bennett-m-anderson", href: LINKEDIN_URL },
+    { icon: <Github size={18} />, label: "GitHub", value: GITHUB_USER, href: GITHUB_URL },
+  ];
 
-      {/* Page content */}
-      <main className="max-w-2xl mx-auto py-16 px-6 flex flex-col items-center">
-        <div className="term-panel rounded-lg p-8 w-full">
-          <p className="font-term text-xs opacity-50 mb-4">
-            handshake protocol: context required in first transmission, or the
-            packet gets dropped.
-          </p>
-          <p className="mb-6 text-center text-sm leading-relaxed opacity-90">
-            Feel free to reach out via email, phone, or LinkedIn.
-            If using phone or email, please provide context in your first
+  return (
+    <div>
+      <header className="md-grain" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
+        <StripeBand offset="80px" title="Get in touch" subtitle="Context in the first message, please" />
+      </header>
+
+      <main className="md-dapple" style={{ position: "relative", minHeight: "60vh", padding: "var(--space-11) var(--space-9)" }}>
+        <div className="md-above" style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
+          <p style={{ margin: 0, fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
+            Feel free to reach out via email, phone, or LinkedIn. If using phone or email, please provide context in your first
             message or it will likely be ignored.
           </p>
 
-          <ul className="space-y-4 text-center font-term text-sm">
-            <li>
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="text-bio-cyan dark:text-cyto hover:underline"
+          <div style={{ border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", background: "var(--surface-raised)", boxShadow: "var(--shadow-sm)", padding: "var(--space-2)" }}>
+            {rows.map((r, i) => (
+              <div
+                key={r.label}
+                style={{ display: "flex", alignItems: "center", gap: "var(--space-6)", padding: "var(--space-6)", borderTop: i ? "1px solid var(--border-subtle)" : "none" }}
               >
-                ✉️ email://{CONTACT_EMAIL}
-              </a>
-            </li>
-            <li className="opacity-85">📞 voice://{CONTACT_PHONE}</li>
-            <li>
-              <a
-                href={LINKEDIN_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-bio-cyan dark:text-cyto hover:underline"
-              >
-                💼 linkedin://bennett-m-anderson
-              </a>
-            </li>
-          </ul>
-        </div>
+                <span style={{ color: "var(--text-accent)", display: "flex", flex: "0 0 auto" }}>{r.icon}</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)", width: 84, flex: "0 0 auto" }}>
+                  {r.label}
+                </span>
+                {r.href ? (
+                  <TextLink href={r.href}>{r.value}</TextLink>
+                ) : (
+                  <span style={{ fontSize: "var(--text-sm)", color: "var(--text-body)" }}>{r.value}</span>
+                )}
+              </div>
+            ))}
+          </div>
 
-        <p className="font-term text-[10px] opacity-30 mt-8">
-          channel encrypted (socially, not cryptographically)
-        </p>
+          <div>
+            <Button variant="primary" href={`mailto:${CONTACT_EMAIL}`} iconRight={<ArrowRight size={15} />}>
+              Start an email
+            </Button>
+          </div>
+        </div>
       </main>
     </div>
   );

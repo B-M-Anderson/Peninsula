@@ -21,6 +21,11 @@ export default function StripeBand({ title, subtitle, offset = "88px", size = "m
 
   const bar = "flex items-center box-border";
   const pad = { paddingInline: "var(--stripe-inset)", color: "var(--stripe-text)" };
+  // Fluid type so long titles (e.g. a full name) stay on one line on phones
+  // instead of wrapping into the band below. Bands use min-height so any wrap
+  // grows the band rather than clipping it.
+  const titleSize = sm ? "var(--text-xl)" : "clamp(24px, 6vw, 44px)";
+  const subSize = sm ? "var(--text-xs)" : "clamp(13px, 3.4vw, 18px)";
 
   return (
     <div
@@ -28,13 +33,13 @@ export default function StripeBand({ title, subtitle, offset = "88px", size = "m
       className={`absolute left-0 right-0 flex flex-col pointer-events-none ${className ?? ""}`}
       style={{ top: offset, gap }}
     >
-      <div className={bar} style={{ ...pad, height: thick, background: "var(--stripe-color-a)" }}>
+      <div className={bar} style={{ ...pad, minHeight: thick, paddingBlock: sm ? "4px" : "6px", background: "var(--stripe-color-a)" }}>
         {title ? (
           <span
-            className="leading-none"
+            className="leading-none whitespace-nowrap"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: sm ? "var(--text-xl)" : "44px",
+              fontSize: titleSize,
               letterSpacing: "-0.015em",
             }}
           >
@@ -42,11 +47,11 @@ export default function StripeBand({ title, subtitle, offset = "88px", size = "m
           </span>
         ) : null}
       </div>
-      <div className={bar} style={{ ...pad, height: thin, background: "var(--stripe-color-b)" }}>
+      <div className={bar} style={{ ...pad, minHeight: thin, paddingBlock: sm ? "3px" : "5px", background: "var(--stripe-color-b)" }}>
         {subtitle ? (
           <span
-            className="leading-none font-medium"
-            style={{ fontFamily: "var(--font-body)", fontSize: sm ? "var(--text-xs)" : "18px" }}
+            className="font-medium"
+            style={{ fontFamily: "var(--font-body)", fontSize: subSize, lineHeight: 1.2 }}
           >
             {subtitle}
           </span>

@@ -11,6 +11,27 @@ import { CONCIERGE_PRIORITY_CODE } from "../../../data/site";
 export const maxDuration = 60; // must exceed ANSWER_WAIT_MS (Vercel Hobby allows up to 60s)
 
 const MAX_QUESTION_LENGTH = 500;
+// Follow-ups ("where?", "tell me more") are meaningless without the turns before
+// them. Only a couple are carried: the node runs a 3b on CPU and pays for every
+// prompt token. The node re-validates all of this — never trust the browser.
+const MAX_HISTORY_TURNS = 2;
+const MAX_HISTORY_CHARS = 400;
+
+type Turn = { q: string; a: string };
+
+function cleanHistory(raw: unknown): Turn[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .slice(-MAX_HISTORY_TURNS)
+    .map((t) => {
+      const o = (t ?? {}) as Record<string, unknown>;
+      return {
+        q: String(o.q ?? "").slice(0, MAX_HISTORY_CHARS),
+        a: String(o.a ?? "").slice(0, MAX_HISTORY_CHARS),
+      };
+    })
+    .filter((t) => t.q.trim() && t.a.trim());
+}
 const ANSWER_WAIT_MS = 45000; // warm answers ~9-25s; generous ceiling before failing closed
 const POLL_INTERVAL_MS = 700;
 
@@ -18,9 +39,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function POST(req: Request) {
   let question = "";
+  let history: Turn[] = [];
   try {
     const body = await req.json();
     question = String(body.question ?? "").slice(0, MAX_QUESTION_LENGTH);
+    history = cleanHistory(body.history);
   } catch {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
@@ -45,6 +68,7 @@ export async function POST(req: Request) {
     question,
     ts: Date.now(),
     priority,
+    ...(history.length ? { history } : {}),
     ...(secret ? { secret } : {}),
   });
 

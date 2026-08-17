@@ -202,15 +202,46 @@ THIRD_PERSON_TAIL = (
     "Hold the formal register: no contractions, no humor, no filler openers, precise and factual.)"
 )
 
-def _chat_body(question, temperature=0.2, stream=False):
+# Conversation context. /ask keeps a visible transcript, so people ask follow-ups
+# ("where?", "tell me more") that are meaningless on their own. Only the last few
+# exchanges are carried: a 3b on CPU pays for every prompt token, and ollama's
+# prefix cache only helps while the prefix is stable.
+MAX_HISTORY_TURNS = 2
+MAX_HISTORY_CHARS = 400
+
+def clean_history(raw):
+    """Sanitize client-supplied turns.
+
+    This arrives from the browser, so it is untrusted: nothing stops someone
+    POSTing a fabricated 'assistant' turn to talk the model into a new persona.
+    We cap it hard, and if any part of it trips the same rails we apply to a
+    question, we drop the whole history rather than hand it to the model."""
+    if not isinstance(raw, list):
+        return []
+    out = []
+    for t in raw[-MAX_HISTORY_TURNS:]:
+        if not isinstance(t, dict):
+            continue
+        q = str(t.get("q") or "").strip()[:MAX_HISTORY_CHARS]
+        a = str(t.get("a") or "").strip()[:MAX_HISTORY_CHARS]
+        if q and a:
+            out.append({"q": q, "a": a})
+    blob = " ".join(t["q"] + " " + t["a"] for t in out)
+    if LEAK.search(blob) or IMPERSONATE.search(blob):
+        return []
+    return out
+
+def _chat_body(question, temperature=0.2, stream=False, history=None):
+    messages = [{"role": "system", "content": SYSTEM}]
+    for turn in history or []:
+        messages.append({"role": "user", "content": turn["q"]})
+        messages.append({"role": "assistant", "content": turn["a"]})
+    # Third-person nudge appended to the visitor's OWN turn — recency-strong for a
+    # 3b, and (unlike a trailing system message) it doesn't corrupt the chat template.
+    messages.append({"role": "user", "content": question + THIRD_PERSON_TAIL})
     return json.dumps({
         "model": MODEL,
-        "messages": [
-            {"role": "system", "content": SYSTEM},
-            # Third-person nudge appended to the visitor's OWN turn — recency-strong for a
-            # 3b, and (unlike a trailing system message) it doesn't corrupt the chat template.
-            {"role": "user", "content": question + THIRD_PERSON_TAIL},
-        ],
+        "messages": messages,
         "stream": stream,
         "keep_alive": -1,  # keep the model resident so first-after-idle isn't a 60s cold start
         "options": {"temperature": temperature, "num_predict": 180},
@@ -255,9 +286,9 @@ def generate_abortable(question, should_stop, temperature=0.2):
                 break
     return _tidy("".join(parts), truncated)
 
-def generate(question):
+def generate(question, history=None):
     """Run the model with the strict prompt. Fail closed (return None) on error."""
-    body = _chat_body(question)
+    body = _chat_body(question, history=history)
     req = urllib.request.Request(f"{OLLAMA_URL}/api/chat", data=body,
                                  headers={"Content-Type": "application/json"})
     # 90s: first pass processes the full system prompt (prompt-eval) on CPU; once
@@ -277,7 +308,7 @@ LAST_RAIL = "-"
 FINGERPRINT = warmcache.fingerprint(SYSTEM, THIRD_PERSON_TAIL, DOC, MODEL)
 CACHE = warmcache.Cache(FINGERPRINT)
 
-def answer_for(question):
+def answer_for(question, history=None):
     global LAST_RAIL
     q = (question or "").strip()
     if not q or len(q) > MAX_QUESTION or LEAK.search(q):
@@ -289,6 +320,21 @@ def answer_for(question):
     if COMMITMENT.search(q):
         LAST_RAIL = "commitment"
         return COMMITMENT_MSG
+    history = clean_history(history)
+    # The cache is keyed on the question alone, so it is only valid for a question
+    # asked on its own. Mid-conversation, "what about after that?" means something
+    # different from the same words typed cold — serve those from the model, with
+    # the transcript, and never store the result under the bare question.
+    if history:
+        try:
+            t0 = time.time()
+            out = generate(q, history=history)
+            LAST_RAIL = "context"
+            return out or REFUSAL
+        except Exception as e:
+            LAST_RAIL = "error"
+            log.warning("model error (contextual), failing closed: %s", e)
+            return None
     # Precomputed during idle time. Same prompt, same doc, same model — just
     # generated earlier, so this is the identical answer without the 10-20s wait.
     hit = CACHE.get(q)
@@ -388,15 +434,20 @@ REFRESH_AFTER = 14 * 86400   # re-generate an entry older than this
 # freeze in. Below this floor we discard and retry later rather than bank it.
 MIN_CACHE_SCORE = 80
 
-# The five topic chips on /ask fire these verbatim, so they are the highest-value
-# entries in the cache — a visitor clicking one should never wait.
-SEED_QUESTIONS = [
+# The five topic chips on /ask fire these verbatim — a visitor clicking one should
+# never wait, so they are precomputed before anything else.
+CHIP_QUESTIONS = [
     "What research is Bennett doing right now?",
     "What are Bennett's projects?",
     "What is Bennett looking for after he graduates?",
     "Tell me about Penny the cat.",
     "What is Bennett best at?",
-    # the questions any portfolio visitor asks next
+]
+
+# Guesses at what a portfolio visitor asks next. Deliberately ranked BELOW
+# questions real people actually asked — an observed question is evidence, this
+# list is only a hunch.
+SEED_QUESTIONS = [
     "What is Bennett studying?",
     "Where does Bennett go to school?",
     "When does Bennett graduate?",
@@ -423,14 +474,17 @@ class IdleWorker:
         self.improved = 0
 
     def _targets(self):
-        """Highest value first: unanswered seeds, then questions real visitors
-        asked that are not cached yet, then the stalest entry."""
-        for q in SEED_QUESTIONS:
-            if not CACHE.has(q):
-                return q, "seed"
+        """Highest value first: the topic chips (guaranteed clicks), then anything
+        a real visitor actually asked, then guesses, then the stalest entry."""
+        for q in CHIP_QUESTIONS:
+            if self._eligible(q):
+                return q, "chip"
         for q in self._asked_by_visitors():
-            if not CACHE.has(q):
+            if self._eligible(q):
                 return q, "observed"
+        for q in SEED_QUESTIONS:
+            if self._eligible(q):
+                return q, "seed"
         oldest, key = None, None
         for k, e in CACHE.data.items():
             if e.get("src") == "live" or time.time() - e.get("ts", 0) > REFRESH_AFTER:
@@ -439,6 +493,19 @@ class IdleWorker:
         if key:
             return CACHE.data[key].get("q", key), "refresh"
         return None, None
+
+    def _eligible(self, q):
+        """Worth spending idle CPU on? Not if it is already cached, not if a rail
+        would answer it anyway (the model is never consulted for those), and not
+        if it has repeatedly failed to clear the register floor — otherwise one
+        awkward question would be retried forever."""
+        if CACHE.has(q):
+            return False
+        if len(q.split()) < 3 or len(q) > MAX_QUESTION:
+            return False
+        if LEAK.search(q) or IMPERSONATE.search(q) or COMMITMENT.search(q):
+            return False
+        return CACHE.reject_count(q) < 3
 
     def _asked_by_visitors(self):
         """Real questions from the poller's own journal — what people actually ask
@@ -501,6 +568,8 @@ class IdleWorker:
                     continue
                 ms = int((time.time() - t0) * 1000)
                 if (sc or 0) < MIN_CACHE_SCORE:
+                    CACHE.note_reject(q, sc)
+                    CACHE.save()
                     warmcache.log_activity("rejected", question=oneline(q, 160),
                                            answer=oneline(ans, 200), score=sc, ms=ms,
                                            note="below register floor")
@@ -543,11 +612,14 @@ def handle(raw):
     if SHARED_SECRET and job.get("secret") != SHARED_SECRET:
         log.warning("job %s rejected: bad secret", jid)
         return
-    log.info("job %s ask: %s", jid, oneline(question, 300))
+    history = job.get("history")
+    n_hist = len(history) if isinstance(history, list) else 0
+    log.info("job %s ask%s: %s", jid, f" (+{n_hist} prior turns)" if n_hist else "",
+             oneline(question, 300))
     t0 = time.time()
     LIVE_JOB.set()          # tells the idle worker to hang up immediately
     try:
-        ans = answer_for(question)
+        ans = answer_for(question, history=history)
     finally:
         LIVE_JOB.clear()
         IDLE.last_job = time.time()

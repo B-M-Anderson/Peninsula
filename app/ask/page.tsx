@@ -73,6 +73,14 @@ export default function AskPage() {
     setInput("");
     setBusy(true);
     setLines((l) => [...l, { from: "you", text: q }]);
+    // Pair up the transcript so a follow-up ("where?") carries what it refers to.
+    // Only real you/bot exchanges — system notices are UI chrome, not conversation.
+    const history: { q: string; a: string }[] = [];
+    for (let i = 0; i < lines.length - 1; i++) {
+      if (lines[i].from === "you" && lines[i + 1].from === "bot") {
+        history.push({ q: lines[i].text, a: lines[i + 1].text });
+      }
+    }
     try {
       const res = await fetch("/api/concierge/ask", {
         method: "POST",
@@ -80,7 +88,7 @@ export default function AskPage() {
           "Content-Type": "application/json",
           ...(priority ? { "x-concierge-priority": CONCIERGE_PRIORITY_CODE } : {}),
         },
-        body: JSON.stringify({ question: q.slice(0, MAX) }),
+        body: JSON.stringify({ question: q.slice(0, MAX), history: history.slice(-2) }),
       });
       const data = await res.json();
       if (data.answer) {

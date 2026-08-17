@@ -124,6 +124,7 @@ class Cache:
     def __init__(self, fp):
         self.fp = fp
         self.data = {}
+        self.rejects = {}
         self._load()
 
     def _load(self):
@@ -132,9 +133,10 @@ class Cache:
                 blob = json.load(f)
             if blob.get("fingerprint") == self.fp:
                 self.data = blob.get("entries", {})
+                self.rejects = blob.get("rejects", {})
             # fingerprint mismatch => prompt or doc changed => start clean
         except (OSError, ValueError):
-            self.data = {}
+            self.data, self.rejects = {}, {}
 
     def save(self):
         os.makedirs(STATE_DIR, exist_ok=True)
@@ -143,8 +145,21 @@ class Cache:
             self.data = dict(keep[:CACHE_MAX])
         tmp = CACHE_PATH + ".tmp"
         with open(tmp, "w") as f:
-            json.dump({"fingerprint": self.fp, "entries": self.data}, f, indent=1)
+            json.dump({"fingerprint": self.fp, "entries": self.data,
+                       "rejects": self.rejects}, f, indent=1)
         os.replace(tmp, CACHE_PATH)
+
+    def note_reject(self, question, sc):
+        """Record that a generated answer was too poor to cache, so the idle
+        worker can stop retrying a question it keeps failing."""
+        k = normalize(question)
+        r = self.rejects.setdefault(k, {"n": 0, "best": 0})
+        r["n"] += 1
+        r["best"] = max(r.get("best", 0), sc or 0)
+        r["ts"] = int(time.time())
+
+    def reject_count(self, question):
+        return self.rejects.get(normalize(question), {}).get("n", 0)
 
     def get(self, question):
         e = self.data.get(normalize(question))
@@ -157,6 +172,7 @@ class Cache:
         return normalize(question) in self.data
 
     def put(self, question, answer, src="idle", sc=None, gen_ms=None):
+        self.rejects.pop(normalize(question), None)   # it succeeded; forget the failures
         self.data[normalize(question)] = {
             "q": question, "a": answer, "src": src, "score": sc,
             "gen_ms": gen_ms, "ts": int(time.time()), "hits": 0,

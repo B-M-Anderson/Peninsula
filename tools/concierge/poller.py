@@ -230,18 +230,30 @@ def generate(question):
             out = out[:cut + 1].strip()
     return out
 
+# Which path produced the most recent answer — "leak" / "impersonate" /
+# "commitment" mean a deterministic rail fired and the model was never called.
+# Recorded on the module rather than returned, so answer_for()'s signature stays
+# a plain question -> answer for the test harness and any other caller.
+LAST_RAIL = "-"
+
 def answer_for(question):
+    global LAST_RAIL
     q = (question or "").strip()
     if not q or len(q) > MAX_QUESTION or LEAK.search(q):
+        LAST_RAIL = "leak"
         return REFUSAL
     if IMPERSONATE.search(q):
+        LAST_RAIL = "impersonate"
         return IMPERSONATE_MSG
     if COMMITMENT.search(q):
+        LAST_RAIL = "commitment"
         return COMMITMENT_MSG
     try:
         out = generate(q)
+        LAST_RAIL = "model"
         return out or REFUSAL
     except Exception as e:
+        LAST_RAIL = "error"
         log.warning("model error, failing closed: %s", e)
         return None  # honest offline; the route shows the offline message
 
@@ -266,6 +278,11 @@ def write_heartbeat():
 
 # ---- main loop --------------------------------------------------------------
 
+def oneline(text, limit=300):
+    """Collapse to a single journald-friendly line, ellipsised."""
+    s = " ".join((text or "").split())
+    return s if len(s) <= limit else s[:limit - 1] + "…"
+
 def handle(raw):
     try:
         job = json.loads(raw)
@@ -279,6 +296,7 @@ def handle(raw):
     if SHARED_SECRET and job.get("secret") != SHARED_SECRET:
         log.warning("job %s rejected: bad secret", jid)
         return
+    log.info("job %s ask: %s", jid, oneline(question, 300))
     t0 = time.time()
     ans = answer_for(question)
     dt = int((time.time() - t0) * 1000)
@@ -286,7 +304,8 @@ def handle(raw):
         log.info("job %s -> offline fallback (%dms)", jid, dt)
         return  # no answer key written; route times out -> honest offline
     redis("SET", ANSWER_PREFIX + str(jid), ans, "EX", ANSWER_TTL)
-    log.info("job %s answered (%dms, %dch)", jid, dt, len(ans))
+    log.info("job %s answered (%dms, %dch) via %s: %s",
+             jid, dt, len(ans), LAST_RAIL, oneline(ans, 300))
 
 def warmup():
     """Load the model (with the full system prompt) before serving, so the first

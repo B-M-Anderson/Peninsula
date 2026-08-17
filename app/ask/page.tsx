@@ -6,6 +6,7 @@ import { Send } from "lucide-react";
 import StripeBand from "../components/brand/StripeBand";
 import { TextLink } from "../components/ui";
 import { CONCIERGE_PRIORITY_CODE } from "../data/site";
+import SystemPanel from "./SystemPanel";
 
 type Status = {
   online: boolean;
@@ -15,6 +16,9 @@ type Status = {
   host: string;
   note?: string;
   latencyMs?: number | null;
+  machine?: { cpu?: string; cores?: number; ramGb?: number; gpu?: string | null } | null;
+  cache?: { entries?: number; hits?: number } | null;
+  idle?: { precomputed?: number; improved?: number } | null;
 };
 
 type Line = { from: "you" | "bot" | "sys"; text: string };
@@ -353,6 +357,9 @@ export default function AskPage() {
               </button>
             </form>
           </motion.div>
+
+          {/* what's actually running, for anyone curious enough to look */}
+          <SystemPanel status={status} />
 
           {/* footer: escape hatches + counter */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>

@@ -325,8 +325,38 @@ def redis(*args, timeout=15):
         raise RuntimeError(data["error"])
     return data.get("result")
 
+def machine_facts():
+    """Static-ish hardware description, read once. The /ask page shows this so a
+    visitor can see exactly what is answering them."""
+    cpu = "unknown CPU"
+    try:
+        for line in open("/proc/cpuinfo"):
+            if line.startswith("model name"):
+                cpu = line.split(":", 1)[1].strip()
+                break
+    except OSError:
+        pass
+    cores = os.cpu_count() or 0
+    ram = 0
+    try:
+        for line in open("/proc/meminfo"):
+            if line.startswith("MemTotal"):
+                ram = round(int(line.split()[1]) / 1048576.0, 1)
+                break
+    except OSError:
+        pass
+    return {"cpu": cpu, "cores": cores, "ramGb": ram, "gpu": None}
+
+MACHINE = machine_facts()
+
 def write_heartbeat():
-    payload = json.dumps({"model": MODEL, "runtime": "ollama", "ts": int(time.time())})
+    n, hits = CACHE.stats()
+    payload = json.dumps({
+        "model": MODEL, "runtime": "ollama", "ts": int(time.time()),
+        "machine": MACHINE,
+        "cache": {"entries": n, "hits": hits},
+        "idle": {"precomputed": IDLE.done, "improved": IDLE.improved},
+    })
     redis("SET", HEARTBEAT_KEY, payload, "EX", HEARTBEAT_TTL)
 
 # ---- main loop --------------------------------------------------------------

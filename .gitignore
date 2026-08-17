@@ -50,3 +50,7 @@ next-env.d.ts
 /tools/resume/resume-preview.png
 /tools/resume/make-thumb.mjs
 /tools/resume/ba-thumb.png
+
+# Python bytecode (concierge tooling)
+__pycache__/
+*.pyc

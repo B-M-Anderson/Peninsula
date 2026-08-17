@@ -40,6 +40,9 @@ export async function GET() {
       model?: string;
       runtime?: string;
       ts?: number;
+      machine?: { cpu?: string; cores?: number; ramGb?: number; gpu?: string | null };
+      cache?: { entries?: number; hits?: number };
+      idle?: { precomputed?: number; improved?: number };
     };
     return NextResponse.json({
       online: true,
@@ -48,6 +51,11 @@ export async function GET() {
       runtime: beat.runtime ?? CONCIERGE.plannedRuntime,
       host: CONCIERGE.host,
       latencyMs,
+      // Optional — an older node that predates these fields simply omits them,
+      // and the page hides the panel rather than showing blanks.
+      machine: beat.machine ?? null,
+      cache: beat.cache ?? null,
+      idle: beat.idle ?? null,
     });
   } catch {
     return NextResponse.json({

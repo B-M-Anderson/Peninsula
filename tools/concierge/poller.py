@@ -302,8 +302,12 @@ def answer_for(question):
         LAST_RAIL = "model"
         if out:
             sc, _ = warmcache.score(out)
-            CACHE.put(q, out, src="live", sc=sc, gen_ms=int((time.time() - t0) * 1000))
-            CACHE.save()
+            # Only bank a live answer that is worth repeating: a real question
+            # (abuse and one-word noise are not worth a cache slot) and an answer
+            # that clears the same register floor as precomputed ones.
+            if len(q.split()) >= 3 and sc >= MIN_CACHE_SCORE:
+                CACHE.put(q, out, src="live", sc=sc, gen_ms=int((time.time() - t0) * 1000))
+                CACHE.save()
         return out or REFUSAL
     except Exception as e:
         LAST_RAIL = "error"
@@ -377,6 +381,12 @@ LIVE_JOB = threading.Event()
 IDLE_AFTER = 90        # quiet seconds before background work may start
 IDLE_GAP = 20          # breather between idle generations
 REFRESH_AFTER = 14 * 86400   # re-generate an entry older than this
+
+# A cached answer is served instantly and forever, so it has to be at least as
+# good as a fresh one. The first pass at "What are Bennett's projects?" came back
+# as a bulleted multi-paragraph list scoring 68 — fine to show once, wrong to
+# freeze in. Below this floor we discard and retry later rather than bank it.
+MIN_CACHE_SCORE = 80
 
 # The five topic chips on /ask fire these verbatim, so they are the highest-value
 # entries in the cache — a visitor clicking one should never wait.
@@ -490,6 +500,13 @@ class IdleWorker:
                                            note="live question arrived")
                     continue
                 ms = int((time.time() - t0) * 1000)
+                if (sc or 0) < MIN_CACHE_SCORE:
+                    warmcache.log_activity("rejected", question=oneline(q, 160),
+                                           answer=oneline(ans, 200), score=sc, ms=ms,
+                                           note="below register floor")
+                    log.info("idle %s: rejected %r (score %s < %d)",
+                             why, oneline(q, 60), sc, MIN_CACHE_SCORE)
+                    continue
                 prev = CACHE.data.get(warmcache.normalize(q))
                 improved = bool(prev and (prev.get("score") or 0) < (sc or 0))
                 CACHE.put(q, ans, src="idle", sc=sc, gen_ms=ms)

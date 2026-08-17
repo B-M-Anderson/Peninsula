@@ -22,9 +22,13 @@ import json
 import logging
 import os
 import re
+import subprocess
+import threading
 import time
 import urllib.request
 import urllib.error
+
+import warmcache
 
 # ---- config -----------------------------------------------------------------
 
@@ -198,9 +202,8 @@ THIRD_PERSON_TAIL = (
     "Hold the formal register: no contractions, no humor, no filler openers, precise and factual.)"
 )
 
-def generate(question):
-    """Run the model with the strict prompt. Fail closed (return None) on error."""
-    body = json.dumps({
+def _chat_body(question, temperature=0.2, stream=False):
+    return json.dumps({
         "model": MODEL,
         "messages": [
             {"role": "system", "content": SYSTEM},
@@ -208,33 +211,71 @@ def generate(question):
             # 3b, and (unlike a trailing system message) it doesn't corrupt the chat template.
             {"role": "user", "content": question + THIRD_PERSON_TAIL},
         ],
-        "stream": False,
+        "stream": stream,
         "keep_alive": -1,  # keep the model resident so first-after-idle isn't a 60s cold start
-        "options": {"temperature": 0.2, "num_predict": 180},
+        "options": {"temperature": temperature, "num_predict": 180},
     }).encode()
+
+def _tidy(out, truncated):
+    out = (out or "").strip()
+    # strip a stray leading role token if the model ever emits one
+    if out[:9].lower() == "assistant":
+        out = out[9:].lstrip(":\n ").strip()
+    # If generation stopped at num_predict, the tail is a half-written clause. Trim back to
+    # the last completed sentence rather than showing a visitor a cut-off line.
+    if truncated:
+        cut = max(out.rfind(". "), out.rfind("."), out.rfind("!"), out.rfind("?"))
+        if cut > 40:
+            out = out[:cut + 1].strip()
+    return out
+
+def generate_abortable(question, should_stop, temperature=0.2):
+    """Streamed generation for idle/background work. Checks should_stop() between
+    chunks and hangs up the moment a real visitor's job arrives — verified to free
+    ollama's slot immediately, so a live question never queues behind idle work.
+    Returns None if aborted."""
+    req = urllib.request.Request(
+        f"{OLLAMA_URL}/api/chat", data=_chat_body(question, temperature, stream=True),
+        headers={"Content-Type": "application/json"})
+    parts, truncated = [], False
+    with urllib.request.urlopen(req, timeout=120) as r:
+        for line in r:
+            if should_stop():
+                r.close()
+                return None
+            if not line.strip():
+                continue
+            try:
+                chunk = json.loads(line)
+            except ValueError:
+                continue
+            parts.append(chunk.get("message", {}).get("content", ""))
+            if chunk.get("done"):
+                truncated = chunk.get("done_reason") == "length"
+                break
+    return _tidy("".join(parts), truncated)
+
+def generate(question):
+    """Run the model with the strict prompt. Fail closed (return None) on error."""
+    body = _chat_body(question)
     req = urllib.request.Request(f"{OLLAMA_URL}/api/chat", data=body,
                                  headers={"Content-Type": "application/json"})
     # 90s: first pass processes the full system prompt (prompt-eval) on CPU; once
     # ollama caches that prefix, later jobs reuse it and land in ~10-20s.
     with urllib.request.urlopen(req, timeout=90) as r:
         payload = json.loads(r.read())
-    out = payload["message"]["content"].strip()
-    # strip a stray leading role token if the model ever emits one
-    if out[:9].lower() == "assistant":
-        out = out[9:].lstrip(":\n ").strip()
-    # If generation stopped at num_predict, the tail is a half-written clause. Trim back to
-    # the last completed sentence rather than showing a visitor a cut-off line.
-    if payload.get("done_reason") == "length":
-        cut = max(out.rfind(". "), out.rfind("."), out.rfind("!"), out.rfind("?"))
-        if cut > 40:
-            out = out[:cut + 1].strip()
-    return out
+    return _tidy(payload["message"]["content"], payload.get("done_reason") == "length")
 
 # Which path produced the most recent answer — "leak" / "impersonate" /
 # "commitment" mean a deterministic rail fired and the model was never called.
 # Recorded on the module rather than returned, so answer_for()'s signature stays
 # a plain question -> answer for the test harness and any other caller.
 LAST_RAIL = "-"
+
+# Cache identity = this prompt + this grounding doc. Editing either retires every
+# stored answer automatically, so a stale profile can never be served.
+FINGERPRINT = warmcache.fingerprint(SYSTEM, THIRD_PERSON_TAIL, DOC, MODEL)
+CACHE = warmcache.Cache(FINGERPRINT)
 
 def answer_for(question):
     global LAST_RAIL
@@ -248,9 +289,21 @@ def answer_for(question):
     if COMMITMENT.search(q):
         LAST_RAIL = "commitment"
         return COMMITMENT_MSG
+    # Precomputed during idle time. Same prompt, same doc, same model — just
+    # generated earlier, so this is the identical answer without the 10-20s wait.
+    hit = CACHE.get(q)
+    if hit:
+        LAST_RAIL = "cache"
+        CACHE.save()   # get() bumps the hit counter; persist it so the stats are real
+        return hit
     try:
+        t0 = time.time()
         out = generate(q)
         LAST_RAIL = "model"
+        if out:
+            sc, _ = warmcache.score(out)
+            CACHE.put(q, out, src="live", sc=sc, gen_ms=int((time.time() - t0) * 1000))
+            CACHE.save()
         return out or REFUSAL
     except Exception as e:
         LAST_RAIL = "error"
@@ -278,6 +331,153 @@ def write_heartbeat():
 
 # ---- main loop --------------------------------------------------------------
 
+# ---- idle work --------------------------------------------------------------
+#
+# The box answers a handful of questions a day and sits idle the rest of the time,
+# with a 2GB model resident doing nothing. This uses that time to pre-generate
+# answers to questions visitors are likely to ask, so the common ones come back
+# instantly instead of after 10-20s of CPU inference.
+#
+# Two rules keep it from ever hurting a real visitor:
+#   1. it only starts work after IDLE_AFTER seconds with no live job, and
+#   2. any in-flight generation hangs up the instant LIVE_JOB is set.
+
+LIVE_JOB = threading.Event()
+
+IDLE_AFTER = 90        # quiet seconds before background work may start
+IDLE_GAP = 20          # breather between idle generations
+REFRESH_AFTER = 14 * 86400   # re-generate an entry older than this
+
+# The five topic chips on /ask fire these verbatim, so they are the highest-value
+# entries in the cache — a visitor clicking one should never wait.
+SEED_QUESTIONS = [
+    "What research is Bennett doing right now?",
+    "What are Bennett's projects?",
+    "What is Bennett looking for after he graduates?",
+    "Tell me about Penny the cat.",
+    "What is Bennett best at?",
+    # the questions any portfolio visitor asks next
+    "What is Bennett studying?",
+    "Where does Bennett go to school?",
+    "When does Bennett graduate?",
+    "What does Bennett work on?",
+    "What programming languages does Bennett know?",
+    "How can I contact Bennett?",
+    "What is Bennett's background?",
+    "Tell me about Bennett's research.",
+    "What is this site built with?",
+    "Does Bennett have experience with machine learning?",
+    "What are Bennett's technical skills?",
+    "Tell me about Bennett.",
+]
+
+class IdleWorker:
+    """Generates cache entries when nobody is asking. Best-of-N: because latency
+    does not matter offline, it samples a couple of candidates and keeps the one
+    that scores highest against the formal register — so cached answers are both
+    faster AND cleaner than a single cold generation."""
+
+    def __init__(self):
+        self.last_job = time.time()
+        self.done = 0
+        self.improved = 0
+
+    def _targets(self):
+        """Highest value first: unanswered seeds, then questions real visitors
+        asked that are not cached yet, then the stalest entry."""
+        for q in SEED_QUESTIONS:
+            if not CACHE.has(q):
+                return q, "seed"
+        for q in self._asked_by_visitors():
+            if not CACHE.has(q):
+                return q, "observed"
+        oldest, key = None, None
+        for k, e in CACHE.data.items():
+            if e.get("src") == "live" or time.time() - e.get("ts", 0) > REFRESH_AFTER:
+                if oldest is None or e.get("ts", 0) < oldest:
+                    oldest, key = e.get("ts", 0), k
+        if key:
+            return CACHE.data[key].get("q", key), "refresh"
+        return None, None
+
+    def _asked_by_visitors(self):
+        """Real questions from the poller's own journal — what people actually ask
+        is a better predictor than anything I could guess."""
+        try:
+            out = subprocess.run(
+                ["journalctl", "--user", "-u", "concierge-poller", "-n", "600",
+                 "--no-pager", "-o", "cat"],
+                capture_output=True, text=True, timeout=10).stdout
+        except Exception:
+            return []
+        seen, qs = set(), []
+        for m in re.finditer(r"job\s+\S+\s+ask:\s*(.+)", out):
+            q = m.group(1).strip()
+            if q and q not in seen and len(q) <= MAX_QUESTION:
+                seen.add(q)
+                qs.append(q)
+        return qs[-40:]
+
+    def _should_stop(self):
+        return LIVE_JOB.is_set()
+
+    def _generate_best(self, question, n=2):
+        """Sample n candidates, keep the best-scoring complete one."""
+        best, best_score, tried = None, -1, 0
+        for i in range(n):
+            if self._should_stop():
+                return None, None, tried
+            try:
+                cand = generate_abortable(question, self._should_stop,
+                                          temperature=0.2 if i == 0 else 0.35)
+            except Exception as e:
+                log.warning("idle generate failed: %s", e)
+                return None, None, tried
+            if cand is None:          # aborted for a live job
+                return None, None, tried
+            tried += 1
+            sc, _ = warmcache.score(cand)
+            if sc > best_score:
+                best, best_score = cand, sc
+            if sc >= 95:              # already clean; no point sampling again
+                break
+        return best, best_score, tried
+
+    def run(self):
+        while True:
+            time.sleep(5)
+            if LIVE_JOB.is_set() or time.time() - self.last_job < IDLE_AFTER:
+                continue
+            try:
+                q, why = self._targets()
+                if not q:
+                    time.sleep(60)     # nothing worth doing; check back later
+                    continue
+                t0 = time.time()
+                ans, sc, tried = self._generate_best(q)
+                if ans is None:
+                    warmcache.log_activity("yielded", question=oneline(q, 120),
+                                           note="live question arrived")
+                    continue
+                ms = int((time.time() - t0) * 1000)
+                prev = CACHE.data.get(warmcache.normalize(q))
+                improved = bool(prev and (prev.get("score") or 0) < (sc or 0))
+                CACHE.put(q, ans, src="idle", sc=sc, gen_ms=ms)
+                CACHE.save()
+                self.done += 1
+                self.improved += int(improved)
+                warmcache.log_activity(
+                    "precomputed", question=oneline(q, 160), answer=oneline(ans, 200),
+                    score=sc, ms=ms, candidates=tried, why=why, improved=improved)
+                log.info("idle %s: cached %r (score %s, %d candidates, %dms)",
+                         why, oneline(q, 60), sc, tried, ms)
+            except Exception as e:
+                log.warning("idle worker error: %s", e)
+                time.sleep(30)
+            time.sleep(IDLE_GAP)
+
+IDLE = IdleWorker()
+
 def oneline(text, limit=300):
     """Collapse to a single journald-friendly line, ellipsised."""
     s = " ".join((text or "").split())
@@ -298,7 +498,12 @@ def handle(raw):
         return
     log.info("job %s ask: %s", jid, oneline(question, 300))
     t0 = time.time()
-    ans = answer_for(question)
+    LIVE_JOB.set()          # tells the idle worker to hang up immediately
+    try:
+        ans = answer_for(question)
+    finally:
+        LIVE_JOB.clear()
+        IDLE.last_job = time.time()
     dt = int((time.time() - t0) * 1000)
     if ans is None:
         log.info("job %s -> offline fallback (%dms)", jid, dt)
@@ -321,6 +526,9 @@ def main():
     log.info("concierge poller up: model=%s url=%s secret=%s",
              MODEL, REST_URL, "on" if SHARED_SECRET else "off")
     warmup()
+    n, hits = CACHE.stats()
+    log.info("warm cache: %d entries (fingerprint %s), %d lifetime hits", n, FINGERPRINT, hits)
+    threading.Thread(target=IDLE.run, name="idle-worker", daemon=True).start()
     last_beat = 0.0
     while True:
         try:

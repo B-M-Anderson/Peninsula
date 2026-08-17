@@ -40,10 +40,15 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export async function POST(req: Request) {
   let question = "";
   let history: Turn[] = [];
+  let clientId = "";
   try {
     const body = await req.json();
     question = String(body.question ?? "").slice(0, MAX_QUESTION_LENGTH);
     history = cleanHistory(body.history);
+    // The page may name its own job so it can poll that job's progress while this
+    // request is still open. Only accept an id shaped like a uuid.
+    const raw = String(body.id ?? "");
+    if (/^[0-9a-f-]{8,64}$/i.test(raw)) clientId = raw;
   } catch {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
@@ -61,7 +66,7 @@ export async function POST(req: Request) {
   // next — ahead of everyone already queued — and they skip any request limits.
   const priority = req.headers.get("x-concierge-priority") === CONCIERGE_PRIORITY_CODE;
 
-  const id = randomUUID();
+  const id = clientId || randomUUID();
   const secret = process.env.CONCIERGE_SHARED_SECRET;
   const job = JSON.stringify({
     id,

@@ -11,6 +11,7 @@ export const KEYS = {
   jobs: "concierge:jobs",
   heartbeat: "concierge:heartbeat",
   answer: (id: string) => `concierge:answer:${id}`,
+  progress: (id: string) => `concierge:progress:${id}`,
 };
 
 // Run one Redis command via the Upstash REST endpoint. Throws on transport/relay error.

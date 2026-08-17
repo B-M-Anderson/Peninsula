@@ -23,6 +23,37 @@ type Status = {
 
 type Line = { from: "you" | "bot" | "sys"; text: string };
 
+type Progress = { state: string; ahead: number; seconds: number };
+
+// Module scope on purpose: these are impure, and the React Compiler lint rightly
+// rejects calling them anywhere it considers render.
+function newJobId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function nowMs(): number {
+  return Date.now();
+}
+
+/** Plain-language account of where a question currently is. */
+function progressLabel(p: Progress): string {
+  // `ahead` is the queue length, which counts this job too — so only claim a
+  // number when there is genuinely someone else in line.
+  if (p.state === "queued" && p.ahead > 1) {
+    return `waiting — ${p.ahead - 1} question${p.ahead - 1 === 1 ? "" : "s"} ahead of yours`;
+  }
+  if (p.state === "queued") return "waiting for the desktop to pick it up…";
+  if (p.state === "working") {
+    if (p.seconds < 4) return "the desktop picked it up";
+    if (p.seconds < 15) return `writing an answer — ${p.seconds}s`;
+    return `still writing — ${p.seconds}s. New questions are composed a word at a time on a CPU.`;
+  }
+  if (p.state === "done") return "finishing up…";
+  if (p.state === "offline") return "the desktop isn't answering right now";
+  return `working — ${p.seconds}s`;
+}
+
 // Short topics for the empty state; each fires a fuller question.
 const TOPICS: { label: string; q: string }[] = [
   { label: "His research", q: "What research is Bennett doing right now?" },
@@ -40,6 +71,7 @@ export default function AskPage() {
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<Progress | null>(null);
   const [priority, setPriority] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
@@ -72,7 +104,23 @@ export default function AskPage() {
 
     setInput("");
     setBusy(true);
+    setProgress({ state: "queued", ahead: 0, seconds: 0 });
     setLines((l) => [...l, { from: "you", text: q }]);
+
+    // Name the job here so its progress can be polled while the answer request is
+    // still open — otherwise the page has no idea whether it is queued or working.
+    const jobId = newJobId();
+    const startedAt = nowMs();
+    const poll = setInterval(async () => {
+      const seconds = Math.round((Date.now() - startedAt) / 1000);
+      try {
+        const r = await fetch(`/api/concierge/progress?id=${jobId}`, { cache: "no-store" });
+        const p = await r.json();
+        setProgress({ state: p.state ?? "queued", ahead: p.ahead ?? 0, seconds });
+      } catch {
+        setProgress((prev) => (prev ? { ...prev, seconds } : prev));
+      }
+    }, 1500);
     // Pair up the transcript so a follow-up ("where?") carries what it refers to.
     // Only real you/bot exchanges — system notices are UI chrome, not conversation.
     const history: { q: string; a: string }[] = [];
@@ -88,7 +136,7 @@ export default function AskPage() {
           "Content-Type": "application/json",
           ...(priority ? { "x-concierge-priority": CONCIERGE_PRIORITY_CODE } : {}),
         },
-        body: JSON.stringify({ question: q.slice(0, MAX), history: history.slice(-2) }),
+        body: JSON.stringify({ question: q.slice(0, MAX), history: history.slice(-2), id: jobId }),
       });
       const data = await res.json();
       if (data.answer) {
@@ -105,6 +153,8 @@ export default function AskPage() {
     } catch {
       setLines((l) => [...l, { from: "sys", text: "That didn't go through. Give it another try." }]);
     }
+    clearInterval(poll);
+    setProgress(null);
     setBusy(false);
   };
 
@@ -318,7 +368,9 @@ export default function AskPage() {
                     ))}
                   </span>
                   <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                    thinking — real machine at home, give it a few seconds
+                    {progress
+                      ? progressLabel(progress)
+                      : "thinking — real machine at home, give it a few seconds"}
                   </span>
                 </motion.div>
               )}

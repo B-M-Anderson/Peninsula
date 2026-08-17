@@ -32,7 +32,12 @@ STATE_DIR = os.path.expanduser("~/.local/share/concierge")
 CACHE_PATH = os.path.join(STATE_DIR, "cache.json")
 ACTIVITY_PATH = os.path.join(STATE_DIR, "activity.jsonl")
 ACTIVITY_MAX = 4000          # lines kept before the log is trimmed
-CACHE_MAX = 400              # entries kept before the coldest are dropped
+# The library is meant to grow, not to be a small hot cache: entries live on disk
+# and average well under a kilobyte, so 20k answers is a handful of megabytes.
+# It is not what puts this machine into swap — the resident model is 2.5GB and the
+# library is a rounding error beside it.
+CACHE_MAX = 20000            # entries kept before the coldest are dropped
+DISCOVERED_MAX = 300         # proposed-question backlog ceiling
 
 _PUNCT = re.compile(r"[^\w\s]")
 _WS = re.compile(r"\s+")
@@ -125,6 +130,7 @@ class Cache:
         self.fp = fp
         self.data = {}
         self.rejects = {}
+        self.discovered = []     # questions the model proposed, awaiting an answer
         self._load()
 
     def _load(self):
@@ -134,9 +140,10 @@ class Cache:
             if blob.get("fingerprint") == self.fp:
                 self.data = blob.get("entries", {})
                 self.rejects = blob.get("rejects", {})
+                self.discovered = blob.get("discovered", [])
             # fingerprint mismatch => prompt or doc changed => start clean
         except (OSError, ValueError):
-            self.data, self.rejects = {}, {}
+            self.data, self.rejects, self.discovered = {}, {}, []
 
     def save(self):
         os.makedirs(STATE_DIR, exist_ok=True)
@@ -146,7 +153,8 @@ class Cache:
         tmp = CACHE_PATH + ".tmp"
         with open(tmp, "w") as f:
             json.dump({"fingerprint": self.fp, "entries": self.data,
-                       "rejects": self.rejects}, f, indent=1)
+                       "rejects": self.rejects,
+                       "discovered": self.discovered[-DISCOVERED_MAX:]}, f, indent=1)
         os.replace(tmp, CACHE_PATH)
 
     def note_reject(self, question, sc):

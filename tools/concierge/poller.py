@@ -54,6 +54,8 @@ QUEUE_KEY = "concierge:jobs"
 ANSWER_PREFIX = "concierge:answer:"
 HEARTBEAT_KEY = "concierge:heartbeat"
 ANSWER_TTL = 120          # seconds a written answer lives
+PROGRESS_PREFIX = "concierge:progress:"
+PROGRESS_TTL = 180        # per-job state the waiting page polls
 HEARTBEAT_TTL = 30        # status route treats a stale/missing beat as offline
 HEARTBEAT_EVERY = 10      # seconds between heartbeats
 BRPOP_TIMEOUT = 5         # seconds the blocking pop waits per cycle
@@ -399,6 +401,15 @@ def machine_facts():
 
 MACHINE = machine_facts()
 
+def set_progress(jid, state, **extra):
+    """Publish per-job state so the waiting page can show something truthful.
+    Best-effort: a failure here must never cost the visitor their answer."""
+    try:
+        payload = json.dumps({"state": state, "ts": int(time.time()), **extra})
+        redis("SET", PROGRESS_PREFIX + str(jid), payload, "EX", PROGRESS_TTL, timeout=6)
+    except Exception as e:
+        log.debug("progress write failed (non-fatal): %s", e)
+
 def write_heartbeat():
     n, hits = CACHE.stats()
     payload = json.dumps({
@@ -426,6 +437,9 @@ LIVE_JOB = threading.Event()
 
 IDLE_AFTER = 90        # quiet seconds before background work may start
 IDLE_GAP = 20          # breather between idle generations
+# Polishing already-good answers is low value, and this is a desktop in a house —
+# back right off so it is not running inference around the clock for a point or two.
+IDLE_GAP_LOW = 300
 REFRESH_AFTER = 14 * 86400   # re-generate an entry older than this
 
 # A cached answer is served instantly and forever, so it has to be at least as
@@ -433,6 +447,7 @@ REFRESH_AFTER = 14 * 86400   # re-generate an entry older than this
 # as a bulleted multi-paragraph list scoring 68 — fine to show once, wrong to
 # freeze in. Below this floor we discard and retry later rather than bank it.
 MIN_CACHE_SCORE = 80
+DISCOVER_EVERY = 1800  # seconds between question-discovery runs
 
 # The five topic chips on /ask fire these verbatim — a visitor clicking one should
 # never wait, so they are precomputed before anything else.
@@ -470,6 +485,8 @@ class IdleWorker:
 
     def __init__(self):
         self.last_job = time.time()
+        self.last_discover = 0.0
+        self.improve_fails = {}
         self.done = 0
         self.improved = 0
 
@@ -485,6 +502,9 @@ class IdleWorker:
         for q in SEED_QUESTIONS:
             if self._eligible(q):
                 return q, "seed"
+        for q in list(CACHE.discovered):
+            if self._eligible(q):
+                return q, "discovered"
         oldest, key = None, None
         for k, e in CACHE.data.items():
             if e.get("src") == "live" or time.time() - e.get("ts", 0) > REFRESH_AFTER:
@@ -492,7 +512,78 @@ class IdleWorker:
                     oldest, key = e.get("ts", 0), k
         if key:
             return CACHE.data[key].get("q", key), "refresh"
+        # Everything known is cached. Rather than idle forever, ask the model what
+        # else a visitor might plausibly ask, and work through that. This is what
+        # keeps the worker useful indefinitely.
+        if self._discover():
+            for q in list(CACHE.discovered):
+                if self._eligible(q):
+                    return q, "discovered"
+        # Nothing new to write, so polish what exists: retry the weakest answer and
+        # keep it only if it beats the one already stored.
+        weakest, wkey = None, None
+        for k, e in CACHE.data.items():
+            sc = e.get("score")
+            # leave near-perfect answers alone, and stop retrying one the model has
+            # already failed twice to beat — otherwise it hot-loops on a hard question
+            if sc is not None and sc < 95 and self.improve_fails.get(k, 0) < 2:
+                if weakest is None or sc < weakest:
+                    weakest, wkey = sc, k
+        if wkey:
+            return CACHE.data[wkey].get("q", wkey), "improve"
         return None, None
+
+    def _discover(self):
+        """Have the model propose questions a visitor might ask, grounded in the
+        profile. Uses its own plain prompt — the concierge SYSTEM prompt is for
+        answering, and would refuse to produce a list like this."""
+        if self._should_stop():
+            return False
+        # Throttled: this is a 300-token generation, and without a floor the
+        # exhausted-work path would re-run it every minute forever.
+        if time.time() - self.last_discover < DISCOVER_EVERY:
+            return False
+        self.last_discover = time.time()
+        prompt = (
+            "Below is a profile of a person whose portfolio website has a question box.\n\n"
+            f"{DOC[:4000]}\n\n"
+            "List 10 short, distinct questions a visitor to that website might type. "
+            "Only questions answerable from the profile. One per line, no numbering, "
+            "no commentary."
+        )
+        body = json.dumps({
+            "model": MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False, "keep_alive": -1,
+            "options": {"temperature": 0.8, "num_predict": 300},
+        }).encode()
+        try:
+            req = urllib.request.Request(f"{OLLAMA_URL}/api/chat", data=body,
+                                         headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=120) as r:
+                text = json.loads(r.read())["message"]["content"]
+        except Exception as e:
+            log.warning("discovery failed: %s", e)
+            return False
+        added = 0
+        known = {warmcache.normalize(x) for x in CACHE.discovered}
+        for line in text.splitlines():
+            q = re.sub(r"^\s*(?:\d+[.)]|[-*•])\s*", "", line).strip().strip('"')
+            if not (8 <= len(q) <= MAX_QUESTION) or "?" not in q:
+                continue
+            n = warmcache.normalize(q)
+            if n in known or CACHE.has(q) or not self._eligible(q):
+                continue
+            known.add(n)
+            CACHE.discovered.append(q)
+            added += 1
+        if added:
+            CACHE.save()
+            warmcache.log_activity("discovered", count=added,
+                                   note=f"{len(CACHE.discovered)} queued")
+            log.info("idle discovery: %d new candidate questions (%d queued)",
+                     added, len(CACHE.discovered))
+        return added > 0
 
     def _eligible(self, q):
         """Worth spending idle CPU on? Not if it is already cached, not if a rail
@@ -528,7 +619,11 @@ class IdleWorker:
     def _should_stop(self):
         return LIVE_JOB.is_set()
 
-    def _generate_best(self, question, n=2):
+    def _generate_best(self, question, n=3):
+        # n candidates, not one. A bigger model cannot help here — a 7b alongside
+        # the resident 3b needs 7.2GiB on a 7.6GiB box — but sampling the same
+        # model several times and keeping the best costs only idle CPU, which is
+        # free and abandoned the moment a visitor arrives.
         """Sample n candidates, keep the best-scoring complete one."""
         best, best_score, tried = None, -1, 0
         for i in range(n):
@@ -555,6 +650,7 @@ class IdleWorker:
             time.sleep(5)
             if LIVE_JOB.is_set() or time.time() - self.last_job < IDLE_AFTER:
                 continue
+            why = None   # the tail sleep reads this even if _targets() raises
             try:
                 q, why = self._targets()
                 if not q:
@@ -577,8 +673,23 @@ class IdleWorker:
                              why, oneline(q, 60), sc, MIN_CACHE_SCORE)
                     continue
                 prev = CACHE.data.get(warmcache.normalize(q))
-                improved = bool(prev and (prev.get("score") or 0) < (sc or 0))
+                prev_score = (prev or {}).get("score") or 0
+                improved = bool(prev and prev_score < (sc or 0))
+                # A rewrite only earns its place if it actually beats what is
+                # already stored; otherwise the stored answer stands.
+                if why == "improve" and not improved:
+                    k = warmcache.normalize(q)
+                    self.improve_fails[k] = self.improve_fails.get(k, 0) + 1
+                    warmcache.log_activity("kept", question=oneline(q, 160), score=sc,
+                                           ms=ms, note=f"existing {prev_score} not beaten")
+                    log.info("idle improve: kept existing for %r (%s vs new %s)",
+                             oneline(q, 60), prev_score, sc)
+                    time.sleep(IDLE_GAP_LOW)
+                    continue
                 CACHE.put(q, ans, src="idle", sc=sc, gen_ms=ms)
+                # once answered, a proposed question is no longer a candidate
+                CACHE.discovered = [x for x in CACHE.discovered
+                                    if warmcache.normalize(x) != warmcache.normalize(q)]
                 CACHE.save()
                 self.done += 1
                 self.improved += int(improved)
@@ -590,7 +701,7 @@ class IdleWorker:
             except Exception as e:
                 log.warning("idle worker error: %s", e)
                 time.sleep(30)
-            time.sleep(IDLE_GAP)
+            time.sleep(IDLE_GAP_LOW if why in ("improve", "refresh") else IDLE_GAP)
 
 IDLE = IdleWorker()
 
@@ -618,6 +729,9 @@ def handle(raw):
              oneline(question, 300))
     t0 = time.time()
     LIVE_JOB.set()          # tells the idle worker to hang up immediately
+    # Tell the waiting browser its question has been picked up. Without this the
+    # page cannot tell "queued behind something" from "being written right now".
+    set_progress(jid, "working")
     try:
         ans = answer_for(question, history=history)
     finally:
@@ -628,6 +742,7 @@ def handle(raw):
         log.info("job %s -> offline fallback (%dms)", jid, dt)
         return  # no answer key written; route times out -> honest offline
     redis("SET", ANSWER_PREFIX + str(jid), ans, "EX", ANSWER_TTL)
+    set_progress(jid, "done", via=LAST_RAIL, ms=dt)
     log.info("job %s answered (%dms, %dch) via %s: %s",
              jid, dt, len(ans), LAST_RAIL, oneline(ans, 300))
 

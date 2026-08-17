@@ -152,9 +152,9 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
             <Stat k="Machine" v={cpuShort ?? "desktop"} note={[cores, ram].filter(Boolean).join(" · ") || undefined} />
             <Stat k="Graphics" v="None" note="every token is computed on the CPU" />
             <Stat
-              k="Ready answers"
+              k="Answer library"
               v={cache?.entries != null ? String(cache.entries) : "—"}
-              note="pre-written while the desktop is idle"
+              note="written ahead while the desktop is idle, and still growing"
             />
           </div>
 

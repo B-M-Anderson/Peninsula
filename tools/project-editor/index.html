@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Peninsula — Project Editor</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, sans-serif; background: #0b0f14; color: #e6edf3; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.sub { color: #8b949e; margin: 0 0 20px; font-size: 13px; }
+  .card { background: #111820; border: 1px solid #2a3542; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .card h3 { margin: 0 0 12px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+  .row { display: grid; grid-template-columns: 140px 1fr; gap: 8px; align-items: start; margin-bottom: 8px; }
+  label { font-size: 12px; color: #8b949e; padding-top: 6px; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; background: #0b0f14; border: 1px solid #2a3542; border-radius: 4px;
+    color: #e6edf3; padding: 6px 8px; font-size: 13px; font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .bools { display: flex; gap: 12px; flex-wrap: wrap; }
+  .bools label { display: flex; align-items: center; gap: 4px; padding-top: 0; }
+  button { background: #238636; color: white; border: none; border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+  button.secondary { background: #21262d; border: 1px solid #2a3542; }
+  button.danger { background: #a12622; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; background: #0b0f14; padding: 8px 0; z-index: 10; }
+  .file-row { display: flex; gap: 6px; align-items: center; }
+  .status { margin-top: 12px; padding: 10px; border-radius: 6px; font-size: 13px; white-space: pre-wrap; }
+  .status.ok { background: #0d2818; border: 1px solid #238636; }
+  .status.err { background: #2d0f0f; border: 1px solid #a12622; }
+  a { color: #58a6ff; }
+</style>
+</head>
+<body>
+  <h1>Peninsula Project Editor</h1>
+  <p class="sub">Edit project entries, add new ones, then push a branch + open a PR. Nothing touches <code>main</code> directly.</p>
+
+  <div class="toolbar">
+    <button id="addBtn" class="secondary">+ Add project</button>
+    <button id="saveBtn" class="secondary">Save to disk (no git)</button>
+    <button id="publishBtn">Push branch &amp; open PR</button>
+    <button id="reloadBtn" class="danger">Reload from disk (discard edits)</button>
+  </div>
+
+  <div id="cards"></div>
+  <div id="status"></div>
+
+<script>
+let FIELDS = [];
+let PROJECTS = [];
+
+async function load() {
+  const res = await fetch('/api/projects');
+  const data = await res.json();
+  FIELDS = data.fields;
+  PROJECTS = data.projects;
+  render();
+}
+
+function render() {
+  const el = document.getElementById('cards');
+  el.innerHTML = '';
+  PROJECTS.forEach((p, i) => el.appendChild(renderCard(p, i)));
+}
+
+function renderCard(p, i) {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const header = document.createElement('h3');
+  header.innerHTML = `<span>${p.title || '(untitled project)'}</span>`;
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'danger';
+  removeBtn.textContent = 'Remove';
+  removeBtn.onclick = () => { PROJECTS.splice(i, 1); render(); };
+  header.appendChild(removeBtn);
+  card.appendChild(header);
+
+  const boolFields = FIELDS.filter(f => f.type === 'boolean');
+  const otherFields = FIELDS.filter(f => f.type !== 'boolean');
+
+  otherFields.forEach(f => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const label = document.createElement('label');
+    label.textContent = f.key;
+    row.appendChild(label);
+
+    let input;
+    if (f.type === 'text') {
+      input = document.createElement('textarea');
+      input.value = p[f.key] || '';
+      input.oninput = () => p[f.key] = input.value;
+    } else if (f.type === 'enum') {
+      input = document.createElement('select');
+      ['', ...f.options].forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt; o.textContent = opt || '(none)';
+        if (p[f.key] === opt) o.selected = true;
+        input.appendChild(o);
+      });
+      input.onchange = () => p[f.key] = input.value || undefined;
+    } else if (f.type === 'number') {
+      input = document.createElement('input');
+      input.type = 'number';
+      input.value = p[f.key] ?? '';
+      input.oninput = () => p[f.key] = input.value === '' ? undefined : Number(input.value);
+    } else if (f.type === 'stringArray') {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'comma, separated, values';
+      input.value = Array.isArray(p[f.key]) ? p[f.key].join(', ') : (p[f.key] || '');
+      input.oninput = () => p[f.key] = input.value.split(',').map(s => s.trim()).filter(Boolean);
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = p[f.key] || '';
+      input.oninput = () => {
+        p[f.key] = input.value;
+        if (f.key === 'title') header.firstChild.textContent = input.value || '(untitled project)';
+      };
+    }
+    row.appendChild(input);
+    card.appendChild(row);
+
+    if (f.key === 'thumbnailUrl' || f.key === 'imageUrl') {
+      card.appendChild(fileUploadRow(f.key, p, input));
+    }
+  });
+
+  const boolRow = document.createElement('div');
+  boolRow.className = 'row';
+  boolRow.innerHTML = '<label>flags</label>';
+  const boolsWrap = document.createElement('div');
+  boolsWrap.className = 'bools';
+  boolFields.forEach(f => {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!p[f.key];
+    cb.onchange = () => p[f.key] = cb.checked;
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(f.key));
+    boolsWrap.appendChild(lbl);
+  });
+  boolRow.appendChild(boolsWrap);
+  card.appendChild(boolRow);
+
+  return card;
+}
+
+function fileUploadRow(key, p, textInput) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = '<label></label>';
+  const wrap = document.createElement('div');
+  wrap.className = 'file-row';
+  const file = document.createElement('input');
+  file.type = 'file';
+  file.accept = 'image/*';
+  const hint = document.createElement('span');
+  hint.style.fontSize = '11px';
+  hint.style.color = '#8b949e';
+  hint.textContent = key === 'thumbnailUrl' ? 'uploads to public/thumbnails/' : 'uploads to public/Previews/';
+  file.onchange = async () => {
+    const f = file.files[0];
+    if (!f) return;
+    const kind = key === 'thumbnailUrl' ? 'thumbnail' : 'preview';
+    const res = await fetch(`/api/upload?kind=${kind}&filename=${encodeURIComponent(f.name)}`, {
+      method: 'POST', body: await f.arrayBuffer()
+    });
+    const data = await res.json();
+    if (data.path) {
+      p[key] = data.path;
+      textInput.value = data.path;
+    }
+  };
+  wrap.appendChild(file);
+  wrap.appendChild(hint);
+  row.appendChild(wrap);
+  return row;
+}
+
+document.getElementById('addBtn').onclick = () => {
+  PROJECTS.push({ title: '', description: '', date: '', skills: [] });
+  render();
+};
+
+document.getElementById('reloadBtn').onclick = () => {
+  if (confirm('Discard unsaved edits and reload from disk?')) load();
+};
+
+function showStatus(msg, ok) {
+  const el = document.getElementById('status');
+  el.className = 'status ' + (ok ? 'ok' : 'err');
+  el.innerHTML = msg;
+}
+
+document.getElementById('saveBtn').onclick = async () => {
+  const res = await fetch('/api/save', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ projects: PROJECTS }) });
+  const data = await res.json();
+  if (res.ok) showStatus('Saved to app/data/projects.ts (not committed).', true);
+  else showStatus('Error: ' + data.error, false);
+};
+
+document.getElementById('publishBtn').onclick = async () => {
+  showStatus('Pushing branch and opening PR...', true);
+  const res = await fetch('/api/publish', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ projects: PROJECTS }) });
+  const data = await res.json();
+  if (res.ok) {
+    showStatus(`Branch <b>${data.branch}</b> pushed.<br>${data.prUrl.startsWith('http') ? `PR: <a href="${data.prUrl}" target="_blank">${data.prUrl}</a>` : data.prUrl}`, true);
+  } else {
+    showStatus('Error: ' + data.error, false);
+  }
+};
+
+load();
+</script>
+</body>
+</html>

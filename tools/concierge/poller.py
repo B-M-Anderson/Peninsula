@@ -56,9 +56,24 @@ HEARTBEAT_KEY = "concierge:heartbeat"
 ANSWER_TTL = 120          # seconds a written answer lives
 PROGRESS_PREFIX = "concierge:progress:"
 PROGRESS_TTL = 180        # per-job state the waiting page polls
-HEARTBEAT_TTL = 30        # status route treats a stale/missing beat as offline
-HEARTBEAT_EVERY = 10      # seconds between heartbeats
-BRPOP_TIMEOUT = 5         # seconds the blocking pop waits per cycle
+# ---- relay request budget ---------------------------------------------------
+#
+# Upstash's free tier allows 500,000 requests per month. This loop is the only
+# thing running 24/7, so its idle cadence -- not visitor traffic -- decides
+# whether the concierge is alive at the end of the month.
+#
+#   BRPOP every 5s  = 17,280/day        beat every 10s = 8,640/day
+#   together        = 25,920/day = ~778,000 per 30 days, against a 500,000 cap.
+#
+# That exhausts the quota on day ~19 of every cycle with nobody visiting the
+# site, and the relay then 400s every call until the cycle rolls over -- which
+# is exactly how the node went dark on 2026-08-21. The cadence below costs
+# ~3,600/day (~110,000 per 30 days), leaving the rest of the budget for actual
+# visitors. Do not lower these without redoing the arithmetic.
+HEARTBEAT_TTL = 120       # status route treats a stale/missing beat as offline
+HEARTBEAT_EVERY = 45      # seconds between heartbeats
+BRPOP_TIMEOUT = 50        # seconds the blocking pop waits per cycle
+QUOTA_BACKOFF = 300       # seconds to wait out a quota rejection (retrying cannot help)
 MAX_QUESTION = 500
 
 DOC_PATH = os.path.join(HERE, "..", "..", "app", "data", "ABOUT_BENNETT.md")
@@ -756,6 +771,20 @@ def warmup():
     except Exception as e:
         log.warning("warmup failed (will retry on first job): %s", e)
 
+def _is_quota_error(err):
+    """True when Upstash refused the call because the monthly request budget is
+    spent. It answers 400 with an explicit message, which is worth reading
+    rather than treating every 400 as a transient network fault."""
+    parts = [str(err)]
+    read = getattr(err, "read", None)
+    if callable(read):
+        try:
+            parts.append(read().decode("utf-8", "replace"))
+        except Exception:
+            pass
+    return any("max requests limit exceeded" in p.lower() for p in parts)
+
+
 def main():
     log.info("concierge poller up: model=%s url=%s secret=%s",
              MODEL, REST_URL, "on" if SHARED_SECRET else "off")
@@ -776,11 +805,28 @@ def main():
                 # BRPOP returns [key, value]
                 handle(res[1] if isinstance(res, list) else res)
         except urllib.error.URLError as e:
-            log.warning("relay unreachable: %s", e)
-            time.sleep(3)
+            # A quota rejection is not a blip: Upstash refuses every call until
+            # the monthly cycle rolls over, so the 3s retry below would burn
+            # ~28,000 pointless requests a day and fill the journal while it did
+            # it. Back off hard and say so once per wait, not once per attempt.
+            if _is_quota_error(e):
+                log.error("relay quota exhausted (Upstash monthly limit) — "
+                          "sleeping %ds; the node stays offline until the cycle "
+                          "resets or the plan is raised", QUOTA_BACKOFF)
+                time.sleep(QUOTA_BACKOFF)
+            else:
+                log.warning("relay unreachable: %s", e)
+                time.sleep(3)
         except Exception as e:
-            log.warning("loop error: %s", e)
-            time.sleep(2)
+            # redis() raises RuntimeError when Upstash answers 200 with an
+            # "error" field, so the quota message can arrive down this path too.
+            if _is_quota_error(e):
+                log.error("relay quota exhausted (Upstash monthly limit) — "
+                          "sleeping %ds", QUOTA_BACKOFF)
+                time.sleep(QUOTA_BACKOFF)
+            else:
+                log.warning("loop error: %s", e)
+                time.sleep(2)
 
 if __name__ == "__main__":
     main()

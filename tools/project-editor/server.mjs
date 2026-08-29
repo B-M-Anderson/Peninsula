@@ -19,6 +19,7 @@ const FIELDS = [
   { key: "title", type: "string", required: true },
   { key: "description", type: "text", required: true },
   { key: "githubUrl", type: "string" },
+  { key: "videoUrl", type: "string" },
   { key: "date", type: "string", required: true },
   { key: "skills", type: "stringArray" },
   { key: "importantSkills", type: "stringArray" },
@@ -32,17 +33,21 @@ const FIELDS = [
   { key: "completed", type: "boolean" },
   { key: "ongoing", type: "boolean" },
   { key: "shelved", type: "boolean" },
+  { key: "draft", type: "boolean" },
 ];
 
 function readProjects() {
   const text = fs.readFileSync(PROJECTS_FILE, "utf8");
-  const match = text.match(/export const projects: Project\[\] = (\[[\s\S]*\]);\s*$/);
+  // Anchored on the closing `];` at column 0 rather than end-of-file: derived
+  // exports (publishedProjects) now sit below the array.
+  const match = text.match(/export const projects: Project\[\] = (\[[\s\S]*?\n\]);/);
   if (!match) throw new Error("Could not find `export const projects: Project[] = [...]` in projects.ts");
   const arrayLiteral = match[1];
   // The array literal is plain JS (template literals included), safe to eval in this local-only tool.
   const projects = new Function(`"use strict"; return (${arrayLiteral});`)();
   const header = text.slice(0, match.index);
-  return { header, projects };
+  const tail = text.slice(match.index + match[0].length);
+  return { header, projects, tail };
 }
 
 function jsStringLiteral(str) {
@@ -83,9 +88,9 @@ function serializeProject(project) {
   return "  {\n" + lines.join("\n") + "\n  }";
 }
 
-function writeProjects(header, projects) {
+function writeProjects(header, projects, tail = "\n") {
   const body = projects.map(serializeProject).join(",\n\n");
-  const text = `${header}export const projects: Project[] = [\n${body},\n];\n`;
+  const text = `${header}export const projects: Project[] = [\n${body},\n];${tail}`;
   fs.writeFileSync(PROJECTS_FILE, text, "utf8");
 }
 
@@ -193,16 +198,16 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/api/save") {
       const body = JSON.parse((await readBody(req)).toString("utf8"));
-      const { header } = readProjects();
-      writeProjects(header, body.projects);
+      const { header, tail } = readProjects();
+      writeProjects(header, body.projects, tail);
       sendJson(res, 200, { saved: true });
       return;
     }
 
     if (req.method === "POST" && url.pathname === "/api/publish") {
       const body = JSON.parse((await readBody(req)).toString("utf8"));
-      const { header } = readProjects();
-      writeProjects(header, body.projects);
+      const { header, tail } = readProjects();
+      writeProjects(header, body.projects, tail);
       const result = publishBranch();
       sendJson(res, 200, result);
       return;

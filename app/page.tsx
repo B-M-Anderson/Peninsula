@@ -7,7 +7,8 @@ import StripeBand from "./components/brand/StripeBand";
 import SkillsSection from "./components/SkillsSection";
 import RecentPosts from "./components/RecentPosts";
 import { Button, Card, Badge, ProgressBar, SectionHeading, TextLink } from "./components/ui";
-import { projects, type Project } from "./data/projects";
+import RichText from "./components/RichText";
+import { publishedProjects, type Project } from "./data/projects";
 import { GITHUB_URL, LINKEDIN_URL, RESUME_PATH, SUBSTACK_URL, YOUTUBE_URL, X_URL } from "./data/site";
 
 function XLogo({ size = 15 }: { size?: number }) {
@@ -75,7 +76,7 @@ function ProjectCard({ p }: { p: Project }) {
               overflow: "hidden",
             }}
           >
-            {p.description}
+            <RichText text={p.description} />
           </p>
           {p.completion !== undefined && <ProgressBar label="completion" value={p.completion} style={{ maxWidth: 240 }} />}
         </div>
@@ -85,6 +86,10 @@ function ProjectCard({ p }: { p: Project }) {
 }
 
 export default function HomePage() {
+  // Newest first, so the homepage leads with whatever was worked on last.
+  const recentProjects = [...publishedProjects].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
   return (
     // One continuous sunken, grained field — hero and content share a ground so
     // "about me" and the rest read as a single panel. A single full-bleed dapple
@@ -159,13 +164,13 @@ export default function HomePage() {
           <section className="md-col-main">
             <SectionHeading kicker="Selected work">Projects</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-              {projects.slice(0, 3).map((p) => (
+              {recentProjects.slice(0, 3).map((p) => (
                 <ProjectCard key={p.title} p={p} />
               ))}
             </div>
             <div style={{ marginTop: "var(--space-6)" }}>
               <TextLink href="/projects" arrow>
-                All four projects
+                {`All ${publishedProjects.length} projects`}
               </TextLink>
             </div>
           </section>

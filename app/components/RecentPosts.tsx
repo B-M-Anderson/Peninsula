@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Youtube, FileText, MessageSquare, ArrowUpRight } from "lucide-react";
 import { Badge, Card } from "./ui";
@@ -45,7 +48,27 @@ function PostCard({ p }: { p: Post }) {
 }
 
 export default function RecentPosts({ limit = 4 }: { limit?: number }) {
-  const recent = [...posts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
+  // Starts from the hand-maintained list so the section is never empty on first
+  // paint, then swaps in the live merge of the YouTube and Substack feeds. X is
+  // not in that merge — it has no free feed — so its entries come from the file.
+  const [live, setLive] = useState<Post[] | null>(null);
+
+  useEffect(() => {
+    const stop = new AbortController();
+    fetch("/api/posts", { signal: stop.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (Array.isArray(d?.posts)) setLive(d.posts as Post[]);
+      })
+      .catch(() => {
+        /* keep whatever is in the file; a dead feed must not empty the section */
+      });
+    return () => stop.abort();
+  }, []);
+
+  const recent = [...(live ?? posts)]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit);
 
   if (recent.length === 0) {
     return (

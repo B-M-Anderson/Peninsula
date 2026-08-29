@@ -170,7 +170,7 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
               }}
             >
               <Hop n={1} where="Your browser → this site" what="Vercel takes the question; it never touches the model." />
-              <Hop n={2} where="A queue in the middle" what="The desktop reaches out to collect it. Nothing can reach in." />
+              <Hop n={2} where="A queue on the desktop" what="Vercel hands the question to a queue running at Bennett's house, over a private tunnel with no port forwarded." />
               <Hop
                 n={3}
                 where="Safety rails"

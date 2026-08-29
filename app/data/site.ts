@@ -13,8 +13,8 @@ export const VAULT_TRIGGER = "penny";
 // node comes online for real.
 export const CONCIERGE = {
   plannedRuntime: "Ollama",
-  plannedModel: "not yet provisioned",
-  host: "desktop node · home network · outbound-only relay",
+  plannedModel: "llama3.2:3b",
+  host: "desktop node · home network · private tunnel",
 };
 
 // Priority passphrase for the /ask concierge. Typing this in the ask box grants

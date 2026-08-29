@@ -431,7 +431,8 @@ def write_heartbeat():
         "model": MODEL, "runtime": "ollama", "ts": int(time.time()),
         "machine": MACHINE,
         "cache": {"entries": n, "hits": hits},
-        "idle": {"precomputed": IDLE.done, "improved": IDLE.improved},
+        "idle": {"precomputed": IDLE.done, "improved": IDLE.improved,
+                 "paused": idle_paused()},
     })
     redis("SET", HEARTBEAT_KEY, payload, "EX", HEARTBEAT_TTL)
 
@@ -449,6 +450,39 @@ def write_heartbeat():
 #   2. any in-flight generation hangs up the instant LIVE_JOB is set.
 
 LIVE_JOB = threading.Event()
+
+# ---- the quiet window --------------------------------------------------------
+#
+# Background generation is where this box's CPU actually goes: best-of-3 sampling,
+# _discover(), answer polishing. Live traffic barely registers next to it. So
+# during work hours the useful thing to pause is the idle worker, NOT the machine.
+#
+# Suspending the box would be the wrong lever. The poller is a *poller* -- asleep,
+# it stops asking Upstash for work, the heartbeat goes stale, and the site
+# correctly reports the concierge offline. Nothing can wake it either: Vercel
+# cannot send a magic packet into a house. Every visitor in the window would get
+# the offline page.
+#
+# With only the idle worker paused, the window costs a visitor nothing:
+#   cache hit        0.30s   unchanged
+#   live uncached    ~19s    unchanged, still answered, still third person
+#   background gen   stopped, fans down
+#
+# The model deliberately stays resident (keep_alive -1) through the window.
+# Unloading it to reclaim memory would reintroduce the >90s cold start that was
+# already fixed once -- and that cost would land on a real visitor rather than on
+# a background job. For deeper savings use the CPU governor, not model eviction.
+#
+# The sentinel is written and removed by a pair of systemd timers
+# (concierge-quiet-window-pause/-resume) plus concierge-quiet-window@reconcile at
+# boot, so a restart inside the window comes back paused instead of quietly
+# grinding until 17:00. The helper is /usr/local/bin/concierge-quiet-window.
+PAUSE_FILE = os.path.join(warmcache.STATE_DIR, "idle.pause")
+
+
+def idle_paused():
+    return os.path.exists(PAUSE_FILE)
+
 
 IDLE_AFTER = 90        # quiet seconds before background work may start
 IDLE_GAP = 20          # breather between idle generations
@@ -661,8 +695,20 @@ class IdleWorker:
         return best, best_score, tried
 
     def run(self):
+        paused = False
         while True:
             time.sleep(5)
+            # Only background work observes the quiet window; live jobs are
+            # handled by the main loop and are never gated on this.
+            if idle_paused():
+                if not paused:
+                    paused = True
+                    log.info("quiet window: idle generation paused — "
+                             "live questions still answered normally")
+                continue
+            if paused:
+                paused = False
+                log.info("quiet window over: idle generation resumed")
             if LIVE_JOB.is_set() or time.time() - self.last_job < IDLE_AFTER:
                 continue
             why = None   # the tail sleep reads this even if _targets() raises

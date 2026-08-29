@@ -788,6 +788,16 @@ def handle(raw):
     n_hist = len(history) if isinstance(history, list) else 0
     log.info("job %s ask%s: %s", jid, f" (+{n_hist} prior turns)" if n_hist else "",
              oneline(question, 300))
+    # A visitor question is the one thing that was never recorded anywhere
+    # durable. activity.jsonl was written exclusively by IdleWorker, and the
+    # cache cannot stand in for it: a cache hit writes nothing at all, a
+    # `context` answer is deliberately never banked, and an entry marked
+    # src="live" is the first thing _targets() picks up for regeneration, so the
+    # flag erases itself within a cycle. The only record was a journald line,
+    # which rotates. Log it properly so the console has something to read.
+    synthetic = str(jid).startswith("watchdog-")
+    warmcache.log_activity("asked", question=oneline(question, 400), jid=str(jid),
+                           turns=n_hist, synthetic=synthetic)
     t0 = time.time()
     LIVE_JOB.set()          # tells the idle worker to hang up immediately
     # Tell the waiting browser its question has been picked up. Without this the
@@ -801,8 +811,16 @@ def handle(raw):
     dt = int((time.time() - t0) * 1000)
     if ans is None:
         log.info("job %s -> offline fallback (%dms)", jid, dt)
+        warmcache.log_activity("failed", question=oneline(question, 400),
+                               rail=LAST_RAIL, ms=dt, jid=str(jid),
+                               synthetic=synthetic)
         return  # no answer key written; route times out -> honest offline
     redis("SET", ANSWER_PREFIX + str(jid), ans, "EX", ANSWER_TTL)
+    # LAST_RAIL only ever reached journald and a TTL'd progress key, so which
+    # rail served a visitor was unrecoverable minutes later. Bank it.
+    warmcache.log_activity("served", question=oneline(question, 400),
+                           answer=oneline(ans, 400), rail=LAST_RAIL, ms=dt,
+                           jid=str(jid), synthetic=synthetic)
     set_progress(jid, "done", via=LAST_RAIL, ms=dt)
     log.info("job %s answered (%dms, %dch) via %s: %s",
              jid, dt, len(ans), LAST_RAIL, oneline(ans, 300))

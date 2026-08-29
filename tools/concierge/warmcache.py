@@ -62,6 +62,43 @@ def fingerprint(*parts):
     return h.hexdigest()[:16]
 
 
+# ---- self-disclosure guard --------------------------------------------------
+#
+# The input LEAK rail in poller.py catches people ASKING for the prompt. It
+# cannot catch the model volunteering it, and on 2026-08-29 a visitor typed
+# "How has this conversation gone" and got back a summary that included
+# "reminded the assistant to describe Bennett in the third person ... and
+# maintain a formal register". Nothing in that question looks like an attack, so
+# no input pattern was ever going to stop it. This checks the OUTPUT instead.
+#
+# Deliberately narrow. "third person" and "assistant" both appear in perfectly
+# good answers about the concierge project itself, so matching those alone would
+# refuse legitimate questions. Every pattern here is the model describing its own
+# operating instructions, which a good answer never needs to do.
+SELF_DISCLOSURE = re.compile(
+    r"(system (?:prompt|message)|developer message|grounding (?:document|doc)|"
+    r"my (?:instruction|guideline|rule|prompt|directive|configuration)s?\b|"
+    r"(?:the )?assistant (?:was|is|has been|had been) "
+    r"(?:told|instructed|reminded|asked|required|configured|programmed)|"
+    r"reminded (?:the assistant|me) to|"
+    r"I (?:was|have been|had been|am being) "
+    r"(?:told|instructed|reminded|programmed|configured)|"
+    r"(?:instructed|reminded|told) to (?:describe|answer|respond|maintain|write|refer)|"
+    r"maintain a formal register|"
+    r"formal register|"
+    r"in the third[- ]person(?:\s+(?:as|per|because|since)\b)|"
+    r"according to (?:my|the) (?:instruction|prompt|rule|guideline))", re.I)
+
+
+def leaks_instructions(text):
+    """True when an answer is describing how the model was set up.
+
+    Used on BOTH paths on purpose: refusing it live but still banking it during
+    idle generation would just serve the leak from cache later.
+    """
+    return bool(SELF_DISCLOSURE.search(text or ""))
+
+
 # ---- register scoring -------------------------------------------------------
 
 # Explicit list, not \w+'s — "Bennett's research" is a possessive and perfectly
@@ -141,7 +178,18 @@ class Cache:
                 self.data = blob.get("entries", {})
                 self.rejects = blob.get("rejects", {})
                 self.discovered = blob.get("discovered", [])
-            # fingerprint mismatch => prompt or doc changed => start clean
+            else:
+                # Fingerprint mismatch => prompt, doc or model changed, so every
+                # stored ANSWER is suspect and none of them carry over.
+                #
+                # `discovered` is different: it is a list of QUESTIONS the model
+                # proposed and has not answered yet. A changed grounding doc does
+                # not make "What is Bennett studying?" a worse question, and
+                # rediscovery costs a full generation each at DISCOVER_EVERY=1800s.
+                # Editing the doc is now routine -- answer-review writes
+                # corrections straight into it -- so throwing this away every time
+                # was a real, repeated cost for no correctness benefit.
+                self.discovered = blob.get("discovered", [])
         except (OSError, ValueError):
             self.data, self.rejects, self.discovered = {}, {}, []
 

@@ -169,7 +169,18 @@ LEAK = re.compile(
     r"before\s+(?:this|our|the|any)\s+(?:conversation|chat|session|message|exchange)|"
     r"how\s+were\s+you\s+(?:set up|configured|programmed|instructed|initial|built|made|trained)|"
     r"your\s+(?:initial|original|underlying|hidden|secret|base|first)\s+"
-    r"(?:prompt|instruction|setup|programming|message|directive))", re.I)
+    r"(?:prompt|instruction|setup|programming|message|directive)|"
+    # Meta-questions about the exchange itself. These do not look like attacks,
+    # which is exactly the problem: "How has this conversation gone" produced a
+    # summary quoting the operating instructions back at a visitor. A concierge
+    # answering questions about Bennett has no reason to narrate its own chat,
+    # so refusing costs nothing.
+    r"how\s+(?:has|did|is|was)\s+(?:this|our|the)\s+"
+    r"(?:conversation|chat|exchange|discussion|session)|"
+    r"summari[sz]e\s+(?:this|our|the)\s+(?:conversation|chat|exchange|discussion)|"
+    r"recap\s+(?:this|our|the)\s+(?:conversation|chat|exchange)|"
+    r"what\s+have\s+we\s+(?:talked|spoken|been talking|discussed)|"
+    r"what\s+did\s+(?:i|we)\s+(?:just\s+)?(?:ask|say|tell you))", re.I)
 
 REFUSAL = ("That request cannot be accommodated. Please ask a question about Bennett's work or background, "
            "or use /contact to reach him directly.")
@@ -346,6 +357,14 @@ def answer_for(question, history=None):
         try:
             t0 = time.time()
             out = generate(q, history=history)
+            # The conversational rail is where self-disclosure actually happens:
+            # with a transcript in front of it the model will happily narrate
+            # what it was told. Check the output, not just the question.
+            if out and warmcache.leaks_instructions(out):
+                LAST_RAIL = "leak"
+                log.warning("suppressed self-disclosure on the context rail for %r",
+                            oneline(q, 80))
+                return REFUSAL
             LAST_RAIL = "context"
             return out or REFUSAL
         except Exception as e:
@@ -362,6 +381,11 @@ def answer_for(question, history=None):
     try:
         t0 = time.time()
         out = generate(q)
+        if out and warmcache.leaks_instructions(out):
+            LAST_RAIL = "leak"
+            log.warning("suppressed self-disclosure on the model rail for %r",
+                        oneline(q, 80))
+            return REFUSAL          # deliberately not cached
         LAST_RAIL = "model"
         if out:
             sc, _ = warmcache.score(out)
@@ -486,6 +510,18 @@ def idle_paused():
 
 IDLE_AFTER = 90        # quiet seconds before background work may start
 IDLE_GAP = 20          # breather between idle generations
+CANDIDATE_GAP = 6      # breather BETWEEN the best-of-N samples for one question
+
+
+def cool_down(seconds):
+    """Let the CPU sit idle for a moment, but never make a visitor wait for it.
+
+    LIVE_JOB.wait() returns the instant a real question arrives, so a cooldown
+    is only ever spent while the box has nothing else to do. A plain
+    time.sleep() here would add up to CANDIDATE_GAP seconds of latency to a
+    visitor unlucky enough to arrive mid-nap.
+    """
+    LIVE_JOB.wait(seconds)
 # Polishing already-good answers is low value, and this is a desktop in a house —
 # back right off so it is not running inference around the clock for a point or two.
 IDLE_GAP_LOW = 300
@@ -687,11 +723,22 @@ class IdleWorker:
             if cand is None:          # aborted for a live job
                 return None, None, tried
             tried += 1
+            if warmcache.leaks_instructions(cand):
+                # Discard rather than score it. Banking a leak would defeat the
+                # live guard entirely: the next visitor gets it from the cache
+                # rail, which never re-checks.
+                log.warning("idle: discarded a candidate that described its own setup")
+                continue
             sc, _ = warmcache.score(cand)
             if sc > best_score:
                 best, best_score = cand, sc
             if sc >= 95:              # already clean; no point sampling again
                 break
+            # Three inferences back to back is the hardest this box ever works.
+            # On a fanless-ish i5 with no GPU that is what you hear from across
+            # the room, so let it settle between candidates.
+            if i + 1 < n:
+                cool_down(CANDIDATE_GAP)
         return best, best_score, tried
 
     def run(self):
@@ -711,11 +758,17 @@ class IdleWorker:
                 log.info("quiet window over: idle generation resumed")
             if LIVE_JOB.is_set() or time.time() - self.last_job < IDLE_AFTER:
                 continue
-            why = None   # the tail sleep reads this even if _targets() raises
+            why = None   # the cooldown reads this even if _targets() raises
+            # Set by whichever branch we leave through; the finally below always
+            # spends it. `continue` runs finally, which is the point -- the
+            # rejected branch used to skip the tail sleep and immediately start
+            # another generation, which is why the box never got a breather
+            # between pre-processed answers.
+            nap = IDLE_GAP
             try:
                 q, why = self._targets()
                 if not q:
-                    time.sleep(60)     # nothing worth doing; check back later
+                    nap = 60           # nothing worth doing; check back later
                     continue
                 t0 = time.time()
                 ans, sc, tried = self._generate_best(q)
@@ -745,7 +798,7 @@ class IdleWorker:
                                            ms=ms, note=f"existing {prev_score} not beaten")
                     log.info("idle improve: kept existing for %r (%s vs new %s)",
                              oneline(q, 60), prev_score, sc)
-                    time.sleep(IDLE_GAP_LOW)
+                    nap = IDLE_GAP_LOW
                     continue
                 CACHE.put(q, ans, src="idle", sc=sc, gen_ms=ms)
                 # once answered, a proposed question is no longer a candidate
@@ -761,8 +814,12 @@ class IdleWorker:
                          why, oneline(q, 60), sc, tried, ms)
             except Exception as e:
                 log.warning("idle worker error: %s", e)
-                time.sleep(30)
-            time.sleep(IDLE_GAP_LOW if why in ("improve", "refresh") else IDLE_GAP)
+                nap = 30
+            else:
+                if why in ("improve", "refresh"):
+                    nap = IDLE_GAP_LOW
+            finally:
+                cool_down(nap)
 
 IDLE = IdleWorker()
 

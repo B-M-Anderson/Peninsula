@@ -23,6 +23,11 @@ export const CONCIERGE = {
 // it's a "for now" fast lane for me + friends. Swap for a server-only secret later.
 export const CONCIERGE_PRIORITY_CODE = "Penrose122";
 
+// Channels the "Recent posts" homepage section links out to. Set to null to
+// hide that platform's link; entries themselves live in app/data/posts.ts.
+export const YOUTUBE_URL: string | null = "https://www.youtube.com/channel/UCY7H6pvaCxxdUModczjw_ew";
+export const X_URL: string | null = "https://x.com/Bennett4Now";
+
 export const GITHUB_USER = "B-M-Anderson";
 export const GITHUB_URL = "https://github.com/B-M-Anderson";
 export const LINKEDIN_URL = "https://www.linkedin.com/in/bennett-m-anderson/";

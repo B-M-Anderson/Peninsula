@@ -2,12 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Download, Linkedin, Github, ArrowRight, Camera, Video } from "lucide-react";
+import { Download, Linkedin, Github, ArrowRight, Camera, Video, Youtube } from "lucide-react";
 import StripeBand from "./components/brand/StripeBand";
 import SkillsSection from "./components/SkillsSection";
+import RecentPosts from "./components/RecentPosts";
 import { Button, Card, Badge, ProgressBar, SectionHeading, TextLink } from "./components/ui";
 import { projects, type Project } from "./data/projects";
-import { GITHUB_URL, LINKEDIN_URL, RESUME_PATH, SUBSTACK_URL } from "./data/site";
+import { GITHUB_URL, LINKEDIN_URL, RESUME_PATH, SUBSTACK_URL, YOUTUBE_URL, X_URL } from "./data/site";
+
+function XLogo({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden focusable="false">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 const SITE_NAME = "Bennett M. Anderson";
 const BLURB =
@@ -121,6 +130,16 @@ export default function HomePage() {
                 <Button variant="secondary" href={GITHUB_URL} iconLeft={<Github size={15} />}>
                   GitHub
                 </Button>
+                {YOUTUBE_URL && (
+                  <Button variant="secondary" href={YOUTUBE_URL} iconLeft={<Youtube size={15} />}>
+                    YouTube
+                  </Button>
+                )}
+                {X_URL && (
+                  <Button variant="secondary" href={X_URL} iconLeft={<XLogo />}>
+                    X
+                  </Button>
+                )}
                 {SUBSTACK_URL && (
                   <Button variant="ghost" href={SUBSTACK_URL} iconRight={<ArrowRight size={15} />}>
                     Substack
@@ -136,8 +155,8 @@ export default function HomePage() {
       <main
         style={{ maxWidth: "var(--max-width)", margin: "0 auto", padding: "var(--space-10) var(--space-9) var(--space-11)" }}
       >
-        <div className="md-above" style={{ display: "flex", flexDirection: "column", gap: "var(--space-11)" }}>
-          <section>
+        <div className="md-above md-content-split">
+          <section className="md-col-main">
             <SectionHeading kicker="Selected work">Projects</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
               {projects.slice(0, 3).map((p) => (
@@ -151,12 +170,36 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section>
+          <aside className="md-rail">
+            <section>
+              <SectionHeading kicker="Video · essays · posts">Recent posts</SectionHeading>
+              <RecentPosts />
+              <div style={{ display: "flex", gap: "var(--space-6)", marginTop: "var(--space-6)", flexWrap: "wrap" }}>
+                {YOUTUBE_URL && (
+                  <TextLink href={YOUTUBE_URL} arrow>
+                    YouTube
+                  </TextLink>
+                )}
+                {SUBSTACK_URL && (
+                  <TextLink href={SUBSTACK_URL} arrow>
+                    Substack
+                  </TextLink>
+                )}
+                {X_URL && (
+                  <TextLink href={X_URL} arrow>
+                    X
+                  </TextLink>
+                )}
+              </div>
+            </section>
+          </aside>
+
+          <section className="md-col-main">
             <SectionHeading kicker="What I can do">Skills</SectionHeading>
             <SkillsSection />
           </section>
 
-          <section>
+          <section className="md-col-main">
             <SectionHeading kicker="Lab assistant · quality assurance (naps on keyboards) · morale">Penrose</SectionHeading>
             <p style={{ margin: "0 0 var(--space-6)", fontSize: "var(--text-sm)", color: "var(--text-faint)" }}>
               She answers to her name. Type it anywhere.

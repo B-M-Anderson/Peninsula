@@ -228,6 +228,55 @@ body {
   z-index: 3;
 }
 
+/* Homepage content split — the "Recent posts" rail sits beside the main column
+   on anything wider than a phone/small tablet, and stacks inline directly under
+   Projects below that.
+
+   Grid, not a flex row, for one reason: source order is
+   projects -> rail -> skills -> penrose, which is the order we want when it
+   collapses to a single column (fresh posts right under the work, rather than
+   buried beneath the cat photos). On wide screens the grid re-places the rail
+   into column 2, row 1.
+
+   No `position: sticky` on the rail: three ancestors clip (the page wrapper's
+   overflow:hidden, plus overflow-x-hidden on html/body), each of which is its
+   own scroll container, so sticky silently never engages. Making it work would
+   mean switching all three to overflow:clip, and the html/body rule is
+   load-bearing for the mobile full-bleed DNA strip. Not worth it — the rail
+   reads fine top-aligned.
+
+   The 900px line is set by the project cards, not the rail: below it the main
+   column drops under ~520px and a card's thumbnail + title + badges + progress
+   bar start wrapping badly. Lower it and that's what breaks first. */
+.md-content-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-11);
+}
+
+@media (min-width: 900px) {
+  .md-content-split {
+    grid-template-columns: minmax(0, 1fr) clamp(236px, 27%, 312px);
+    column-gap: var(--space-9);
+  }
+
+  .md-col-main {
+    grid-column: 1;
+  }
+
+  .md-rail {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .md-content-split {
+    column-gap: var(--space-10);
+  }
+}
+
 /* ---- component primitives (built from the tokens above) ---- */
 
 /* Buttons — 3px radius, never pills. Hover changes colour only; press nudges

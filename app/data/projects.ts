@@ -89,7 +89,9 @@ Finished and in use playing wii, watching the matrix, and eventually for use in 
 
 **Built with** Next.js API routes and Upstash Redis on the site side; a single-file Python poller, Ollama and systemd on the desktop side.
 
-It must be noted with such a machine running it hard indefinetly is a lot, so it often shuts down and auto-reboot systems fail. I'm working to improve this, which may include switching from linux mint, which I am now comfortable enough to do, to something with even less overhead. A headless distro may be in order for such a project.`,
+**Keeping it up was the last real problem.** Running a desktop hard and indefinitely is a lot to ask of it, and mine used to fall over with the auto-reboot failing to catch it — a bad property for something a stranger might click at three in the morning. So I rebuilt it. It runs Debian now rather than Mint, and the whole stack runs as system services ordered behind the model instead of user services that quietly die at logout. The BIOS brings the box back after a power cut and the chipset watchdog resets it if the kernel locks up, so it recovers from both with nobody in the room. Every five minutes a watchdog restarts anything that has fallen over, and every half hour it pushes a synthetic question through the real queue — checking that answers are actually coming back, rather than only that the process is still running. Those are different claims, and the second one is the one that matters.
+
+**It also knows when to get out of the way.** On weekdays between nine and five the idle worker stands down, so the machine is quiet while I am working at it. A visitor's question is never the thing that gets paused — only the speculative work is. And the answer library, which took weeks to build and cannot be regenerated, is copied off the machine every night.`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
     date: "August 11, 2026",
     skills: [
@@ -107,9 +109,9 @@ It must be noted with such a machine running it hard indefinetly is a lot, so it
     importantSkills: ["Local LLMs", "System Design", "Security Design"],
     media: "none",
     aiUsage: 80,
-    completion: 82,
+    completion: 100,
     thumbnailUrl: "/thumbnails/concierge.png",
-    wip: true,
+    wip: false,
     ongoing: false,
     terminated: false,
     completed: true,

@@ -148,13 +148,13 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
               gap: "var(--space-4)",
             }}
           >
-            <Stat k="Model" v={status?.model ?? "—"} note="3 billion parameters, 4-bit quantised" />
+            <Stat k="Model" v={status?.model ?? "—"} note="3 billion parameters, 4-bit quantised, held in memory so there is no cold start" />
             <Stat k="Machine" v={cpuShort ?? "desktop"} note={[cores, ram].filter(Boolean).join(" · ") || undefined} />
             <Stat k="Graphics" v="None" note="every token is computed on the CPU" />
             <Stat
               k="Answer library"
               v={cache?.entries != null ? String(cache.entries) : "—"}
-              note="written ahead while the desktop is idle, and still growing"
+              note="written ahead while the desktop is idle, and copied off the machine nightly"
             />
           </div>
 
@@ -178,10 +178,15 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
               />
               <Hop
                 n={4}
+                where="The library is checked first"
+                what="Most of what people ask has already been written out during idle hours. A match comes back in about a third of a second."
+              />
+              <Hop
+                n={5}
                 where="The model reads a profile"
                 what="One document about Bennett. If a fact is not in it, the honest answer is that it is not available."
               />
-              <Hop n={5} where="Back to you" what="Usually 10–20 seconds. If it was asked before, it returns instantly." last />
+              <Hop n={6} where="Back to you" what="Instant if it was written ahead, 10–20 seconds if the question is genuinely new." last />
             </ol>
           </div>
 
@@ -189,6 +194,8 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
             The slow part is honest: a small model thinking on four CPU cores in a house, not a rented GPU.
             While nobody is asking, it works ahead — writing answers to likely questions so the common ones come
             back the moment you hit enter. Ask something new and you will feel the machine actually think.
+            On weekdays between nine and five that preparation stands down so the desktop is quiet while Bennett
+            works at it; a question from a visitor is never the thing that gets paused.
           </p>
 
           {status?.latencyMs != null && (

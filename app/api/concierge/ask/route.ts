@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { redis, relayConfigured, KEYS } from "../upstash";
 import { CONCIERGE_PRIORITY_CODE } from "../../../data/site";
 
@@ -68,11 +68,56 @@ export async function POST(req: Request) {
 
   const id = clientId || randomUUID();
   const secret = process.env.CONCIERGE_SHARED_SECRET;
+
+  // Where the question came from. The desktop node never sees the visitor -- it
+  // only ever reads a job off the queue -- so if this is not attached here it
+  // cannot be recovered later.
+  //
+  // Vercel injects these at the edge. City names arrive percent-encoded.
+  const geo = (h: string) => {
+    const v = req.headers.get(h);
+    if (!v) return undefined;
+    try { return decodeURIComponent(v); } catch { return v; }
+  };
+
+  // Referrer is reduced to host + path. The query string is dropped: it is the
+  // part most likely to carry something personal, and it answers no question
+  // worth answering about where a visitor came from.
+  let ref: string | undefined;
+  const rawRef = req.headers.get("referer");
+  if (rawRef) {
+    try {
+      const u = new URL(rawRef);
+      ref = `${u.host}${u.pathname}`.replace(/\/$/, "");
+    } catch { /* malformed referer: drop it rather than store junk */ }
+  }
+
+  // A stable per-visitor pseudonym instead of the IP itself, so "how many
+  // distinct people asked something" is answerable without keeping an address.
+  // Salted with the shared secret, which never leaves the server; rotating that
+  // secret rotates every pseudonym, which is the correct behaviour.
+  let visitor: string | undefined;
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (ip && secret) {
+    visitor = createHash("sha256").update(`${secret}:${ip}`).digest("hex").slice(0, 12);
+  }
+
+  const origin = {
+    ...(geo("x-vercel-ip-country") ? { country: geo("x-vercel-ip-country") } : {}),
+    ...(geo("x-vercel-ip-country-region") ? { region: geo("x-vercel-ip-country-region") } : {}),
+    ...(geo("x-vercel-ip-city") ? { city: geo("x-vercel-ip-city") } : {}),
+    ...(geo("x-vercel-ip-timezone") ? { tz: geo("x-vercel-ip-timezone") } : {}),
+    ...(ref ? { ref } : {}),
+    ...(visitor ? { visitor } : {}),
+    ...(priority ? { priority: true } : {}),
+  };
+
   const job = JSON.stringify({
     id,
     question,
     ts: Date.now(),
     priority,
+    ...(Object.keys(origin).length ? { origin } : {}),
     ...(history.length ? { history } : {}),
     ...(secret ? { secret } : {}),
   });

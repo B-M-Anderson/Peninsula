@@ -853,6 +853,10 @@ def handle(raw):
     # flag erases itself within a cycle. The only record was a journald line,
     # which rotates. Log it properly so the console has something to read.
     synthetic = str(jid).startswith("watchdog-")
+    # Where the question came from. The node cannot know this by itself -- it
+    # never sees the visitor -- so the site attaches it to the job from Vercel's
+    # geo headers. Absent on older jobs and on the watchdog's own probes.
+    origin = job.get("origin") if isinstance(job.get("origin"), dict) else {}
     warmcache.log_activity("asked", question=oneline(question, 400), jid=str(jid),
                            turns=n_hist, synthetic=synthetic)
     t0 = time.time()
@@ -871,6 +875,11 @@ def handle(raw):
         warmcache.log_activity("failed", question=oneline(question, 400),
                                rail=LAST_RAIL, ms=dt, jid=str(jid),
                                synthetic=synthetic)
+        if not synthetic:
+            # A question that got no answer is the most important thing to keep.
+            warmcache.log_served(jid=str(jid), question=question, answer=None,
+                                 rail=LAST_RAIL, ms=dt, turns=n_hist,
+                                 failed=True, **origin)
         return  # no answer key written; route times out -> honest offline
     redis("SET", ANSWER_PREFIX + str(jid), ans, "EX", ANSWER_TTL)
     # LAST_RAIL only ever reached journald and a TTL'd progress key, so which
@@ -878,6 +887,12 @@ def handle(raw):
     warmcache.log_activity("served", question=oneline(question, 400),
                            answer=oneline(ans, 400), rail=LAST_RAIL, ms=dt,
                            jid=str(jid), synthetic=synthetic)
+    if not synthetic:
+        # The permanent record. Watchdog probes are excluded on purpose: they
+        # would outnumber real visitors and make the log useless as history.
+        warmcache.log_served(jid=str(jid), question=question,
+                             answer=ans, rail=LAST_RAIL, ms=dt,
+                             turns=n_hist, **origin)
     set_progress(jid, "done", via=LAST_RAIL, ms=dt)
     log.info("job %s answered (%dms, %dch) via %s: %s",
              jid, dt, len(ans), LAST_RAIL, oneline(ans, 300))
@@ -909,6 +924,21 @@ def _is_quota_error(err):
 def main():
     log.info("concierge poller up: model=%s url=%s secret=%s",
              MODEL, REST_URL, "on" if SHARED_SECRET else "off")
+    # Declare the node present BEFORE the 8-10s warmup, not after.
+    #
+    # The heartbeat's 120s TTL normally covers a restart, so the site never
+    # notices. It does not cover the case where the relay restarted too and the
+    # key is simply gone -- then the site reports the node unreachable for the
+    # whole warmup, which is a visible outage for a box that is actually fine.
+    #
+    # Saying "online" a few seconds before the first job can be served is the
+    # better trade: a question that arrives in that window waits for the warmup
+    # instead of being met with an offline page. Uptime beats a marginally
+    # more precise readiness signal.
+    try:
+        write_heartbeat()
+    except Exception as e:                                    # noqa: BLE001
+        log.warning("could not publish the startup heartbeat: %s", e)
     warmup()
     n, hits = CACHE.stats()
     log.info("warm cache: %d entries (fingerprint %s), %d lifetime hits", n, FINGERPRINT, hits)

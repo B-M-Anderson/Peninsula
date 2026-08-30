@@ -31,6 +31,12 @@ import time
 STATE_DIR = os.path.expanduser("~/.local/share/concierge")
 CACHE_PATH = os.path.join(STATE_DIR, "cache.json")
 ACTIVITY_PATH = os.path.join(STATE_DIR, "activity.jsonl")
+# activity.jsonl is a rolling operational log -- log_activity() trims it to the
+# last ACTIVITY_MAX lines once it passes 1.5 MB, and the idle worker writes
+# thousands of lines a day, so a real visitor question falls off it within days.
+# served.jsonl is the opposite: only real answers, appended, never trimmed by
+# this process. It is the permanent record.
+SERVED_PATH = os.path.join(STATE_DIR, "served.jsonl")
 ACTIVITY_MAX = 4000          # lines kept before the log is trimmed
 # The library is meant to grow, not to be a small hot cache: entries live on disk
 # and average well under a kilobyte, so 20k answers is a handful of megabytes.
@@ -240,6 +246,28 @@ class Cache:
 
 
 # ---- activity log -----------------------------------------------------------
+
+def log_served(**fields):
+    """Append one permanently-retained record of a real answer.
+
+    Deliberately separate from log_activity():
+      * it is never trimmed, so history does not quietly evaporate;
+      * only real visitor traffic lands here, so the file stays small -- a few
+        hundred bytes per answer means years fit in a handful of megabytes;
+      * a failure to write must never cost a visitor their answer, so it is
+        wrapped and swallowed rather than raised.
+
+    Rotation, if it is ever wanted, is logrotate's job with no expiry. The
+    application does not delete its own audit trail.
+    """
+    try:
+        os.makedirs(STATE_DIR, exist_ok=True)
+        rec = {"ts": int(time.time()), **fields}
+        with open(SERVED_PATH, "a") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:                                        # noqa: BLE001
+        pass
+
 
 def log_activity(action, **fields):
     os.makedirs(STATE_DIR, exist_ok=True)

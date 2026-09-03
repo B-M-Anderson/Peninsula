@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { typeset } from "../lib/typeset";
 
 /**
- * Renders the small amount of markdown the project descriptions actually use:
+ * Renders the small amount of markdown the project descriptions actually use
+ * (put `md-prose` on the wrapper — that class styles the bold and code runs):
  * **bold**, *italic*, `code`, bare URLs, and a leading `~` that marks a line as
  * a footnote-style aside. Deliberately not a markdown library — descriptions
  * are hand-written prose, and this keeps the dependency list and the bundle
@@ -39,9 +40,7 @@ function inline(text: string, keyPrefix: string, links: boolean): ReactNode[] {
     const key = `${keyPrefix}-${i}`;
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={key} style={{ fontWeight: 600, color: "var(--text-body)" }}>
-          {typeset(part.slice(2, -2))}
-        </strong>
+        <strong key={key}>{typeset(part.slice(2, -2))}</strong>
       );
     }
     if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) {
@@ -49,9 +48,7 @@ function inline(text: string, keyPrefix: string, links: boolean): ReactNode[] {
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
-        <code key={key} style={{ fontFamily: "var(--font-mono)", fontSize: "0.9em", background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "1px 5px", whiteSpace: "nowrap" }}>
-          {part.slice(1, -1)}
-        </code>
+        <code key={key}>{part.slice(1, -1)}</code>
       );
     }
     if (/^https?:\/\//.test(part)) {

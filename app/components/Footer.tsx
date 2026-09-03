@@ -18,14 +18,14 @@ export default function Footer() {
           flexWrap: "wrap",
         }}
       >
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
+        <span className="md-label">
           {SITE_NAME} · © <Year />
         </span>
         <nav aria-label="Footer" style={{ display: "flex", gap: "var(--space-6)", flexWrap: "wrap" }}>
           <TextLink href={GITHUB_URL}>GitHub</TextLink>
           <TextLink href={LINKEDIN_URL}>LinkedIn</TextLink>
           <TextLink href={CONTACT_MAILTO}>Email</TextLink>
-          <TextLink href={RESUME_PATH}>Resume</TextLink>
+          <TextLink href={RESUME_PATH} newTab>Resume</TextLink>
           <TextLink href={REPO_URL}>Source</TextLink>
         </nav>
       </div>

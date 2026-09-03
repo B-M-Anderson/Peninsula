@@ -395,6 +395,63 @@ select {
   color: var(--text-muted);
 }
 
+/* The small mono label: kickers, <dt> terms, field labels, the footer line. */
+.md-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Prose rendered from the project descriptions (RichText). */
+.md-prose strong {
+  font-weight: 600;
+  color: var(--text-body);
+}
+.md-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* A card that is itself a link: the focus ring follows the card's corners. */
+.md-card-link {
+  display: block;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Navbar links: rest, hover, current page — and the current page keeps its
+   underline when it also carries the focus ring. */
+.md-nav-link {
+  color: var(--text-muted);
+  transition: color 0.15s var(--ease-standard);
+}
+.md-nav-link:hover {
+  color: var(--text-strong);
+}
+.md-nav-link[aria-current="page"] {
+  color: var(--text-strong);
+  box-shadow: inset 0 -1.5px 0 var(--text-accent);
+}
+.md-nav-link[aria-current="page"]:focus-visible {
+  box-shadow: inset 0 -1.5px 0 var(--text-accent), var(--focus-ring);
+}
+
+/* A disclosure chevron that turns when its button is expanded. */
+.md-chevron {
+  transition: transform 0.25s var(--ease-standard);
+}
+[aria-expanded="true"] > .md-chevron {
+  transform: rotate(180deg);
+}
+
 /* Buttons — 3px radius, never pills. Hover changes colour only; press nudges
    1px down and one step darker. */
 .md-btn {
@@ -432,10 +489,11 @@ select {
   background: var(--action-primary-bg);
   color: var(--action-primary-fg);
 }
-.md-btn-primary:hover {
+/* Hover and press only answer on a button that would actually take the click. */
+.md-btn-primary:not(:disabled):not([aria-disabled="true"]):hover {
   background: var(--action-primary-bg-hover);
 }
-.md-btn-primary:active {
+.md-btn-primary:not(:disabled):not([aria-disabled="true"]):active {
   background: var(--action-primary-bg-active);
 }
 .md-btn-secondary {
@@ -443,7 +501,7 @@ select {
   color: var(--text-body);
   background: transparent;
 }
-.md-btn-secondary:hover {
+.md-btn-secondary:not(:disabled):not([aria-disabled="true"]):hover {
   border-color: var(--border-accent);
   color: var(--text-strong);
 }
@@ -451,7 +509,7 @@ select {
   color: var(--text-muted);
   background: transparent;
 }
-.md-btn-ghost:hover {
+.md-btn-ghost:not(:disabled):not([aria-disabled="true"]):hover {
   color: var(--text-strong);
 }
 
@@ -559,6 +617,35 @@ select {
   color: var(--text-strong);
   border-bottom-color: var(--border-accent);
 }
+/* A <button> dressed as a text link (back to top, the darkroom's entrance). */
+button.md-link {
+  background: none;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+/* On touch screens the small buttons and standalone links keep their drawn
+   size but answer to a 44px-tall area. */
+@media (pointer: coarse) {
+  .md-btn-sm,
+  button.md-link,
+  .md-site-footer .md-link {
+    position: relative;
+  }
+  .md-btn-sm::before,
+  button.md-link::before,
+  .md-site-footer .md-link::before {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
+  }
+  .md-site-footer .md-link::before,
+  button.md-link::before {
+    inset: -10px 0;
+  }
+}
 
 /* Disclosure rows — hairline separators, a + marker that rotates 45° into ×,
    panels open by animating grid-template-rows. */
@@ -573,15 +660,23 @@ select {
 .md-acc-trigger {
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-5);
   padding: var(--space-6) 0;
   background: transparent;
   border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
   color: var(--text-body);
+}
+/* The ring and the landed wash stand a little off the text instead of
+   hugging it; the row's own hairlines stay where the column is. */
+.md-acc-trigger:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--text-accent);
+  outline-offset: 6px;
 }
 .md-acc-marker {
   flex: 0 0 auto;
@@ -618,9 +713,6 @@ select {
 }
 /* Collapsed rows say something: a one-line summary and the key skills. Both
    step aside once the row is open (the panel carries the full text). */
-.md-acc-trigger {
-  align-items: flex-start;
-}
 .md-acc-trigger > span:last-child {
   padding-top: 4px;
 }
@@ -716,6 +808,7 @@ select {
 /* Theme toggle: sun and moon trade places with a small turn, in step with
    the ground fade rather than cutting ahead of it. */
 .md-theme-btn {
+  color: var(--text-muted);
   transition: color 0.15s var(--ease-standard);
 }
 .md-theme-btn:hover {
@@ -727,7 +820,10 @@ select {
   place-items: center;
   transition: transform 0.35s var(--ease-out), opacity 0.25s var(--ease-standard);
 }
-.md-theme-icon[data-on="false"] {
+/* The <html> class picks the icon, as it does for the mark and theme-color, so
+   the server's markup is right for either ground and nothing flips on load. */
+html.dark .md-theme-icon[data-icon="moon"],
+html.light .md-theme-icon[data-icon="sun"] {
   opacity: 0;
   transform: rotate(-90deg) scale(0.6);
   pointer-events: none;
@@ -754,11 +850,11 @@ select {
 @keyframes md-landed {
   from {
     background: color-mix(in srgb, var(--text-accent) 16%, transparent);
+    box-shadow: 0 0 0 var(--space-3) color-mix(in srgb, var(--text-accent) 16%, transparent);
   }
 }
 .md-landed > .md-acc-trigger {
-  animation: md-landed 1.4s var(--ease-standard) 0.3s both;
-  border-radius: var(--radius-sm);
+  animation: md-landed 1.4s var(--ease-standard) both;
 }
 
 /* Reading hairline on the long projects page: the thin band's colour, growing
@@ -876,6 +972,8 @@ select {
   }
   *, *::before, *::after {
     transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
     animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
   }
 }

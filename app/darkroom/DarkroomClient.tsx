@@ -5,9 +5,12 @@ import Image from "next/image";
 import { Upload } from "lucide-react";
 import { Button, Card } from "../components/ui";
 import { DARKROOM_MAX_UPLOAD_BYTES } from "../data/site";
+import { json, type Photo, type PhotosResponse, type UploadResponse } from "../lib/api-types";
 
-type Photo = { url: string; pathname: string; uploadedAt: string };
 type Gallery = { loading: boolean; configured: boolean; photos: Photo[]; error: boolean };
+// The one status line under the form: what it says, and whether it is a
+// problem, progress or a result — the colour and the focus move follow.
+type Msg = { text: string; tone: "error" | "busy" | "ok" };
 
 const MAX_MB = Math.round(DARKROOM_MAX_UPLOAD_BYTES / (1024 * 1024));
 
@@ -17,14 +20,6 @@ function printDate(iso: string): string {
     ? ""
     : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
-
-const label = {
-  fontFamily: "var(--font-mono)",
-  fontSize: "var(--text-3xs)",
-  letterSpacing: "var(--tracking-label)",
-  textTransform: "uppercase" as const,
-  color: "var(--text-faint)",
-};
 
 const field = {
   background: "var(--surface-sunken)",
@@ -41,15 +36,17 @@ export default function DarkroomClient() {
   const [gallery, setGallery] = useState<Gallery>({ loading: true, configured: false, photos: [], error: false });
   const [station, setStation] = useState(false);
   const [code, setCode] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<Msg | null>(null);
+  const [invalid, setInvalid] = useState<"file" | "code" | null>(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const codeRef = useRef<HTMLInputElement>(null);
 
   // `fresh` adds a cache-busting query: the CDN keys on the URL and would
   // otherwise hand back the list it cached a moment before the upload.
   const refresh = (signal?: AbortSignal, fresh = false) =>
     fetch(fresh ? `/api/photos?fresh=${Date.now()}` : "/api/photos", { signal, cache: fresh ? "no-store" : "default" })
-      .then((r) => r.json())
+      .then(json<PhotosResponse>)
       .then((data) =>
         setGallery((g) =>
           data.error
@@ -71,20 +68,17 @@ export default function DarkroomClient() {
 
   const upload = async () => {
     const file = fileRef.current?.files?.[0];
-    if (!file) {
-      setMsg("Pick a file first.");
-      return;
-    }
-    if (file.size > DARKROOM_MAX_UPLOAD_BYTES) {
-      setMsg(`That print is too large — ${MAX_MB} MB is the ceiling.`);
-      return;
-    }
-    if (!code) {
-      setMsg("Access code required.");
-      return;
-    }
+    const fail = (text: string, field: "file" | "code") => {
+      setMsg({ text, tone: "error" });
+      setInvalid(field);
+      (field === "file" ? fileRef : codeRef).current?.focus();
+    };
+    if (!file) return fail("Pick a file first.", "file");
+    if (file.size > DARKROOM_MAX_UPLOAD_BYTES) return fail(`That print is too large — ${MAX_MB} MB is the ceiling.`, "file");
+    if (!code) return fail("Access code required.", "code");
+    setInvalid(null);
     setBusy(true);
-    setMsg("Developing…");
+    setMsg({ text: "Developing…", tone: "busy" });
     try {
       const form = new FormData();
       form.append("photo", file);
@@ -93,24 +87,26 @@ export default function DarkroomClient() {
         headers: { "x-darkroom-code": code },
         body: form,
       });
-      const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      const data = await json<UploadResponse>(res).catch((): UploadResponse => ({ error: `HTTP ${res.status}` }));
       if (res.ok) {
-        setMsg("Developed. It's on the wall.");
+        setMsg({ text: "Developed. It's on the wall.", tone: "ok" });
         if (fileRef.current) fileRef.current.value = "";
         // Show the new print immediately, then reconcile with the store.
-        if (data.url) {
+        const url = data.url;
+        if (url) {
           setGallery((g) => ({
             ...g,
             configured: true,
-            photos: [{ url: data.url, pathname: `gallery/${Date.now()}-${file.name}`, uploadedAt: new Date().toISOString() }, ...g.photos],
+            photos: [{ url, pathname: `gallery/${Date.now()}-${file.name}`, uploadedAt: new Date().toISOString() }, ...g.photos],
           }));
         }
         refresh(undefined, true);
       } else {
-        setMsg(`Rejected: ${data.error ?? `HTTP ${res.status}`}.`);
+        setMsg({ text: `Rejected: ${data.error ?? `HTTP ${res.status}`}.`, tone: "error" });
+        if (res.status === 401) setInvalid("code");
       }
     } catch {
-      setMsg("The print didn't make it. Try again.");
+      setMsg({ text: "The print didn't make it. Try again.", tone: "error" });
     }
     setBusy(false);
   };
@@ -129,7 +125,6 @@ export default function DarkroomClient() {
           aria-expanded={station}
           aria-controls="develop-station"
           onClick={() => setStation((s) => !s)}
-          style={{ background: "none", border: 0, padding: 0, cursor: "pointer", borderBottom: "1px solid transparent" }}
         >
           Keeper&rsquo;s entrance <span aria-hidden>{station ? "−" : "+"}</span>
         </button>
@@ -147,21 +142,28 @@ export default function DarkroomClient() {
             style={{ display: "grid", gap: "var(--space-5)", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", alignItems: "end" }}
           >
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", minWidth: 0 }}>
-              <span style={label}>Print · JPEG, PNG, WebP or GIF · {MAX_MB} MB max</span>
+              <span className="md-label">Print · JPEG, PNG, WebP or GIF · {MAX_MB} MB max</span>
               <input
                 ref={fileRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
+                aria-invalid={invalid === "file" || undefined}
+                onChange={() => setInvalid((v) => (v === "file" ? null : v))}
                 disabled={busy}
                 style={{ ...field, fontSize: "var(--text-sm)" }}
               />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", minWidth: 0 }}>
-              <span style={label}>Access code</span>
+              <span className="md-label">Access code</span>
               <input
+                ref={codeRef}
                 type="password"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                aria-invalid={invalid === "code" || undefined}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  setInvalid((v) => (v === "code" ? null : v));
+                }}
                 autoComplete="current-password"
                 disabled={busy}
                 style={field}
@@ -172,18 +174,24 @@ export default function DarkroomClient() {
                 Develop
               </Button>
             </div>
-            <p role="status" aria-live="polite" style={{ margin: 0, gridColumn: "1 / -1", fontSize: "var(--text-sm)", color: "var(--text-muted)", minHeight: "1.4em" }}>
-              {msg}
-              {!gallery.loading && !gallery.configured && !gallery.error
-                ? " Storage isn't set up yet, so nothing can be hung."
-                : null}
+            <p
+              role="status"
+              aria-live="polite"
+              style={{ margin: 0, gridColumn: "1 / -1", fontSize: "var(--text-sm)", color: msg?.tone === "error" ? "var(--status-wip-text)" : "var(--text-muted)", minHeight: "1.4em" }}
+            >
+              {msg?.text}
             </p>
+            {!gallery.loading && !gallery.configured && !gallery.error ? (
+              <p style={{ margin: 0, gridColumn: "1 / -1", fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>
+                Storage isn&rsquo;t set up yet, so nothing can be hung.
+              </p>
+            ) : null}
           </form>
         </Card>
       )}
 
       <section aria-labelledby="wall-heading">
-        <h2 id="wall-heading" style={{ ...label, margin: "0 0 var(--space-5)" }}>
+        <h2 id="wall-heading" className="md-label" style={{ margin: "0 0 var(--space-5)" }}>
           The wall{gallery.loading ? "" : ` · ${count} ${count === 1 ? "print" : "prints"}`}
         </h2>
         {gallery.loading && (

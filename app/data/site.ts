@@ -38,12 +38,9 @@ export const CONCIERGE = {
   host: "desktop node · home network · outbound-only relay",
 };
 
-// Priority passphrase for the /ask concierge. Typing this in the ask box grants
-// queue-priority (the question jumps ahead of everyone) and exempts the session
-// from the per-visitor request limit. Soft gate only — it's in the client
-// bundle, so it's not real security; it's a "for now" fast lane for me +
-// friends. Swap for a server-only secret later.
-export const CONCIERGE_PRIORITY_CODE = "Penrose122";
+// The /ask fast-lane passphrase is NOT here: it lives in the
+// CONCIERGE_PRIORITY_CODE environment variable and is checked on the server,
+// so it never ships in the page. Typing it into the ask box unlocks priority.
 
 // Channels the "Recent posts" homepage section links out to. Set to null to
 // hide that platform's link; entries themselves live in app/data/posts.ts.

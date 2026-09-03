@@ -1,24 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, MotionConfig, useReducedMotion } from "framer-motion";
 import { Send } from "lucide-react";
 import { TextLink } from "../components/ui";
-import { CONCIERGE_PRIORITY_CODE } from "../data/site";
+import { json, type AskResponse, type ProgressResponse, type StatusResponse } from "../lib/api-types";
 import SystemPanel from "./SystemPanel";
-
-type Status = {
-  online: boolean;
-  provisioned: boolean;
-  model: string | null;
-  runtime: string;
-  host: string;
-  note?: string;
-  latencyMs?: number | null;
-  machine?: { cpu?: string; cores?: number; ramGb?: number; gpu?: string | null } | null;
-  cache?: { entries?: number; hits?: number } | null;
-  idle?: { precomputed?: number; improved?: number } | null;
-};
 
 type Line = { from: "you" | "bot" | "sys"; text: string };
 
@@ -63,22 +49,29 @@ const TOPICS: { label: string; q: string }[] = [
 ];
 
 const MAX = 500;
-const EASE: [number, number, number, number] = [0.16, 0.84, 0.44, 1];
 // The node's heartbeat expires after ~30s, so the pill re-checks on that cadence.
 const STATUS_REFRESH_MS = 30000;
 const PROGRESS_POLL_MS = 2000;
 
+const bubble = {
+  padding: "10px 14px",
+  borderRadius: 14,
+  fontSize: "var(--text-sm)",
+  lineHeight: "var(--leading-relaxed)",
+} as const;
+
 export default function AskClient() {
-  const [status, setStatus] = useState<Status | null>(null);
+  const [status, setStatus] = useState<StatusResponse | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
-  const [priority, setPriority] = useState(false);
+  // The fast-lane passphrase, once the server has recognised it. It never
+  // ships in the page; it is whatever was typed, kept for this visit only.
+  const [priority, setPriority] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const inflight = useRef<{ abort: AbortController; poll: ReturnType<typeof setInterval> } | null>(null);
-  const reduce = useReducedMotion();
 
   // Live status: on mount, every 30s while the tab is visible, and after each
   // answer — so the pill never claims "Online" about a desktop that went to sleep.
@@ -87,8 +80,8 @@ export default function AskClient() {
     const load = () => {
       if (document.hidden) return;
       fetch("/api/concierge/status", { cache: "no-store", signal: ctrl.signal })
-        .then((r) => r.json())
-        .then((s: Status) => setStatus(s))
+        .then(json<StatusResponse>)
+        .then((s) => setStatus(s))
         .catch(() => {});
     };
     load();
@@ -110,23 +103,13 @@ export default function AskClient() {
   }, []);
 
   useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: reduce ? "auto" : "smooth" });
-  }, [lines, busy, reduce]);
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: still ? "auto" : "smooth" });
+  }, [lines, busy]);
 
   const ask = async (raw: string) => {
     const q = raw.trim();
     if (!q || busy) return;
-
-    // Priority passphrase: unlock the fast lane instead of asking a question.
-    if (q === CONCIERGE_PRIORITY_CODE) {
-      setInput("");
-      setPriority(true);
-      setLines((l) => [
-        ...l,
-        { from: "sys", text: "Priority access on — your questions now jump the queue and skip limits." },
-      ]);
-      return;
-    }
 
     setInput("");
     setBusy(true);
@@ -142,7 +125,7 @@ export default function AskClient() {
       const seconds = Math.round((Date.now() - startedAt) / 1000);
       try {
         const r = await fetch(`/api/concierge/progress?id=${jobId}`, { cache: "no-store", signal: abort.signal });
-        const p = await r.json();
+        const p = await json<ProgressResponse>(r);
         setProgress({ state: p.state ?? "queued", ahead: p.ahead ?? 0, seconds });
       } catch {
         setProgress((prev) => (prev ? { ...prev, seconds } : prev));
@@ -162,14 +145,19 @@ export default function AskClient() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(priority ? { "x-concierge-priority": CONCIERGE_PRIORITY_CODE } : {}),
+          ...(priority ? { "x-concierge-priority": priority } : {}),
         },
         body: JSON.stringify({ question: q.slice(0, MAX), history: history.slice(-2), id: jobId }),
         signal: abort.signal,
       });
-      const data = await res.json().catch(() => ({}));
-      if (data.answer) {
-        setLines((l) => [...l, { from: "bot", text: data.answer }]);
+      const data = await json<AskResponse>(res).catch((): AskResponse => ({ online: false, answer: null }));
+      if (data.unlocked) {
+        // The passphrase was typed instead of a question: unlock the fast lane
+        // and keep the passphrase itself out of the transcript.
+        setPriority(q);
+        setLines((l) => [...l.slice(0, -1), { from: "sys", text: "Priority access on — your questions now jump the queue and skip limits." }]);
+      } else if (data.answer) {
+        setLines((l) => [...l, { from: "bot", text: data.answer as string }]);
       } else if (data.limited) {
         setLines((l) => [...l, { from: "sys", text: "That's a lot of questions in one minute — give it a moment before the next one." }]);
       } else if (data.busy) {
@@ -206,270 +194,206 @@ export default function AskClient() {
   const asleep = status !== null && !online;
 
   return (
-    <MotionConfig reducedMotion="user">
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-          {/* chat panel */}
-          <motion.div
-            initial={reduce ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: EASE }}
-            style={{
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "var(--radius-lg)",
-              background: "var(--surface-card)",
-              boxShadow: "var(--shadow-sm)",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
-            {/* header: identity + live status */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "var(--space-4)",
-                padding: "var(--space-4) var(--space-5)",
-                borderBottom: "1px solid var(--border-subtle)",
-              }}
-            >
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-3)" }}>
-                <span
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "var(--text-3xs)",
-                    letterSpacing: "var(--tracking-label)",
-                    textTransform: "uppercase",
-                    color: "var(--text-faint)",
-                  }}
-                >
-                  Concierge
-                </span>
-                {priority && (
-                  <motion.span
-                    initial={reduce ? false : { opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, ease: EASE }}
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "var(--text-3xs)",
-                      letterSpacing: "var(--tracking-label)",
-                      textTransform: "uppercase",
-                      color: "var(--action-primary-fg)",
-                      background: "var(--action-primary-bg)",
-                      borderRadius: "var(--radius-sm)",
-                      padding: "2px 6px",
-                    }}
-                  >
-                    Priority
-                  </motion.span>
-                )}
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-2)" }}>
-                <span
-                  aria-hidden
-                  className={pill.pulse && !reduce ? "md-pulse" : undefined}
-                  style={{ width: 7, height: 7, borderRadius: "50%", background: pill.dot, flex: "0 0 auto" }}
-                />
-                <span style={{ fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>{pill.label}</span>
-              </span>
-            </div>
-
-            {/* messages / topic picker */}
-            <div
-              ref={logRef}
-              role="log"
-              aria-live="polite"
-              aria-relevant="additions"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "var(--space-4)",
-                padding: "var(--space-5)",
-                height: "min(56vh, 440px)",
-                overflowY: "auto",
-              }}
-            >
-              {empty ? (
-                <motion.div
-                  initial={reduce ? false : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-5)", textAlign: "center" }}
-                >
-                  {asleep && (
-                    <p style={{ margin: 0, maxWidth: 420, fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-                      The desktop is asleep right now. A question will wait up to 45 seconds for it to wake, then
-                      give up — Projects and Contact still work.
-                    </p>
-                  )}
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "var(--text-3xs)",
-                      letterSpacing: "var(--tracking-label)",
-                      textTransform: "uppercase",
-                      color: "var(--text-faint)",
-                    }}
-                  >
-                    Pick a topic — or just ask
-                  </span>
-                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-2)", maxWidth: 460 }}>
-                    {TOPICS.map((t, i) => (
-                      <motion.button
-                        key={t.label}
-                        type="button"
-                        onClick={() => ask(t.q)}
-                        disabled={busy}
-                        className="md-btn md-btn-secondary md-btn-sm"
-                        initial={reduce ? false : { opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 + i * 0.06, duration: 0.3, ease: EASE }}
-                      >
-                        {t.label}
-                      </motion.button>
-                    ))}
-                  </div>
-                </motion.div>
-              ) : (
-                <>
-                {lines.map((line, i) => {
-                  if (line.from === "sys") {
-                    return (
-                      <motion.p
-                        key={i}
-                        initial={reduce ? false : { opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.25 }}
-                        style={{ margin: 0, alignSelf: "center", maxWidth: "90%", textAlign: "center", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-faint)" }}
-                      >
-                        {line.text}
-                      </motion.p>
-                    );
-                  }
-                  const you = line.from === "you";
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: reduce ? 0 : 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, ease: EASE }}
-                      style={{
-                        alignSelf: you ? "flex-end" : "flex-start",
-                        maxWidth: "86%",
-                        padding: "10px 14px",
-                        borderRadius: 14,
-                        borderBottomRightRadius: you ? 4 : 14,
-                        borderBottomLeftRadius: you ? 14 : 4,
-                        background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
-                        color: you ? "var(--action-primary-fg)" : "var(--text-body)",
-                        border: you ? "none" : "1px solid var(--border-subtle)",
-                        fontSize: "var(--text-sm)",
-                        lineHeight: "var(--leading-relaxed)",
-                        whiteSpace: "pre-line",
-                      }}
-                    >
-                      {line.text}
-                    </motion.div>
-                  );
-                })}
-                </>
-              )}
-
-              {busy && (
-                <motion.div
-                  initial={reduce ? false : { opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  style={{
-                    alignSelf: "flex-start",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "var(--space-3)",
-                    padding: "10px 14px",
-                    borderRadius: 14,
-                    borderBottomLeftRadius: 4,
-                    background: "var(--surface-sunken)",
-                    border: "1px solid var(--border-subtle)",
-                  }}
-                >
-                  <span style={{ display: "inline-flex", gap: 4 }}>
-                    {[0, 1, 2].map((d) => (
-                      <span
-                        key={d}
-                        className={reduce ? undefined : "md-pulse"}
-                        style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-accent)", animationDelay: `${d * 0.2}s` }}
-                      />
-                    ))}
-                  </span>
-                  <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                    {progress
-                      ? progressLabel(progress)
-                      : "thinking — real machine at home, give it a few seconds"}
-                  </span>
-                </motion.div>
-              )}
-            </div>
-
-            {/* composer */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                ask(input);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-4) var(--space-5)", borderTop: "1px solid var(--border-subtle)" }}
-            >
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value.slice(0, MAX))}
-                placeholder={asleep ? "Ask anyway…" : "Ask about Bennett…"}
-                aria-label="Ask about Bennett"
-                enterKeyHint="send"
-                autoComplete="off"
-                readOnly={busy}
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+      {/* chat panel — arrives with the page; the bands are the one entrance */}
+      <div
+        style={{
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "var(--radius-lg)",
+          background: "var(--surface-card)",
+          boxShadow: "var(--shadow-sm)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        {/* header: identity + live status */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "var(--space-4)",
+            padding: "var(--space-4) var(--space-5)",
+            borderBottom: "1px solid var(--border-subtle)",
+          }}
+        >
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-3)" }}>
+            <span className="md-label">Concierge</span>
+            {priority && (
+              <span
+                className="md-label md-fade-in"
                 style={{
-                  flex: 1,
-                  minWidth: 0,
-                  background: "var(--surface-sunken)",
-                  border: "1px solid var(--border-subtle)",
+                  color: "var(--action-primary-fg)",
+                  background: "var(--action-primary-bg)",
                   borderRadius: "var(--radius-sm)",
-                  padding: "12px 14px",
-                  fontFamily: "var(--font-body)",
-                  fontSize: 16,
-                  color: "var(--text-body)",
-                  outline: "none",
+                  padding: "2px 6px",
                 }}
-              />
-              <button
-                type="submit"
-                disabled={busy || input.trim().length === 0}
-                className="md-btn md-btn-primary"
-                style={{ minHeight: 44 }}
               >
-                <Send size={16} aria-hidden />
-                <span>Ask</span>
-              </button>
-            </form>
-          </motion.div>
-
-          {/* what's actually running, for anyone curious enough to look */}
-          <SystemPanel status={status} />
-
-          {/* footer: escape hatches + counter */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
-            <span style={{ display: "inline-flex", gap: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
-              <TextLink href="/projects">Projects</TextLink>
-              <TextLink href="/contact">Contact</TextLink>
-            </span>
-            {input.length > 0 && (
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip)" : "var(--text-faint)" }}>
-                {input.length}/{MAX}
+                Priority
               </span>
             )}
-          </div>
+          </span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-2)" }}>
+            <span
+              aria-hidden
+              className={pill.pulse ? "md-pulse" : undefined}
+              style={{ width: 7, height: 7, borderRadius: "50%", background: pill.dot, flex: "0 0 auto" }}
+            />
+            <span style={{ fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>{pill.label}</span>
+          </span>
         </div>
-    </MotionConfig>
+
+        {/* messages / topic picker */}
+        <div
+          ref={logRef}
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-4)",
+            padding: "var(--space-5)",
+            height: "min(56vh, 440px)",
+            overflowY: "auto",
+          }}
+        >
+          {empty ? (
+            <div style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-5)", textAlign: "center" }}>
+              {asleep && (
+                <p style={{ margin: 0, maxWidth: 420, fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
+                  The desktop is asleep right now. A question will wait up to 45 seconds for it to wake, then
+                  give up — Projects and Contact still work.
+                </p>
+              )}
+              <span className="md-label">Pick a topic — or just ask</span>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-2)", maxWidth: 460 }}>
+                {TOPICS.map((t) => (
+                  <button key={t.label} type="button" onClick={() => ask(t.q)} disabled={busy} className="md-btn md-btn-secondary md-btn-sm">
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            lines.map((line, i) => {
+              if (line.from === "sys") {
+                return (
+                  <p
+                    key={i}
+                    className="md-fade-in"
+                    style={{ margin: 0, alignSelf: "center", maxWidth: "90%", textAlign: "center", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-faint)" }}
+                  >
+                    {line.text}
+                  </p>
+                );
+              }
+              const you = line.from === "you";
+              return (
+                <div
+                  key={i}
+                  className="md-fade-in"
+                  style={{
+                    ...bubble,
+                    alignSelf: you ? "flex-end" : "flex-start",
+                    maxWidth: "86%",
+                    borderBottomRightRadius: you ? 4 : 14,
+                    borderBottomLeftRadius: you ? 14 : 4,
+                    background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
+                    color: you ? "var(--action-primary-fg)" : "var(--text-body)",
+                    border: you ? "none" : "1px solid var(--border-subtle)",
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {line.text}
+                </div>
+              );
+            })
+          )}
+
+          {busy && (
+            <div
+              className="md-fade-in"
+              style={{
+                ...bubble,
+                alignSelf: "flex-start",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "var(--space-3)",
+                borderBottomLeftRadius: 4,
+                background: "var(--surface-sunken)",
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              <span style={{ display: "inline-flex", gap: 4 }}>
+                {[0, 1, 2].map((d) => (
+                  <span
+                    key={d}
+                    className="md-pulse"
+                    style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-accent)", animationDelay: `${d * 0.2}s` }}
+                  />
+                ))}
+              </span>
+              <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
+                {progress ? progressLabel(progress) : "thinking — real machine at home, give it a few seconds"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* composer */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            ask(input);
+          }}
+          style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-4) var(--space-5)", borderTop: "1px solid var(--border-subtle)" }}
+        >
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value.slice(0, MAX))}
+            placeholder={asleep ? "Ask anyway…" : "Ask about Bennett…"}
+            aria-label="Ask about Bennett"
+            enterKeyHint="send"
+            autoComplete="off"
+            readOnly={busy}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: "var(--surface-sunken)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-sm)",
+              padding: "12px 14px",
+              fontFamily: "var(--font-body)",
+              fontSize: 16,
+              color: "var(--text-body)",
+              outline: "none",
+            }}
+          />
+          <button type="submit" disabled={busy || input.trim().length === 0} className="md-btn md-btn-primary" style={{ minHeight: 44 }}>
+            <Send size={16} aria-hidden />
+            <span>Ask</span>
+          </button>
+        </form>
+      </div>
+
+      {/* what's actually running, for anyone curious enough to look */}
+      <SystemPanel status={status} />
+
+      {/* footer: escape hatches + counter */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
+        <span style={{ display: "inline-flex", gap: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
+          <TextLink href="/projects">Projects</TextLink>
+          <TextLink href="/contact">Contact</TextLink>
+        </span>
+        {input.length > 0 && (
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip-text)" : "var(--text-faint)" }}>
+            {input.length}/{MAX}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }

@@ -1,78 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
-import { Button, Badge, Chip, ProgressBar, TextLink, Accordion, statusLabel, type AccordionItem } from "../components/ui";
-import MediaBadge from "../components/MediaBadge";
-import RichText from "../components/RichText";
-import YouTubeEmbed, { youTubeId } from "../components/YouTubeEmbed";
-import { publishedProjects, projectSlug, relatedProjects, statusOf, summaryOf, type Project } from "../data/projects";
+import { useMemo, useState, type ReactNode } from "react";
+import { Button } from "../components/ui";
+import { Accordion, type AccordionItem } from "../components/Accordion";
 
-function ProjectDetail({ p }: { p: Project }) {
-  const skills = [...p.skills].sort(
-    (a, b) => (p.importantSkills?.includes(b) ? 1 : 0) - (p.importantSkills?.includes(a) ? 1 : 0)
-  );
-  const videoId = p.videoUrl ? youTubeId(p.videoUrl) : null;
-  const related = relatedProjects(p);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-      <div className="md-acc-date" style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
-        Updated <span style={{ color: "var(--text-muted)" }}>{p.date}</span>
-      </div>
-      {p.imageUrl && (
-        <div style={{ borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--border-subtle)", maxWidth: 420 }}>
-          <Image src={p.imageUrl} alt={`${p.title} preview`} width={420} height={Math.round(420 / (p.imageAspect ?? 1))} sizes="(max-width: 640px) 100vw, 420px" style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
-      )}
-      <p style={{ margin: 0, maxWidth: "var(--measure)", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)", whiteSpace: "pre-line" }}>
-        <RichText text={p.description} />
-      </p>
-      <ul aria-label="Skills used" style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", listStyle: "none", margin: 0, padding: 0 }}>
-        {skills.map((s) => (
-          <li key={s}>
-            <Chip emphasis={p.importantSkills?.includes(s) ? "strong" : "normal"}>{s}</Chip>
-          </li>
-        ))}
-      </ul>
-      <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "var(--space-8)", maxWidth: 520 }}>
-        {p.completion !== undefined && <ProgressBar label="completion" value={p.completion} />}
-        {p.aiUsage !== undefined && <ProgressBar label="estimated ai usage" value={p.aiUsage} tone="moss" />}
-      </div>
-      {videoId && (
-        <div style={{ maxWidth: 560 }}>
-          <YouTubeEmbed id={videoId} title={`${p.title} — video`} />
-        </div>
-      )}
-      <div style={{ display: "flex", gap: "var(--space-7)", flexWrap: "wrap" }}>
-        {p.githubUrl && (
-          <TextLink href={p.githubUrl} arrow>
-            View on GitHub
-          </TextLink>
-        )}
-        {p.videoUrl && (
-          <TextLink href={p.videoUrl} arrow>
-            Watch on YouTube
-          </TextLink>
-        )}
-      </div>
-      {related.length > 0 && (
-        <div>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)", marginBottom: "var(--space-3)" }}>
-            Also see
-          </div>
-          <div style={{ display: "flex", gap: "var(--space-6)", flexWrap: "wrap" }}>
-            {related.map((r) => (
-              // plain anchors: a same-page #hash fires hashchange, which the accordion follows
-              <TextLink key={r.title} href={`#${projectSlug(r)}`} arrow>
-                {r.title}
-              </TextLink>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+/**
+ * One row, built on the server (projects/page.tsx) so the data module never
+ * enters a client bundle. The client keeps only what sorting needs.
+ */
+export type ProjectRow = {
+  id: string;
+  dateMs: number;
+  completion: number;
+  title: ReactNode;
+  subtitle: string;
+  extra: ReactNode;
+  meta: string;
+  content: ReactNode;
+};
 
 const sortOptions = [
   ["new", "Newest"],
@@ -82,54 +27,21 @@ const sortOptions = [
 
 type SortKey = (typeof sortOptions)[number][0];
 
-const byDate = (p: Project) => new Date(p.date).getTime();
-
-export default function ProjectsList() {
+export default function ProjectsList({ rows }: { rows: ProjectRow[] }) {
   const [sort, setSort] = useState<SortKey>("new");
 
-  const list = useMemo<Project[]>(() => {
-    const c = [...publishedProjects];
-    if (sort === "new") c.sort((a, b) => byDate(b) - byDate(a));
-    if (sort === "old") c.sort((a, b) => byDate(a) - byDate(b));
-    if (sort === "done") c.sort((a, b) => (b.completion ?? 0) - (a.completion ?? 0) || byDate(b) - byDate(a));
-    return c;
-  }, [sort]);
-
-  const items: AccordionItem[] = list.map((p) => ({
-    id: projectSlug(p),
-    subtitle: summaryOf(p),
-    extra: (
-      <span className="md-acc-skills">
-        {(p.importantSkills?.length ? p.importantSkills : p.skills).slice(0, 4).map((s) => (
-          <Chip key={s}>{s}</Chip>
-        ))}
-      </span>
-    ),
-    title: (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-5)", flexWrap: "wrap" }}>
-        {/* Thumbnail and title stay together; only the badges may wrap to the next line */}
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-4)", minWidth: 0 }}>
-          <Image
-            src={p.thumbnailUrl ?? "/thumbnails/default.png"}
-            alt=""
-            width={34}
-            height={34}
-            style={{ borderRadius: "var(--radius-sm)", objectFit: "cover", border: "1px solid var(--border-subtle)", background: "var(--surface-sunken)", width: 34, height: 34, flex: "0 0 auto" }}
-          />
-          <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px, 5.5vw, var(--text-xl))", lineHeight: 1.2, letterSpacing: "var(--tracking-display)", color: "var(--text-strong)" }}>{p.title}</span>
-        </span>
-        <Badge status={statusOf(p)}>{statusLabel[statusOf(p)]}</Badge>
-        <MediaBadge media={p.media} />
-      </span>
-    ),
-    meta: p.date,
-    content: <ProjectDetail p={p} />,
-  }));
+  const items = useMemo<AccordionItem[]>(() => {
+    const c = [...rows];
+    if (sort === "new") c.sort((a, b) => b.dateMs - a.dateMs);
+    if (sort === "old") c.sort((a, b) => a.dateMs - b.dateMs);
+    if (sort === "done") c.sort((a, b) => b.completion - a.completion || b.dateMs - a.dateMs);
+    return c.map(({ id, title, subtitle, extra, meta, content }) => ({ id, title, subtitle, extra, meta, content }));
+  }, [rows, sort]);
 
   return (
     <>
       <div role="group" aria-label="Sort projects" style={{ display: "flex", gap: "var(--space-4)", marginBottom: "var(--space-8)", alignItems: "center", flexWrap: "wrap" }}>
-        <span aria-hidden style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)", marginRight: "var(--space-3)" }}>
+        <span aria-hidden className="md-label" style={{ marginRight: "var(--space-3)" }}>
           Sort
         </span>
         {sortOptions.map(([k, label]) => (
@@ -140,12 +52,7 @@ export default function ProjectsList() {
       </div>
       <Accordion items={items} syncHash />
       <div style={{ marginTop: "var(--space-9)" }}>
-        <button
-          type="button"
-          className="md-link"
-          onClick={() => window.scrollTo({ top: 0 })}
-          style={{ background: "none", border: 0, padding: 0, cursor: "pointer" }}
-        >
+        <button type="button" className="md-link" onClick={() => window.scrollTo({ top: 0 })}>
           <span aria-hidden>↑</span> Back to top
         </button>
       </div>

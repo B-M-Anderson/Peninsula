@@ -1,6 +1,5 @@
-"use client";
-
-import { Accordion, Chip, type AccordionItem } from "./ui";
+import { Chip } from "./ui";
+import { Accordion, type AccordionItem } from "./Accordion";
 
 const categories = [
   {

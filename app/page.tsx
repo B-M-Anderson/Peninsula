@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { FileText, Linkedin, Github } from "lucide-react";
@@ -14,6 +15,7 @@ import RecentPosts from "./components/RecentPosts";
 import MediaBadge from "./components/MediaBadge";
 import { Button, Card, Badge, Chip, Dotted, ProgressBar, SectionHeading, TextLink, statusColor, statusLabel } from "./components/ui";
 import { typeset } from "./lib/typeset";
+import { openGraphFor } from "./lib/og";
 import RichText from "./components/RichText";
 import { projectCounts, publishedProjects, projectSlug, statusOf, type Project } from "./data/projects";
 import { getPosts } from "./lib/posts";
@@ -36,6 +38,11 @@ import {
 // rail is in the HTML on first paint (see app/lib/posts.ts).
 export const revalidate = 900;
 
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: openGraphFor("/"),
+};
+
 // Static imports so each photo blurs up from its own colours instead of a
 // blank box; the health check reads the import paths above.
 const catPhotos = [penny1, penny2, penny3, penny4, penny5, penny6];
@@ -48,7 +55,7 @@ function ProjectCard({ p }: { p: Project }) {
   const status = statusOf(p);
   const keySkills = (p.importantSkills?.length ? p.importantSkills : p.skills).slice(0, 4);
   return (
-    <Link href={`/projects#${projectSlug(p)}`} className="block md-reveal" style={{ textDecoration: "none", color: "inherit" }}>
+    <Link href={`/projects#${projectSlug(p)}`} className="md-card-link md-reveal">
       <Card interactive className="md-project-card" style={{ boxShadow: `inset 3px 0 0 ${statusColor[status]}, var(--shadow-sm)` }}>
         <Image
           src={p.thumbnailUrl ?? "/thumbnails/default.png"}
@@ -65,6 +72,7 @@ function ProjectCard({ p }: { p: Project }) {
             <MediaBadge media={p.media} suffix=" demo" />
           </div>
           <p
+            className="md-prose"
             style={{
               margin: "0 0 var(--space-5)",
               fontSize: "var(--text-sm)",
@@ -145,7 +153,7 @@ export default async function HomePage() {
               style={{ borderRadius: "var(--radius-lg)", objectFit: "cover", border: "1px solid var(--border-default)", flex: "0 0 auto", width: "clamp(140px, 40vw, 188px)", height: "auto", aspectRatio: "1" }}
             />
             <div style={{ minWidth: 0 }}>
-              <p style={{ margin: "0 0 var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)", lineHeight: 1.8 }}>
+              <p className="md-label" style={{ margin: "0 0 var(--space-4)", lineHeight: 1.8 }}>
                 <Dotted items={HERO_FACTS} />
               </p>
               <p className="md-lede">{typeset(BLURB)}</p>

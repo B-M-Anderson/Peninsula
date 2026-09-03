@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CONCIERGE } from "../../../data/site";
 import { redis, relayConfigured, KEYS } from "../upstash";
+import type { StatusResponse } from "../../../lib/api-types";
 
 // Concierge node status. Reads the desktop node's heartbeat directly from the
 // Upstash relay. No relay env set -> honestly reports "not yet provisioned".
@@ -17,7 +18,7 @@ export async function GET() {
       runtime: CONCIERGE.plannedRuntime,
       host: CONCIERGE.host,
       note: "desktop node not yet provisioned",
-    });
+    } satisfies StatusResponse);
   }
 
   try {
@@ -33,7 +34,7 @@ export async function GET() {
         runtime: CONCIERGE.plannedRuntime,
         host: CONCIERGE.host,
         note: "desktop node unreachable (powered down or asleep)",
-      });
+      } satisfies StatusResponse);
     }
 
     const beat = JSON.parse(String(raw)) as {
@@ -56,7 +57,7 @@ export async function GET() {
       machine: beat.machine ?? null,
       cache: beat.cache ?? null,
       idle: beat.idle ?? null,
-    });
+    } satisfies StatusResponse);
   } catch {
     return NextResponse.json({
       online: false,
@@ -65,6 +66,6 @@ export async function GET() {
       runtime: CONCIERGE.plannedRuntime,
       host: CONCIERGE.host,
       note: "desktop node unreachable",
-    });
+    } satisfies StatusResponse);
   }
 }

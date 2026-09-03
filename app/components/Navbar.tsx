@@ -141,11 +141,7 @@ export default function Navbar() {
                   <Link
                     href={href}
                     aria-current={active ? "page" : undefined}
-                    className="block whitespace-nowrap px-2 py-2 transition-colors rounded-sm"
-                    style={{
-                      color: active ? "var(--text-strong)" : "var(--text-muted)",
-                      boxShadow: active ? "inset 0 -1.5px 0 var(--text-accent)" : undefined,
-                    }}
+                    className="md-nav-link block whitespace-nowrap px-2 py-2 rounded-sm"
                   >
                     {label}
                   </Link>
@@ -161,17 +157,18 @@ export default function Navbar() {
             </Button>
           </span>
 
-          {/* Ground toggle — overrides the browser preference; always pinned */}
+          {/* Ground toggle — overrides the browser preference; always pinned.
+              The label is the same in both grounds so the server's markup never
+              has to guess which one the visitor is in; CSS shows the right icon. */}
           <button
             type="button"
             onClick={toggleTheme}
-            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-            title={dark ? "Light mode" : "Dark mode"}
+            aria-label="Toggle light or dark mode"
             className="md-theme-btn flex-shrink-0 grid place-items-center -my-1"
-            style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)", color: "var(--text-muted)" }}
+            style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)" }}
           >
-            <span className="md-theme-icon" data-on={dark}><Sun size={17} aria-hidden /></span>
-            <span className="md-theme-icon" data-on={!dark}><Moon size={17} aria-hidden /></span>
+            <span className="md-theme-icon" data-icon="sun"><Sun size={17} aria-hidden /></span>
+            <span className="md-theme-icon" data-icon="moon"><Moon size={17} aria-hidden /></span>
           </button>
         </div>
       </nav>

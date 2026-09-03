@@ -68,9 +68,10 @@
 
   --text-body: #F5EBDA;
   --text-strong: #FFFDF9;
-  --text-muted: rgba(240, 220, 188, 0.66);
-  /* faint sits at ~4.6:1 on the page ground — the 11px mono labels rely on it */
-  --text-faint: rgba(240, 220, 188, 0.58);
+  --text-muted: rgba(240, 220, 188, 0.74);
+  /* faint clears 4.5:1 on every dark surface, raised included — the 11px mono
+     labels rely on it; muted sits a clear step above it */
+  --text-faint: rgba(240, 220, 188, 0.64);
   --text-accent: #D3B68A;
 
   --border-subtle: rgba(245, 235, 218, 0.12);
@@ -129,11 +130,15 @@
   --space-9: 48px;
   --space-10: 64px;
   --space-11: 80px;
+  /* every subpage's <main> starts this far under its 232px title frame */
+  --page-top: var(--space-9);
 
   --text-3xs: 11px;
   --radius-md: 6px;
 
   --leading-relaxed: 1.64;
+  /* summaries and short prose: one rhythm wherever the same text appears */
+  --leading-body: 1.55;
 
   --tracking-display: -0.015em;
   --tracking-label: 0.13em;
@@ -150,8 +155,8 @@ html.light {
 
   --text-body: #3A2412;
   --text-strong: #1B1007;
-  --text-muted: rgba(42, 25, 13, 0.68);
-  --text-faint: rgba(42, 25, 13, 0.6);
+  --text-muted: rgba(42, 25, 13, 0.78);
+  --text-faint: rgba(42, 25, 13, 0.68);
   --text-accent: #6B4420;
 
   --border-subtle: rgba(42, 25, 13, 0.08);
@@ -216,6 +221,17 @@ body,
 .md-site-footer {
   transition: background-color 0.3s var(--ease-standard), color 0.3s var(--ease-standard),
     border-color 0.3s var(--ease-standard);
+}
+
+/* In-page anchors glide; route changes still land at the top (Next reads the
+   data-scroll-behavior attribute on <html>). */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+[id$="-heading"] {
+  scroll-margin-top: 96px;
 }
 
 /* Focus lands on <main> from the skip link; the page itself needs no ring. */
@@ -369,6 +385,73 @@ select {
 
 /* ---- component primitives (built from the tokens above) ---- */
 
+/* The opening paragraph of a page: a size that eases down on phones, and a
+   tighter leading than body copy so seven lines don't become a wall. */
+.md-lede {
+  margin: 0;
+  max-width: var(--measure);
+  font-size: clamp(17px, 1vw + 13px, 20px);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* The small mono label: kickers, <dt> terms, field labels, the footer line. */
+.md-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Prose rendered from the project descriptions (RichText). */
+.md-prose strong {
+  font-weight: 600;
+  color: var(--text-body);
+}
+.md-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* A card that is itself a link: the focus ring follows the card's corners. */
+.md-card-link {
+  display: block;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Navbar links: rest, hover, current page — and the current page keeps its
+   underline when it also carries the focus ring. */
+.md-nav-link {
+  color: var(--text-muted);
+  transition: color 0.15s var(--ease-standard);
+}
+.md-nav-link:hover {
+  color: var(--text-strong);
+}
+.md-nav-link[aria-current="page"] {
+  color: var(--text-strong);
+  box-shadow: inset 0 -1.5px 0 var(--text-accent);
+}
+.md-nav-link[aria-current="page"]:focus-visible {
+  box-shadow: inset 0 -1.5px 0 var(--text-accent), var(--focus-ring);
+}
+
+/* A disclosure chevron that turns when its button is expanded. */
+.md-chevron {
+  transition: transform 0.25s var(--ease-standard);
+}
+[aria-expanded="true"] > .md-chevron {
+  transform: rotate(180deg);
+}
+
 /* Buttons — 3px radius, never pills. Hover changes colour only; press nudges
    1px down and one step darker. */
 .md-btn {
@@ -406,10 +489,11 @@ select {
   background: var(--action-primary-bg);
   color: var(--action-primary-fg);
 }
-.md-btn-primary:hover {
+/* Hover and press only answer on a button that would actually take the click. */
+.md-btn-primary:not(:disabled):not([aria-disabled="true"]):hover {
   background: var(--action-primary-bg-hover);
 }
-.md-btn-primary:active {
+.md-btn-primary:not(:disabled):not([aria-disabled="true"]):active {
   background: var(--action-primary-bg-active);
 }
 .md-btn-secondary {
@@ -417,7 +501,7 @@ select {
   color: var(--text-body);
   background: transparent;
 }
-.md-btn-secondary:hover {
+.md-btn-secondary:not(:disabled):not([aria-disabled="true"]):hover {
   border-color: var(--border-accent);
   color: var(--text-strong);
 }
@@ -425,7 +509,7 @@ select {
   color: var(--text-muted);
   background: transparent;
 }
-.md-btn-ghost:hover {
+.md-btn-ghost:not(:disabled):not([aria-disabled="true"]):hover {
   color: var(--text-strong);
 }
 
@@ -533,6 +617,35 @@ select {
   color: var(--text-strong);
   border-bottom-color: var(--border-accent);
 }
+/* A <button> dressed as a text link (back to top, the darkroom's entrance). */
+button.md-link {
+  background: none;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+/* On touch screens the small buttons and standalone links keep their drawn
+   size but answer to a 44px-tall area. */
+@media (pointer: coarse) {
+  .md-btn-sm,
+  button.md-link,
+  .md-site-footer .md-link {
+    position: relative;
+  }
+  .md-btn-sm::before,
+  button.md-link::before,
+  .md-site-footer .md-link::before {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
+  }
+  .md-site-footer .md-link::before,
+  button.md-link::before {
+    inset: -10px 0;
+  }
+}
 
 /* Disclosure rows — hairline separators, a + marker that rotates 45° into ×,
    panels open by animating grid-template-rows. */
@@ -547,15 +660,23 @@ select {
 .md-acc-trigger {
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-5);
   padding: var(--space-6) 0;
   background: transparent;
   border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
   color: var(--text-body);
+}
+/* The ring and the landed wash stand a little off the text instead of
+   hugging it; the row's own hairlines stay where the column is. */
+.md-acc-trigger:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--text-accent);
+  outline-offset: 6px;
 }
 .md-acc-marker {
   flex: 0 0 auto;
@@ -590,10 +711,39 @@ select {
   visibility: hidden;
   transition: visibility 0s 0.28s;
 }
+/* Collapsed rows say something: a one-line summary and the key skills. Both
+   step aside once the row is open (the panel carries the full text). */
+.md-acc-trigger > span:last-child {
+  padding-top: 4px;
+}
+.md-acc-sub {
+  display: block;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--text-muted);
+  max-width: var(--measure);
+}
+.md-acc-skills {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.md-acc-open .md-acc-sub,
+.md-acc-open .md-acc-extra {
+  display: none;
+}
 /* The date/count beside a row title is repeated inside the panel; on phones it
-   costs the title most of its width, so it steps aside. */
+   costs the title most of its width, so it steps aside — as do the chips. */
 @media (max-width: 639px) {
-  .md-acc-meta {
+  .md-acc-meta,
+  .md-acc-extra {
+    display: none;
+  }
+}
+/* …and on wider screens the panel's own date line steps aside instead, so the
+   date is printed once either way. */
+@media (min-width: 640px) {
+  .md-acc-date {
     display: none;
   }
 }
@@ -635,6 +785,137 @@ select {
 }
 .md-fade-in {
   animation: md-fade-in 0.35s var(--ease-out) both;
+}
+
+/* The two bands arrive from the left edge on every page load — the motif is
+   the brand, so it is the one entrance the site makes. Transform only, so the
+   h1 inside stays a clean LCP; the reduced-motion rule zeroes the duration. */
+@keyframes md-band-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.md-band {
+  animation: md-band-in 0.55s var(--ease-out) both;
+}
+.md-band-b {
+  animation-delay: 90ms;
+}
+
+/* Theme toggle: sun and moon trade places with a small turn, in step with
+   the ground fade rather than cutting ahead of it. */
+.md-theme-btn {
+  color: var(--text-muted);
+  transition: color 0.15s var(--ease-standard);
+}
+.md-theme-btn:hover {
+  color: var(--text-strong);
+}
+.md-theme-icon {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition: transform 0.35s var(--ease-out), opacity 0.25s var(--ease-standard);
+}
+/* The <html> class picks the icon, as it does for the mark and theme-color, so
+   the server's markup is right for either ground and nothing flips on load. */
+html.dark .md-theme-icon[data-icon="moon"],
+html.light .md-theme-icon[data-icon="sun"] {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+  pointer-events: none;
+}
+
+/* Sections settle into place as they scroll in (scroll-driven, no JS). Never
+   above the fold: only cards, rows and figures carry the class. Browsers
+   without scroll timelines simply show everything. */
+@keyframes md-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@supports (animation-timeline: view()) {
+  .md-reveal {
+    animation: md-reveal 0.5s var(--ease-out) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+/* A deep-linked row lights for a moment so the arrival reads. */
+@keyframes md-landed {
+  from {
+    background: color-mix(in srgb, var(--text-accent) 16%, transparent);
+    box-shadow: 0 0 0 var(--space-3) color-mix(in srgb, var(--text-accent) 16%, transparent);
+  }
+}
+.md-landed > .md-acc-trigger {
+  animation: md-landed 1.4s var(--ease-standard) both;
+}
+
+/* Reading hairline on the long projects page: the thin band's colour, growing
+   with scroll along the top of the pinned navbar. */
+@supports (animation-timeline: scroll()) {
+  @keyframes md-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: none;
+    }
+  }
+  .md-site-header[data-long]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 1.5px;
+    width: 100%;
+    background: var(--stripe-color-b);
+    transform-origin: left;
+    animation: md-progress linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+/* Hero status rows: NOW / LOOKING FOR */
+.md-status-list {
+  margin: var(--space-7) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: var(--measure);
+}
+.md-status-row {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: baseline;
+}
+.md-status-row > dt {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.md-status-row > dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-body);
+}
+@media (max-width: 479px) {
+  .md-status-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
 }
 
 /* Skip link: invisible until it has keyboard focus. */
@@ -681,11 +962,18 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .md-pulse {
+  .md-pulse,
+  .md-reveal,
+  .md-landed > .md-acc-trigger {
     animation: none;
+  }
+  .md-site-header[data-long]::before {
+    display: none;
   }
   *, *::before, *::after {
     transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
     animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
   }
 }

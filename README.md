@@ -42,6 +42,7 @@ All optional — each feature degrades to an honest "not configured" state witho
 |---|---|
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | `/ask` concierge relay (queue + heartbeat) |
 | `CONCIERGE_SHARED_SECRET` | Attached to each queued question so the desktop node can verify origin |
+| `CONCIERGE_PRIORITY_CODE` | The /ask fast-lane passphrase, checked on the server; unset means no fast lane |
 | `BLOB_READ_WRITE_TOKEN` | `/darkroom` gallery storage (auto-injected by Vercel when a Blob store is attached) |
 | `DARKROOM_CODE` | Upload password for `/darkroom` (server-checked) |
 

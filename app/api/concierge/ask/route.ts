@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { redis, relayConfigured, KEYS } from "../upstash";
-import { CONCIERGE_PRIORITY_CODE } from "../../../data/site";
+import { sameSecret } from "../../../lib/secret";
+import type { AskResponse } from "../../../lib/api-types";
 
 // Concierge ask endpoint. Every question is enqueued to the desktop node via the
 // Upstash relay; we poll for the answer and return it. On timeout or any error we
@@ -47,7 +48,10 @@ const POLL_SLOW_MS = 1200;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const offline = () => NextResponse.json({ online: false, canned: false, answer: null });
+const offline = () => NextResponse.json({ online: false, canned: false, answer: null } satisfies AskResponse);
+
+/** The fast-lane passphrase, or null when the fast lane is switched off. */
+const priorityCode = () => process.env.CONCIERGE_PRIORITY_CODE || null;
 
 export async function POST(req: Request) {
   // A cross-site form post can't set this header without a CORS preflight, so
@@ -75,18 +79,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "empty question" }, { status: 400 });
   }
 
+  // The passphrase typed as a question unlocks the fast lane instead of being
+  // asked. Checked here, in constant time, so the code never leaves the server.
+  const code = priorityCode();
+  if (code && sameSecret(question.trim(), code)) {
+    return NextResponse.json({ online: true, answer: null, unlocked: true } satisfies AskResponse);
+  }
+
   // No relay configured -> honest offline (unchanged behavior).
   if (!relayConfigured()) return offline();
 
   // Priority pass: the /ask box sends this header once someone has unlocked the
   // fast lane. Priority jobs RPUSH to the tail so the poller's BRPOP grabs them
   // next — ahead of everyone already queued — and skip the per-address limit.
-  const priority = req.headers.get("x-concierge-priority") === CONCIERGE_PRIORITY_CODE;
+  const provided = req.headers.get("x-concierge-priority") ?? "";
+  const priority = Boolean(code && provided && sameSecret(provided, code));
 
   try {
     const depth = Number(await redis(["LLEN", KEYS.jobs], 3000));
     if (depth >= QUEUE_CAP) {
-      return NextResponse.json({ online: true, busy: true, answer: null }, { status: 503 });
+      return NextResponse.json({ online: true, busy: true, answer: null } satisfies AskResponse, { status: 503 });
     }
   } catch {
     /* as above */
@@ -100,7 +112,7 @@ export async function POST(req: Request) {
       await redis(["SET", KEYS.rate(ip), 0, "EX", 60, "NX"], 3000);
       const n = Number(await redis(["INCR", KEYS.rate(ip)], 3000));
       if (n > RATE_LIMIT_PER_MIN) {
-        return NextResponse.json({ online: true, limited: true, answer: null }, { status: 429 });
+        return NextResponse.json({ online: true, limited: true, answer: null } satisfies AskResponse, { status: 429 });
       }
     } catch {
       /* relay hiccup: don't block a real visitor over the counter */
@@ -137,7 +149,7 @@ export async function POST(req: Request) {
           online: true,
           canned: false,
           answer: String(ans),
-        });
+        } satisfies AskResponse);
       }
     } catch {
       // transient relay hiccup — keep polling until the deadline

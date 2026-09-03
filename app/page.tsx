@@ -1,17 +1,29 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { FileText, Linkedin, Github, ArrowRight, Youtube } from "lucide-react";
+import { FileText, Linkedin, Github } from "lucide-react";
+import profile from "../public/profile.jpeg";
+import penny1 from "../public/cats/Penny1.jpeg";
+import penny2 from "../public/cats/Penny2.jpeg";
+import penny3 from "../public/cats/Penny3.jpeg";
+import penny4 from "../public/cats/Penny4.jpeg";
+import penny5 from "../public/cats/Penny5.jpeg";
+import penny6 from "../public/cats/Penny6.jpeg";
 import StripeBand from "./components/brand/StripeBand";
 import SkillsSection from "./components/SkillsSection";
 import RecentPosts from "./components/RecentPosts";
 import MediaBadge from "./components/MediaBadge";
-import { Button, Card, Badge, ProgressBar, SectionHeading, TextLink } from "./components/ui";
+import { Button, Card, Badge, Chip, Dotted, ProgressBar, SectionHeading, TextLink, statusColor, statusLabel } from "./components/ui";
+import { typeset } from "./lib/typeset";
+import { openGraphFor } from "./lib/og";
 import RichText from "./components/RichText";
-import { publishedProjects, projectSlug, statusOf, type Project } from "./data/projects";
+import { projectCounts, publishedProjects, projectSlug, statusOf, type Project } from "./data/projects";
 import { getPosts } from "./lib/posts";
 import {
   BLURB,
+  CURRENTLY,
   GITHUB_URL,
+  HERO_FACTS,
   LINKEDIN_URL,
   RESUME_PATH,
   SITE_NAME,
@@ -26,22 +38,14 @@ import {
 // rail is in the HTML on first paint (see app/lib/posts.ts).
 export const revalidate = 900;
 
-function XLogo({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden focusable="false">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: openGraphFor("/"),
+};
 
-const catPhotos = [
-  "/cats/Penny1.jpeg",
-  "/cats/Penny2.jpeg",
-  "/cats/Penny3.jpeg",
-  "/cats/Penny4.jpeg",
-  "/cats/Penny5.jpeg",
-  "/cats/Penny6.jpeg",
-];
+// Static imports so each photo blurs up from its own colours instead of a
+// blank box; the health check reads the import paths above.
+const catPhotos = [penny1, penny2, penny3, penny4, penny5, penny6];
 
 // The band sits a little lower on the front page than on the subpages; on a
 // phone that extra room is dead space, so it tightens up as the viewport does.
@@ -49,9 +53,10 @@ const HERO_OFFSET = "clamp(80px, 12vw, 104px)";
 
 function ProjectCard({ p }: { p: Project }) {
   const status = statusOf(p);
+  const keySkills = (p.importantSkills?.length ? p.importantSkills : p.skills).slice(0, 4);
   return (
-    <Link href={`/projects#${projectSlug(p)}`} className="block" style={{ textDecoration: "none", color: "inherit" }}>
-      <Card interactive className="md-project-card">
+    <Link href={`/projects#${projectSlug(p)}`} className="md-card-link md-reveal">
+      <Card interactive className="md-project-card" style={{ boxShadow: `inset 3px 0 0 ${statusColor[status]}, var(--shadow-sm)` }}>
         <Image
           src={p.thumbnailUrl ?? "/thumbnails/default.png"}
           alt=""
@@ -63,14 +68,15 @@ function ProjectCard({ p }: { p: Project }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-5)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
             <h3 style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", margin: 0, color: "var(--text-strong)" }}>{p.title}</h3>
-            <Badge status={status}>{status}</Badge>
+            <Badge status={status}>{statusLabel[status]}</Badge>
             <MediaBadge media={p.media} suffix=" demo" />
           </div>
           <p
+            className="md-prose"
             style={{
               margin: "0 0 var(--space-5)",
               fontSize: "var(--text-sm)",
-              lineHeight: "var(--leading-relaxed)",
+              lineHeight: "var(--leading-body)",
               color: "var(--text-muted)",
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -80,6 +86,13 @@ function ProjectCard({ p }: { p: Project }) {
           >
             <RichText text={p.description} stripAsides links={false} />
           </p>
+          <ul aria-label="Key skills" style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap", listStyle: "none", margin: "0 0 var(--space-5)", padding: 0 }}>
+            {keySkills.map((s) => (
+              <li key={s}>
+                <Chip>{s}</Chip>
+              </li>
+            ))}
+          </ul>
           {p.completion !== undefined && <ProgressBar label="completion" value={p.completion} style={{ maxWidth: 240 }} />}
         </div>
       </Card>
@@ -93,6 +106,8 @@ export default async function HomePage() {
   const recentProjects = [...publishedProjects].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+  const counts = projectCounts();
+  const ledger = ["Selected work", `${counts.total} projects`, `${counts.byStatus.complete} complete`, counts.latestLabel ? `updated ${counts.latestLabel}` : null];
 
   // Structured data: who this site is about, and the profiles it links to.
   const person = {
@@ -101,7 +116,7 @@ export default async function HomePage() {
     name: SITE_NAME,
     url: SITE_URL,
     image: `${SITE_URL}/profile.jpeg`,
-    jobTitle: "Biomedical engineering student",
+    jobTitle: "Biomedical engineering senior",
     affiliation: { "@type": "CollegeOrUniversity", name: "Iowa State University" },
     sameAs: [GITHUB_URL, LINKEDIN_URL, YOUTUBE_URL, X_URL, SUBSTACK_URL].filter(Boolean),
   };
@@ -122,7 +137,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(person) }} />
 
       {/* Hero — the two-band motif; no divider dapple, so it flows into the content */}
-      <div style={{ position: "relative", overflow: "hidden", paddingBottom: "var(--space-11)" }}>
+      <div style={{ position: "relative", overflow: "hidden", paddingBottom: "var(--space-7)" }}>
         <StripeBand offset={HERO_OFFSET} title={SITE_NAME} subtitle={SITE_TAGLINE} />
         <div
           className="md-above"
@@ -130,19 +145,19 @@ export default async function HomePage() {
         >
           <div className="flex flex-col md:flex-row" style={{ gap: "var(--space-10)", alignItems: "flex-start" }}>
             <Image
-              src="/profile.jpeg"
+              src={profile}
               alt={`${SITE_NAME}, kayaking`}
-              width={188}
-              height={188}
+              placeholder="blur"
               priority
               sizes="188px"
-              style={{ borderRadius: "var(--radius-lg)", objectFit: "cover", border: "1px solid var(--border-default)", flex: "0 0 auto", width: "clamp(140px, 40vw, 188px)", height: "auto" }}
+              style={{ borderRadius: "var(--radius-lg)", objectFit: "cover", border: "1px solid var(--border-default)", flex: "0 0 auto", width: "clamp(140px, 40vw, 188px)", height: "auto", aspectRatio: "1" }}
             />
-            <div>
-              <p style={{ margin: 0, maxWidth: "var(--measure)", fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-                {BLURB}
+            <div style={{ minWidth: 0 }}>
+              <p className="md-label" style={{ margin: "0 0 var(--space-4)", lineHeight: 1.8 }}>
+                <Dotted items={HERO_FACTS} />
               </p>
-              <div style={{ display: "flex", gap: "var(--space-5)", marginTop: "var(--space-7)", flexWrap: "wrap" }}>
+              <p className="md-lede">{typeset(BLURB)}</p>
+              <div style={{ display: "flex", gap: "var(--space-5)", marginTop: "var(--space-7)", flexWrap: "wrap", alignItems: "center" }}>
                 <Button variant="primary" href={RESUME_PATH} newTab iconLeft={<FileText size={15} />}>
                   Resume (PDF)
                 </Button>
@@ -152,22 +167,28 @@ export default async function HomePage() {
                 <Button variant="secondary" href={GITHUB_URL} rel="me" iconLeft={<Github size={15} />}>
                   GitHub
                 </Button>
-                {YOUTUBE_URL && (
-                  <Button variant="secondary" href={YOUTUBE_URL} rel="me" iconLeft={<Youtube size={15} />}>
-                    YouTube
-                  </Button>
-                )}
-                {X_URL && (
-                  <Button variant="secondary" href={X_URL} rel="me" iconLeft={<XLogo />}>
-                    X
-                  </Button>
-                )}
-                {SUBSTACK_URL && (
-                  <Button variant="ghost" href={SUBSTACK_URL} rel="me" iconRight={<ArrowRight size={15} />}>
-                    Substack
-                  </Button>
-                )}
               </div>
+              {/* The places I publish — one quiet line, not three more buttons */}
+              {(YOUTUBE_URL || X_URL || SUBSTACK_URL) && (
+                <div style={{ display: "flex", gap: "var(--space-6)", marginTop: "var(--space-5)", flexWrap: "wrap" }}>
+                  {YOUTUBE_URL && <TextLink href={YOUTUBE_URL} rel="me" arrow>YouTube</TextLink>}
+                  {SUBSTACK_URL && <TextLink href={SUBSTACK_URL} rel="me" arrow>Substack</TextLink>}
+                  {X_URL && <TextLink href={X_URL} rel="me" arrow>X</TextLink>}
+                </div>
+              )}
+              <dl className="md-status-list">
+                <div className="md-status-row">
+                  <dt>
+                    <span aria-hidden className="md-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--status-complete)", display: "inline-block", marginRight: "var(--space-2)" }} />
+                    Now
+                  </dt>
+                  <dd>{typeset(CURRENTLY.now)}</dd>
+                </div>
+                <div className="md-status-row">
+                  <dt>Looking for</dt>
+                  <dd>{typeset(CURRENTLY.lookingFor)}</dd>
+                </div>
+              </dl>
             </div>
           </div>
         </div>
@@ -180,7 +201,7 @@ export default async function HomePage() {
       >
         <div className="md-above md-content-split">
           <section className="md-col-main" aria-labelledby="projects-heading">
-            <SectionHeading kicker="Selected work" id="projects-heading">Projects</SectionHeading>
+            <SectionHeading kicker={<Dotted items={ledger} />} id="projects-heading">Projects</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
               {recentProjects.slice(0, 3).map((p) => (
                 <ProjectCard key={p.title} p={p} />
@@ -193,9 +214,10 @@ export default async function HomePage() {
             </div>
           </section>
 
-          <aside className="md-rail" aria-labelledby="posts-heading">
+          {/* With nothing published the rail stacks under Projects instead of holding an empty column */}
+          <aside className={posts.length ? "md-rail" : "md-col-main"} aria-labelledby="posts-heading">
             <section>
-              <SectionHeading kicker="Video · essays · posts" id="posts-heading">Recent posts</SectionHeading>
+              <SectionHeading kicker={<Dotted items={["Video", "essays", "posts"]} />} id="posts-heading">Recent posts</SectionHeading>
               <RecentPosts posts={posts} />
               <div style={{ display: "flex", gap: "var(--space-6)", marginTop: "var(--space-6)", flexWrap: "wrap" }}>
                 {YOUTUBE_URL && (
@@ -223,19 +245,18 @@ export default async function HomePage() {
           </section>
 
           <section className="md-col-main" aria-labelledby="penrose-heading">
-            <SectionHeading kicker="Lab assistant · quality assurance (naps on keyboards) · morale" id="penrose-heading">Penrose</SectionHeading>
+            <SectionHeading kicker={<Dotted items={["Lab assistant", "quality assurance (naps on keyboards)", "morale"]} />} id="penrose-heading">Penrose</SectionHeading>
             <p style={{ margin: "0 0 var(--space-6)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
               She answers to her name. Type it anywhere.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3" style={{ gap: "var(--space-5)" }}>
               {catPhotos.map((src, i) => (
-                <figure key={src} style={{ margin: 0 }}>
+                <figure key={src.src} className="md-reveal" style={{ margin: 0 }}>
                   <div style={{ aspectRatio: "1", borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--border-subtle)" }}>
                     <Image
                       src={src}
                       alt={`Penrose, observation ${i + 1}`}
-                      width={400}
-                      height={400}
+                      placeholder="blur"
                       sizes="(min-width: 1180px) 240px, (min-width: 640px) 22vw, 50vw"
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />

@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Moon, Sun } from "lucide-react";
+import { FileText, Moon, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Mark from "./brand/Mark";
-import { SITE_NAME } from "../data/site";
+import { RESUME_PATH, SITE_NAME } from "../data/site";
+import { Button } from "./ui";
 import { storageGet, storageSet } from "../lib/storage";
 
 const links = [
@@ -103,6 +104,7 @@ export default function Navbar() {
   return (
     <header
       inert={hidden}
+      data-long={pathname === "/projects" ? "" : undefined}
       className={`md-site-header fixed top-0 left-0 w-full z-50 transition-[opacity,transform,background-color,border-color,color] duration-300 ease-in-out ${
         hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"
       }`}
@@ -116,8 +118,10 @@ export default function Navbar() {
     >
       <nav aria-label="Primary" className="flex justify-between items-center gap-3 px-4 sm:px-6 py-2.5">
         {/* Left: mark + name */}
-        <Link href="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0 rounded-sm" aria-label={`${SITE_NAME} — home`}>
+        <Link href="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0 rounded-sm">
           <Mark variant="favicon" size={26} />
+          {/* The name is the link's accessible name at every width; phones only show the mark */}
+          <span className="sr-only sm:hidden">{SITE_NAME}</span>
           <span
             className="hidden sm:block whitespace-nowrap"
             style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", letterSpacing: "-0.015em", color: "var(--text-strong)" }}
@@ -137,11 +141,7 @@ export default function Navbar() {
                   <Link
                     href={href}
                     aria-current={active ? "page" : undefined}
-                    className="block whitespace-nowrap px-2 py-2 transition-colors rounded-sm"
-                    style={{
-                      color: active ? "var(--text-strong)" : "var(--text-muted)",
-                      boxShadow: active ? "inset 0 -1.5px 0 var(--text-accent)" : undefined,
-                    }}
+                    className="md-nav-link block whitespace-nowrap px-2 py-2 rounded-sm"
                   >
                     {label}
                   </Link>
@@ -150,16 +150,25 @@ export default function Navbar() {
             })}
           </ul>
 
-          {/* Ground toggle — overrides the browser preference; always pinned */}
+          {/* The resume is one click from every page on anything wider than a phone */}
+          <span className="hidden sm:block flex-shrink-0">
+            <Button size="sm" variant="secondary" href={RESUME_PATH} newTab iconLeft={<FileText size={13} />}>
+              Resume
+            </Button>
+          </span>
+
+          {/* Ground toggle — overrides the browser preference; always pinned.
+              The label is the same in both grounds so the server's markup never
+              has to guess which one the visitor is in; CSS shows the right icon. */}
           <button
             type="button"
             onClick={toggleTheme}
-            aria-label={dark ? "Switch to the light ground" : "Switch to the dark ground"}
-            title={dark ? "Light ground" : "Dark ground"}
-            className="flex-shrink-0 grid place-items-center transition-colors -my-1"
-            style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)", color: "var(--text-muted)" }}
+            aria-label="Toggle light or dark mode"
+            className="md-theme-btn flex-shrink-0 grid place-items-center -my-1"
+            style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)" }}
           >
-            {dark ? <Sun size={17} /> : <Moon size={17} />}
+            <span className="md-theme-icon" data-icon="sun"><Sun size={17} aria-hidden /></span>
+            <span className="md-theme-icon" data-icon="moon"><Moon size={17} aria-hidden /></span>
           </button>
         </div>
       </nav>

@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Darkroom prints live in the project's Vercel Blob store.
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+      // Video posters, so they get a srcset and AVIF like every other image.
+      { protocol: "https", hostname: "i.ytimg.com", pathname: "/vi/**" },
     ],
   },
   async headers() {

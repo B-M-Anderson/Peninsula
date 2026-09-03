@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import StripeBand from "./components/brand/StripeBand";
+import PageFrame from "./components/PageFrame";
 import { Button, TextLink } from "./components/ui";
 
 export const metadata: Metadata = {
@@ -9,13 +9,9 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <div>
-      <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
-        <StripeBand offset="80px" title="Not found" subtitle="404 · nothing lives at this address" />
-      </div>
-      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", minHeight: "50vh", padding: "var(--space-11) var(--gutter-page)" }}>
-        <div className="md-above" style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-7)" }}>
-          <p style={{ margin: 0, fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)", maxWidth: "var(--measure)" }}>
+    <PageFrame title="Not found" subtitle="404 · nothing lives at this address" maxWidth={720}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-7)" }}>
+          <p className="md-lede">
             The page you were after has moved, never existed, or is hiding somewhere it shouldn&rsquo;t be. The
             navigation above still works.
           </p>
@@ -23,8 +19,7 @@ export default function NotFound() {
             <Button variant="primary" href="/">Back to the front page</Button>
             <TextLink href="/projects" arrow>Browse projects</TextLink>
           </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </PageFrame>
   );
 }

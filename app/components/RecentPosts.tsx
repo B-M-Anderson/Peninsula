@@ -21,7 +21,7 @@ function formatDate(iso: string): string {
 
 function PostCard({ p }: { p: Post }) {
   return (
-    <a href={p.url} target="_blank" rel="noopener noreferrer" className="block" style={{ textDecoration: "none", color: "inherit" }}>
+    <a href={p.url} target="_blank" rel="noopener noreferrer" className="md-card-link md-reveal">
       <Card interactive>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-5)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
           <Badge icon={platformIcon[p.platform]}>{platformLabel[p.platform]}</Badge>
@@ -35,7 +35,7 @@ function PostCard({ p }: { p: Post }) {
         </h3>
         <span className="sr-only"> (opens in a new tab)</span>
         {p.blurb ? (
-          <p style={{ margin: "var(--space-3) 0 0", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)", maxWidth: "var(--measure)" }}>
+          <p style={{ margin: "var(--space-3) 0 0", fontSize: "var(--text-sm)", lineHeight: "var(--leading-body)", color: "var(--text-muted)", maxWidth: "var(--measure)" }}>
             {p.blurb}
           </p>
         ) : null}

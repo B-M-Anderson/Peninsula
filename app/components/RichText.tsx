@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { typeset } from "../lib/typeset";
 
 /**
- * Renders the small amount of markdown the project descriptions actually use:
+ * Renders the small amount of markdown the project descriptions actually use
+ * (put `md-prose` on the wrapper — that class styles the bold and code runs):
  * **bold**, *italic*, `code`, bare URLs, and a leading `~` that marks a line as
  * a footnote-style aside. Deliberately not a markdown library — descriptions
  * are hand-written prose, and this keeps the dependency list and the bundle
@@ -38,26 +40,22 @@ function inline(text: string, keyPrefix: string, links: boolean): ReactNode[] {
     const key = `${keyPrefix}-${i}`;
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={key} style={{ fontWeight: 650, color: "var(--text-body)" }}>
-          {part.slice(2, -2)}
-        </strong>
+        <strong key={key}>{typeset(part.slice(2, -2))}</strong>
       );
     }
     if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) {
-      return <em key={key}>{part.slice(1, -1)}</em>;
+      return <em key={key}>{typeset(part.slice(1, -1))}</em>;
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
-        <code key={key} style={{ fontFamily: "var(--font-mono)", fontSize: "0.9em", background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "1px 5px", whiteSpace: "nowrap" }}>
-          {part.slice(1, -1)}
-        </code>
+        <code key={key}>{part.slice(1, -1)}</code>
       );
     }
     if (/^https?:\/\//.test(part)) {
       // Inside a card that is itself a link, a nested <a> is invalid HTML.
       return links ? <UrlLink key={key} href={part} /> : urlLabel(part);
     }
-    return part;
+    return typeset(part);
   });
 }
 

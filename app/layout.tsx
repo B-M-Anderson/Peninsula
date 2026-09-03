@@ -44,7 +44,7 @@ const themeInit = `(function(){try{var s=localStorage.getItem('theme');var d=(s=
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="min-h-screen">
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         <VaultGate>

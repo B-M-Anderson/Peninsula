@@ -2,14 +2,14 @@ import { Newsreader, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 
 export const display = Newsreader({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["400", "500"],
   variable: "--font-display-src",
   display: "swap",
 });
 
 export const body = Hanken_Grotesk({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   variable: "--font-body-src",
   display: "swap",
 });

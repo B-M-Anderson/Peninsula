@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
-import { Mail, Phone, Linkedin, Github, ArrowRight } from "lucide-react";
-import StripeBand from "../components/brand/StripeBand";
+import { Mail, Phone, Linkedin, Github, ArrowRight, FileText } from "lucide-react";
+import CopyButton from "../components/CopyButton";
+import PageFrame from "../components/PageFrame";
+import { openGraphFor } from "../lib/og";
 import { Button, TextLink } from "../components/ui";
-import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_TEL, LINKEDIN_URL, GITHUB_URL, GITHUB_USER } from "../data/site";
+import { CONTACT_EMAIL, CONTACT_MAILTO, CONTACT_PHONE, CONTACT_PHONE_TEL, LINKEDIN_URL, GITHUB_URL, GITHUB_USER, RESUME_META, RESUME_PATH } from "../data/site";
 
 export const metadata: Metadata = {
   title: "Contact",
   description: "Email, phone, LinkedIn and GitHub for Bennett M. Anderson.",
   alternates: { canonical: "/contact" },
+  openGraph: openGraphFor("/contact", "How to reach me: email, phone, LinkedIn, and the resume."),
 };
 
-type Row = { icon: React.ReactNode; label: string; value: string; href?: string; rel?: string };
+type Row = { icon: React.ReactNode; label: string; value: string; href?: string; rel?: string; copy?: string; newTab?: boolean };
 
 /** The handle shown for a profile URL, derived so it can't drift from the link. */
 function handleOf(url: string): string {
@@ -23,23 +26,19 @@ function handleOf(url: string): string {
 
 export default function ContactPage() {
   const rows: Row[] = [
-    { icon: <Mail size={18} />, label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+    { icon: <Mail size={18} />, label: "Email", value: CONTACT_EMAIL, href: CONTACT_MAILTO, copy: CONTACT_EMAIL },
     { icon: <Phone size={18} />, label: "Phone", value: CONTACT_PHONE, href: `tel:${CONTACT_PHONE_TEL}` },
     { icon: <Linkedin size={18} />, label: "LinkedIn", value: handleOf(LINKEDIN_URL), href: LINKEDIN_URL, rel: "me" },
     { icon: <Github size={18} />, label: "GitHub", value: GITHUB_USER, href: GITHUB_URL, rel: "me" },
+    { icon: <FileText size={18} />, label: "Resume", value: `PDF · ${RESUME_META.pages} page · ${RESUME_META.updated}`, href: RESUME_PATH, newTab: true },
   ];
 
   return (
-    <div>
-      <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
-        <StripeBand offset="80px" title="Get in touch" subtitle="Context in the first message, please" />
-      </div>
-
-      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", minHeight: "60vh", padding: "var(--space-11) var(--gutter-page)" }}>
-        <div className="md-above" style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
-          <p style={{ margin: 0, fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-            Feel free to reach out via email, phone, or LinkedIn. If using phone or email, please provide context in your first
-            message or it will likely be ignored.
+    <PageFrame title="Get in touch" subtitle="Context in the first message, please" maxWidth={720} minHeight="60vh">
+      {/* The column sits in the page's content column so the copy starts under the band's title */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
+          <p className="md-lede">
+            Email, phone or LinkedIn all work. Say what it&rsquo;s about in your first message, or it will likely be ignored.
           </p>
 
           <dl className="md-surface" style={{ margin: 0, border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", background: "var(--surface-raised)", boxShadow: "var(--shadow-sm)", padding: "var(--space-2)" }}>
@@ -48,28 +47,26 @@ export default function ContactPage() {
                 {/* display: contents so the icon and label are the grid's first two cells */}
                 <dt style={{ display: "contents" }}>
                   <span aria-hidden style={{ color: "var(--text-accent)", display: "flex" }}>{r.icon}</span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
-                    {r.label}
-                  </span>
+                  <span className="md-label">{r.label}</span>
                 </dt>
-                <dd className="md-contact-value" style={{ margin: 0 }}>
+                <dd className="md-contact-value" style={{ margin: 0, display: "flex", alignItems: "center", gap: "var(--space-4)", flexWrap: "wrap" }}>
                   {r.href ? (
-                    <TextLink href={r.href} rel={r.rel}>{r.value}</TextLink>
+                    <TextLink href={r.href} rel={r.rel} newTab={r.newTab}>{r.value}</TextLink>
                   ) : (
                     <span style={{ fontSize: "var(--text-sm)", color: "var(--text-body)" }}>{r.value}</span>
                   )}
+                  {r.copy ? <CopyButton text={r.copy} /> : null}
                 </dd>
               </div>
             ))}
           </dl>
 
           <div>
-            <Button variant="primary" href={`mailto:${CONTACT_EMAIL}`} iconRight={<ArrowRight size={15} />}>
+            <Button variant="primary" href={CONTACT_MAILTO} iconRight={<ArrowRight size={15} />}>
               Start an email
             </Button>
           </div>
         </div>
-      </main>
-    </div>
+    </PageFrame>
   );
 }

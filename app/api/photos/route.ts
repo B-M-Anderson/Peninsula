@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { list, put } from "@vercel/blob";
 import { redis, relayConfigured } from "../concierge/upstash";
 import { DARKROOM_MAX_UPLOAD_BYTES as MAX_UPLOAD_BYTES } from "../../data/site";
+import { sameSecret } from "../../lib/secret";
+import type { PhotosResponse, UploadResponse } from "../../lib/api-types";
 
 // Photo gallery backed by Vercel Blob.
 // - GET: public list of uploaded photos (prefix gallery/)
@@ -19,12 +20,6 @@ const FAIL_WINDOW_S = 600;
 
 function blobConfigured() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
-}
-
-function sameSecret(provided: string, expected: string): boolean {
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** What the bytes say the file is — the browser-supplied type is only a claim. */
@@ -44,7 +39,7 @@ function clientIp(req: Request): string {
 
 export async function GET() {
   if (!blobConfigured()) {
-    return NextResponse.json({ configured: false, photos: [] });
+    return NextResponse.json({ configured: false, photos: [] } satisfies PhotosResponse);
   }
   try {
     const { blobs } = await list({ prefix: "gallery/" });
@@ -59,7 +54,7 @@ export async function GET() {
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
     );
   } catch {
-    return NextResponse.json({ configured: true, photos: [], error: "list failed" }, { status: 502 });
+    return NextResponse.json({ configured: true, photos: [], error: "list failed" } satisfies PhotosResponse, { status: 502 });
   }
 }
 
@@ -138,7 +133,7 @@ export async function POST(req: Request) {
       contentType: type,
       addRandomSuffix: true,
     });
-    return NextResponse.json({ ok: true, url: blob.url });
+    return NextResponse.json({ ok: true, url: blob.url } satisfies UploadResponse);
   } catch (err) {
     console.error("darkroom upload failed", err);
     return NextResponse.json({ error: "upload failed — try again" }, { status: 502 });

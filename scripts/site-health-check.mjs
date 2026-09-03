@@ -53,7 +53,7 @@ if (!hasIssues) console.log("Project dates, status flags and video links look co
 
 // --- homepage photos -------------------------------------------------------
 const page = readFileSync("app/page.tsx", "utf8");
-const photos = [...page.matchAll(/"(\/(?:cats|Previews)\/[^"]+|\/profile\.jpeg)"/g)].map((m) => m[1]);
+const photos = [...page.matchAll(/["'](?:\.\.\/public)?(\/(?:cats|Previews)\/[^"']+|\/profile\.jpeg)["']/g)].map((m) => m[1]);
 const lost = photos.filter((u) => !existsSync(`public${u}`));
 if (lost.length) {
   issue(`\nMISSING HOMEPAGE PHOTOS (${lost.length}):`);

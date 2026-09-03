@@ -10,7 +10,6 @@ Reference for the personal portfolio site as it is today. Operating rules and th
 | `react` / `react-dom` 19 | UI runtime |
 | `typescript` 5 | Type checking |
 | `tailwindcss` 4 via `@tailwindcss/postcss` | Utility classes (no `tailwind.config`; `@import "tailwindcss"` in `app/globals.css`) |
-| `framer-motion` | Message/panel animation on `/ask` only |
 | `lucide-react` | Icons |
 | `@vercel/analytics` (`/next` entry) | Page views |
 | `@vercel/blob` | Darkroom photo storage |
@@ -30,11 +29,11 @@ Reference for the personal portfolio site as it is today. Operating rules and th
 Everything visual comes from `app/globals.css`:
 
 - `@theme` — raw colour ramps (brown, tan, cream, clay, moss), type scale, radii, shadows, easings.
-- `:root` — dark-ground semantic aliases: `--surface-page/raised/sunken/card`, `--text-body/strong/muted/faint/accent`, `--border-*`, `--action-primary-*`, `--status-*` (+ `--status-wip-text` for readable clay), `--mark-*` (the monogram), stripe metrics, textures, `--max-width`, `--gutter-page` (fluid), spacing scale.
+- `:root` — dark-ground semantic aliases: `--surface-page/raised/sunken/card`, `--text-body/strong/muted/faint/accent`, `--border-*`, `--action-primary-*`, `--status-*` (+ `--status-wip-text` for readable clay), `--mark-*` (the monogram), stripe metrics, textures, `--max-width`, `--gutter-page` (fluid), `--page-top` (subpage `<main>` top padding), `--leading-body` (summaries) / `--leading-relaxed` (long prose), spacing scale.
 - `html.light` / `.md-light` — the eggshell aliases. `color-scheme` follows the class so native scrollbars and form controls match. `@media print` uses a paper palette and hides chrome/textures.
 - Brand utilities: `.md-grain` (film grain), `.md-dapple` (foot dappling), `.md-above` (content above the textures).
-- Primitives: `.md-btn` (+ `-primary/-secondary/-ghost/-sm`, `:disabled`), `.md-chip`, `.md-card` (tighter padding on phones), `.md-link`, `.md-acc-*` (disclosure rows; collapsed panels are `inert` and hidden), `.md-contact-row`, `.md-project-card`, `.md-video-poster`, `.md-fade-in`, `.md-skip-link`.
-- Motion: one `md-pulse` keyframe for status dots, `md-fade-in` for page entrances; `prefers-reduced-motion` zeroes every CSS transition/animation, and `/ask` wraps framer-motion in `MotionConfig reducedMotion="user"`.
+- Primitives: `.md-btn` (+ `-primary/-secondary/-ghost/-sm`, `:disabled`), `.md-chip`, `.md-card` (tighter padding on phones), `.md-link`, `.md-acc-*` (disclosure rows; collapsed panels are `inert` and hidden; `.md-acc-date` is the panel's date line, shown only on phones where the row meta is hidden), `.md-contact-row`, `.md-project-card`, `.md-lede` (a page's opening paragraph: fluid size, 1.5 leading), `.md-video-poster`, `.md-fade-in`, `.md-skip-link`.
+- Motion: the two bands slide in on load (`md-band-in`), cards/rows/figures settle in as they scroll into view (`md-reveal`, CSS scroll-driven, no JS), a deep-linked row lights briefly (`md-landed`), a reading hairline grows along the navbar on `/projects`, the theme toggle's icons cross-fade, `md-pulse` for status dots, `md-fade-in` for things that appear on a visitor's action (a new message on `/ask`, the darkroom form); `prefers-reduced-motion` neutralises all of it, delays included. No animation library — the bands are the one entrance a page makes.
 
 Theme switching: the inline script in `app/layout.tsx` sets `html.dark`/`html.light` (saved override, else OS preference) and the `theme-color` meta before paint; `Navbar` keeps both in sync afterwards through a `useSyncExternalStore` theme store. Storage access goes through `app/lib/storage.ts`, which never throws.
 
@@ -58,7 +57,9 @@ Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app
 
 - `components/brand/StripeBand.tsx` — the two bands. Title renders as `<h1>` (prop `as`), subtitle as `<p>`; text sits in a `max-width`/`--gutter-page` column so it aligns with page content at every width. `offset` is the distance from the top of the surface.
 - `components/brand/Mark.tsx` — the BA monogram; colours come from `--mark-*` tokens (a `tone` prop forces a ground). `MonogramOg.tsx` is the box-drawn version for `next/og`.
-- `components/ui.tsx` — `Button` (internal routes go through `next/link`, external links open in a new tab with a screen-reader cue, `pressed`, `disabled`, `newTab`, `rel`), `Chip`, `Card`, `Badge` (typed `ProjectStatus`), `ProgressBar` (real `role="progressbar"`), `SectionHeading`, `TextLink` (→ for internal, ↗ for external), `Accordion` (id-keyed, `aria-controls`, `inert` panels, optional `syncHash`).
+- `components/ui.tsx` — `Button` (internal routes go through `next/link`, external links open in a new tab with a screen-reader cue, `pressed`, `disabled`, `newTab`, `rel`), `Chip`, `Card`, `Badge` (typed `ProjectStatus`), `ProgressBar` (real `role="progressbar"`), `SectionHeading`, `TextLink` (→ for internal, ↗ for external, `newTab` for files), `Dotted`, `statusLabel`. No `"use client"` — these render on the server.
+- `components/Accordion.tsx` — the one stateful primitive (id-keyed, `aria-controls`, `inert` panels, optional `syncHash`); it also tells `DeferredMedia` (`components/DeferredMedia.tsx`) whether a row has been opened, so collapsed rows download no images or video posters.
+- `components/PageFrame.tsx` — every subpage's opening: title frame + bands + the page's `<main id="main">`.
 - `components/Navbar.tsx` — fixed bar with `<header><nav>`, `aria-current` on the active link, 44px theme toggle with a state-dependent label; tucks away on scroll-down on phones only (matchMedia store), pinned elsewhere; `inert` while hidden.
 - `components/Footer.tsx` — one row: name + year (`Year.tsx`, computed in the browser), GitHub / LinkedIn / Email / Source. `components/SkipLink.tsx` focuses `#main` without touching the URL fragment.
 - `components/RecentPosts.tsx` — renders a `Post[]` passed from the server.
@@ -67,14 +68,15 @@ Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app
 
 ## 6. Data
 
-`app/data/site.ts` — every site-wide constant (name, tagline, description, blurb, URLs and handles, contact details, vault code/triggers, concierge priority code, darkroom upload limit).
+`app/data/site.ts` — every site-wide constant (name, tagline, description, blurb, hero fact line `HERO_FACTS`, the `CURRENTLY` now / looking-for lines, `RESUME_META`, URLs and handles, contact details and `CONTACT_MAILTO`, vault code/triggers, concierge priority code, darkroom upload limit).
 
-`app/data/projects.ts` — the `Project` type and list, plus `publishedProjects` (drafts filtered), `statusOf()` and `projectSlug()`.
+`app/data/projects.ts` — the `Project` type and list, plus `publishedProjects` (drafts filtered), `statusOf()`, `projectSlug()`, `summaryOf()`, `projectCounts()` (the ledger lines under headings) and `relatedProjects()` (the "Also see" links).
 
 | Field | Drives |
 |---|---|
 | `title` | Card/row heading; slug source |
 | `description` | Rendered through `RichText` (`whiteSpace: pre-line` on `/projects`; 2-line clamp without `~` asides on `/`) |
+| `summary` | One line on the collapsed `/projects` row; defaults to the description's first sentence (`summaryOf()`) |
 | `githubUrl`, `videoUrl` | "View on GitHub" / "Watch on YouTube" links; `videoUrl` also drives the embed |
 | `date` | Display + sort key (`new Date(date)`; keep it parseable) |
 | `skills`, `importantSkills` | Chips; important ones sort first and render strong |

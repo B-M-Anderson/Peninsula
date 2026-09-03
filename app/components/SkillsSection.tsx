@@ -1,6 +1,5 @@
-"use client";
-
-import { Accordion, Chip, type AccordionItem } from "./ui";
+import { Chip } from "./ui";
+import { Accordion, type AccordionItem } from "./Accordion";
 
 const categories = [
   {
@@ -31,7 +30,7 @@ const categories = [
   {
     name: "microbiology",
     skills: [
-      { name: "Bacterial experimental techniques", strong: true },
+      { name: "Bacterial Experimental Techniques", strong: true },
       { name: "Cloning & Transformation", strong: true },
       { name: "PCR & Gel Electrophoresis", strong: true },
       { name: "PRISM", strong: false },

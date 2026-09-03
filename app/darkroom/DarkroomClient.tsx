@@ -45,8 +45,10 @@ export default function DarkroomClient() {
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // `fresh` adds a cache-busting query: the CDN keys on the URL and would
+  // otherwise hand back the list it cached a moment before the upload.
   const refresh = (signal?: AbortSignal, fresh = false) =>
-    fetch("/api/photos", { signal, cache: fresh ? "no-store" : "default" })
+    fetch(fresh ? `/api/photos?fresh=${Date.now()}` : "/api/photos", { signal, cache: fresh ? "no-store" : "default" })
       .then((r) => r.json())
       .then((data) =>
         setGallery({ loading: false, configured: Boolean(data.configured), photos: data.photos ?? [], error: Boolean(data.error) })
@@ -90,6 +92,14 @@ export default function DarkroomClient() {
       if (res.ok) {
         setMsg("Developed. It's on the wall.");
         if (fileRef.current) fileRef.current.value = "";
+        // Show the new print immediately, then reconcile with the store.
+        if (data.url) {
+          setGallery((g) => ({
+            ...g,
+            configured: true,
+            photos: [{ url: data.url, pathname: `gallery/${Date.now()}-${file.name}`, uploadedAt: new Date().toISOString() }, ...g.photos],
+          }));
+        }
         refresh(undefined, true);
       } else {
         setMsg(`Rejected: ${data.error ?? `HTTP ${res.status}`}.`);

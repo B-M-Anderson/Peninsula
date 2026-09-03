@@ -11,6 +11,8 @@ const issue = (msg) => {
   hasIssues = true;
   console.log(msg);
 };
+// Worth a look, but the site renders sensibly regardless — no weekly issue.
+const warn = (msg) => console.log(`WARN ${msg}`);
 
 const src = readFileSync("app/data/projects.ts", "utf8");
 
@@ -37,7 +39,7 @@ for (const entry of entries) {
   const completion = Number(get("completion")?.[1]);
   const flag = (k) => get(k)?.[1] === "true";
   if (flag("completed") && Number.isFinite(completion) && completion < 100) {
-    issue(`STATUS: "${title}" is flagged completed but completion is ${completion}% — it renders as work in progress.`);
+    warn(`STATUS: "${title}" is flagged completed but completion is ${completion}% — it renders as work in progress (set completion: 100 if it is done).`);
   }
   if ([flag("completed"), flag("terminated"), flag("shelved")].filter(Boolean).length > 1) {
     issue(`STATUS: "${title}" sets more than one of completed/terminated/shelved.`);

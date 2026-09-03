@@ -53,8 +53,9 @@ export async function GET() {
       .map((b) => ({ url: b.url, pathname: b.pathname, uploadedAt: b.uploadedAt }));
     return NextResponse.json(
       { configured: true, photos },
-      // Ordinary visits are served from the CDN; the page re-fetches with
-      // no-store right after an upload so a new print shows up at once.
+      // Ordinary visits are served from the CDN for a minute; right after an
+      // upload the page re-fetches with a cache-busting query so the new print
+      // shows up at once.
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
     );
   } catch {
@@ -90,12 +91,20 @@ export async function POST(req: Request) {
   const provided = req.headers.get("x-darkroom-code") ?? "";
   if (!sameSecret(provided, expected)) {
     if (relayConfigured()) {
-      redis(["INCR", failKey], 2000)
-        .then(() => redis(["EXPIRE", failKey, FAIL_WINDOW_S], 2000))
-        .catch(() => {});
+      // Awaited, and the window is created together with its expiry (SET NX EX)
+      // so a lost follow-up command can never leave a counter with no TTL —
+      // that would lock the address out until someone cleared the key by hand.
+      try {
+        await redis(["SET", failKey, 0, "EX", FAIL_WINDOW_S, "NX"], 2000);
+        await redis(["INCR", failKey], 2000);
+      } catch {
+        /* relay hiccup: the compare above is still the gate */
+      }
     }
     return NextResponse.json({ error: "access denied" }, { status: 401 });
   }
+  // A good code clears earlier typos from the same address.
+  if (relayConfigured()) redis(["DEL", failKey], 2000).catch(() => {});
 
   // Refuse oversized bodies before buffering them.
   const declared = Number(req.headers.get("content-length") ?? 0);

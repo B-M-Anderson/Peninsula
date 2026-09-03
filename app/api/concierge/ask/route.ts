@@ -86,8 +86,10 @@ export async function POST(req: Request) {
   if (!priority) {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
     try {
+      // The window is created with its expiry in one command (SET NX EX) so a
+      // missed EXPIRE can never leave a counter that only ever climbs.
+      await redis(["SET", KEYS.rate(ip), 0, "EX", 60, "NX"], 3000);
       const n = Number(await redis(["INCR", KEYS.rate(ip)], 3000));
-      if (n === 1) redis(["EXPIRE", KEYS.rate(ip), 60], 2000).catch(() => {});
       if (n > RATE_LIMIT_PER_MIN) {
         return NextResponse.json({ online: true, limited: true, answer: null }, { status: 429 });
       }

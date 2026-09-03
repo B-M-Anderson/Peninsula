@@ -1,6 +1,8 @@
 export type Project = {
   title: string;
   description: string;
+  /** One line shown on the collapsed row. Defaults to the description's first sentence. */
+  summary?: string;
   githubUrl?: string;
   date: string;
   skills: string[];
@@ -338,6 +340,47 @@ export function statusOf(p: Project): ProjectStatus {
   if (p.wip) return "wip";
   if (p.shelved) return "shelved";
   return "ongoing";
+}
+
+/** The one-line version shown on collapsed rows: the entry's own summary, or its first sentence. */
+export function summaryOf(p: Project): string {
+  if (p.summary) return p.summary;
+  const line = p.description.split("\n").map((l) => l.trim()).find((l) => l && !l.startsWith("~")) ?? "";
+  const plain = line.replace(/\*\*|`|\*/g, "");
+  const first = plain.split(/(?<=[.!?])\s+/)[0] ?? plain;
+  return first.length > 150 ? `${first.slice(0, 147).trimEnd()}…` : first;
+}
+
+/** The short ledger under headings: how much is here, how far along, how recently it moved. */
+export function projectCounts() {
+  const byStatus: Record<ProjectStatus, number> = { terminated: 0, complete: 0, ongoing: 0, wip: 0, shelved: 0 };
+  let latest = 0;
+  for (const p of publishedProjects) {
+    byStatus[statusOf(p)] += 1;
+    latest = Math.max(latest, new Date(p.date).getTime() || 0);
+  }
+  const latestLabel = latest
+    ? new Date(latest).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : null;
+  return { total: publishedProjects.length, byStatus, inProgress: byStatus.ongoing + byStatus.wip, latestLabel };
+}
+
+/** Projects that share the most skills with this one (Jaccard), newest first on ties. */
+export function relatedProjects(p: Project, n = 3): Project[] {
+  const bag = (x: Project) => new Set([...x.skills, ...(x.importantSkills ?? [])].map((s) => s.toLowerCase()));
+  const mine = bag(p);
+  return publishedProjects
+    .filter((q) => q !== p)
+    .map((q) => {
+      const theirs = bag(q);
+      const shared = [...mine].filter((s) => theirs.has(s)).length;
+      const union = new Set([...mine, ...theirs]).size;
+      return { q, score: union ? shared / union : 0 };
+    })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score || new Date(b.q.date).getTime() - new Date(a.q.date).getTime())
+    .slice(0, n)
+    .map((r) => r.q);
 }
 
 /** URL-safe id for a project: the element id on /projects and its #hash deep link. */

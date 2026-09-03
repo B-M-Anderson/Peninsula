@@ -1,18 +1,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FileText, Linkedin, Github, ArrowRight, Youtube } from "lucide-react";
+import profile from "../public/profile.jpeg";
+import penny1 from "../public/cats/Penny1.jpeg";
+import penny2 from "../public/cats/Penny2.jpeg";
+import penny3 from "../public/cats/Penny3.jpeg";
+import penny4 from "../public/cats/Penny4.jpeg";
+import penny5 from "../public/cats/Penny5.jpeg";
+import penny6 from "../public/cats/Penny6.jpeg";
 import StripeBand from "./components/brand/StripeBand";
 import SkillsSection from "./components/SkillsSection";
 import RecentPosts from "./components/RecentPosts";
 import MediaBadge from "./components/MediaBadge";
-import { Button, Card, Badge, ProgressBar, SectionHeading, TextLink } from "./components/ui";
+import { Button, Card, Badge, Chip, ProgressBar, SectionHeading, TextLink, statusColor } from "./components/ui";
 import RichText from "./components/RichText";
-import { publishedProjects, projectSlug, statusOf, type Project } from "./data/projects";
+import { projectCounts, publishedProjects, projectSlug, statusOf, type Project } from "./data/projects";
 import { getPosts } from "./lib/posts";
 import {
   BLURB,
+  CURRENTLY,
   GITHUB_URL,
+  HERO_FACTS,
   LINKEDIN_URL,
+  RESUME_META,
   RESUME_PATH,
   SITE_NAME,
   SITE_TAGLINE,
@@ -34,14 +44,9 @@ function XLogo({ size = 15 }: { size?: number }) {
   );
 }
 
-const catPhotos = [
-  "/cats/Penny1.jpeg",
-  "/cats/Penny2.jpeg",
-  "/cats/Penny3.jpeg",
-  "/cats/Penny4.jpeg",
-  "/cats/Penny5.jpeg",
-  "/cats/Penny6.jpeg",
-];
+// Static imports so each photo blurs up from its own colours instead of a
+// blank box; the health check reads the import paths above.
+const catPhotos = [penny1, penny2, penny3, penny4, penny5, penny6];
 
 // The band sits a little lower on the front page than on the subpages; on a
 // phone that extra room is dead space, so it tightens up as the viewport does.
@@ -49,9 +54,10 @@ const HERO_OFFSET = "clamp(80px, 12vw, 104px)";
 
 function ProjectCard({ p }: { p: Project }) {
   const status = statusOf(p);
+  const keySkills = (p.importantSkills?.length ? p.importantSkills : p.skills).slice(0, 4);
   return (
-    <Link href={`/projects#${projectSlug(p)}`} className="block" style={{ textDecoration: "none", color: "inherit" }}>
-      <Card interactive className="md-project-card">
+    <Link href={`/projects#${projectSlug(p)}`} className="block md-reveal" style={{ textDecoration: "none", color: "inherit" }}>
+      <Card interactive className="md-project-card" style={{ boxShadow: `inset 3px 0 0 ${statusColor[status]}, var(--shadow-sm)` }}>
         <Image
           src={p.thumbnailUrl ?? "/thumbnails/default.png"}
           alt=""
@@ -80,6 +86,13 @@ function ProjectCard({ p }: { p: Project }) {
           >
             <RichText text={p.description} stripAsides links={false} />
           </p>
+          <ul aria-label="Key skills" style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap", listStyle: "none", margin: "0 0 var(--space-5)", padding: 0 }}>
+            {keySkills.map((s) => (
+              <li key={s}>
+                <Chip>{s}</Chip>
+              </li>
+            ))}
+          </ul>
           {p.completion !== undefined && <ProgressBar label="completion" value={p.completion} style={{ maxWidth: 240 }} />}
         </div>
       </Card>
@@ -93,6 +106,10 @@ export default async function HomePage() {
   const recentProjects = [...publishedProjects].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+  const counts = projectCounts();
+  const ledger = ["Selected work", `${counts.total} projects`, `${counts.byStatus.complete} complete`, counts.latestLabel ? `updated ${counts.latestLabel}` : null]
+    .filter(Boolean)
+    .join(" · ");
 
   // Structured data: who this site is about, and the profiles it links to.
   const person = {
@@ -101,7 +118,7 @@ export default async function HomePage() {
     name: SITE_NAME,
     url: SITE_URL,
     image: `${SITE_URL}/profile.jpeg`,
-    jobTitle: "Biomedical engineering student",
+    jobTitle: "Biomedical engineering senior",
     affiliation: { "@type": "CollegeOrUniversity", name: "Iowa State University" },
     sameAs: [GITHUB_URL, LINKEDIN_URL, YOUTUBE_URL, X_URL, SUBSTACK_URL].filter(Boolean),
   };
@@ -130,19 +147,21 @@ export default async function HomePage() {
         >
           <div className="flex flex-col md:flex-row" style={{ gap: "var(--space-10)", alignItems: "flex-start" }}>
             <Image
-              src="/profile.jpeg"
+              src={profile}
               alt={`${SITE_NAME}, kayaking`}
-              width={188}
-              height={188}
+              placeholder="blur"
               priority
               sizes="188px"
-              style={{ borderRadius: "var(--radius-lg)", objectFit: "cover", border: "1px solid var(--border-default)", flex: "0 0 auto", width: "clamp(140px, 40vw, 188px)", height: "auto" }}
+              style={{ borderRadius: "var(--radius-lg)", objectFit: "cover", border: "1px solid var(--border-default)", flex: "0 0 auto", width: "clamp(140px, 40vw, 188px)", height: "auto", aspectRatio: "1" }}
             />
-            <div>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: "0 0 var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)", lineHeight: 1.8 }}>
+                {HERO_FACTS.join(" · ")}
+              </p>
               <p style={{ margin: 0, maxWidth: "var(--measure)", fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
                 {BLURB}
               </p>
-              <div style={{ display: "flex", gap: "var(--space-5)", marginTop: "var(--space-7)", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "var(--space-5)", marginTop: "var(--space-7)", flexWrap: "wrap", alignItems: "center" }}>
                 <Button variant="primary" href={RESUME_PATH} newTab iconLeft={<FileText size={15} />}>
                   Resume (PDF)
                 </Button>
@@ -168,6 +187,22 @@ export default async function HomePage() {
                   </Button>
                 )}
               </div>
+              <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
+                Resume · PDF · {RESUME_META.pages} page · updated {RESUME_META.updated}
+              </p>
+              <dl className="md-status-list">
+                <div className="md-status-row">
+                  <dt>
+                    <span aria-hidden className="md-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--status-complete)", display: "inline-block", marginRight: "var(--space-2)" }} />
+                    Now
+                  </dt>
+                  <dd>{CURRENTLY.now}</dd>
+                </div>
+                <div className="md-status-row">
+                  <dt>Looking for</dt>
+                  <dd>{CURRENTLY.lookingFor}</dd>
+                </div>
+              </dl>
             </div>
           </div>
         </div>
@@ -180,7 +215,7 @@ export default async function HomePage() {
       >
         <div className="md-above md-content-split">
           <section className="md-col-main" aria-labelledby="projects-heading">
-            <SectionHeading kicker="Selected work" id="projects-heading">Projects</SectionHeading>
+            <SectionHeading kicker={ledger} id="projects-heading">Projects</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
               {recentProjects.slice(0, 3).map((p) => (
                 <ProjectCard key={p.title} p={p} />
@@ -229,13 +264,12 @@ export default async function HomePage() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3" style={{ gap: "var(--space-5)" }}>
               {catPhotos.map((src, i) => (
-                <figure key={src} style={{ margin: 0 }}>
+                <figure key={src.src} className="md-reveal" style={{ margin: 0 }}>
                   <div style={{ aspectRatio: "1", borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--border-subtle)" }}>
                     <Image
                       src={src}
                       alt={`Penrose, observation ${i + 1}`}
-                      width={400}
-                      height={400}
+                      placeholder="blur"
                       sizes="(min-width: 1180px) 240px, (min-width: 640px) 22vw, 50vw"
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />

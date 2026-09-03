@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import StripeBand from "../components/brand/StripeBand";
 import ProjectsList from "./ProjectsList";
-import { publishedProjects } from "../data/projects";
+import { projectCounts, publishedProjects } from "../data/projects";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -15,7 +15,10 @@ function subtitle(): string {
     .filter((y) => Number.isFinite(y));
   const span = years.length ? `${Math.min(...years)}—${Math.max(...years)}` : "";
   const n = publishedProjects.length;
-  return `${n} ${n === 1 ? "entry" : "entries"}${span ? ` · ${span}` : ""}`;
+  const c = projectCounts();
+  const parts = [`${n} ${n === 1 ? "entry" : "entries"}`, span, `${c.byStatus.complete} complete`, `${c.inProgress} in progress`];
+  if (c.latestLabel) parts.push(`last touched ${c.latestLabel}`);
+  return parts.filter(Boolean).join(" · ");
 }
 
 export default function ProjectsPage() {

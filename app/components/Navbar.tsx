@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Moon, Sun } from "lucide-react";
+import { FileText, Moon, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Mark from "./brand/Mark";
-import { SITE_NAME } from "../data/site";
+import { RESUME_PATH, SITE_NAME } from "../data/site";
+import { Button } from "./ui";
 import { storageGet, storageSet } from "../lib/storage";
 
 const links = [
@@ -103,6 +104,7 @@ export default function Navbar() {
   return (
     <header
       inert={hidden}
+      data-long={pathname === "/projects" ? "" : undefined}
       className={`md-site-header fixed top-0 left-0 w-full z-50 transition-[opacity,transform,background-color,border-color,color] duration-300 ease-in-out ${
         hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"
       }`}
@@ -150,16 +152,24 @@ export default function Navbar() {
             })}
           </ul>
 
+          {/* The resume is one click from every page on anything wider than a phone */}
+          <span className="hidden sm:block flex-shrink-0">
+            <Button size="sm" variant="secondary" href={RESUME_PATH} newTab iconLeft={<FileText size={13} />}>
+              Resume
+            </Button>
+          </span>
+
           {/* Ground toggle — overrides the browser preference; always pinned */}
           <button
             type="button"
             onClick={toggleTheme}
             aria-label={dark ? "Switch to the light ground" : "Switch to the dark ground"}
             title={dark ? "Light ground" : "Dark ground"}
-            className="flex-shrink-0 grid place-items-center transition-colors -my-1"
+            className="md-theme-btn flex-shrink-0 grid place-items-center -my-1"
             style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)", color: "var(--text-muted)" }}
           >
-            {dark ? <Sun size={17} /> : <Moon size={17} />}
+            <span className="md-theme-icon" data-on={dark}><Sun size={17} aria-hidden /></span>
+            <span className="md-theme-icon" data-on={!dark}><Moon size={17} aria-hidden /></span>
           </button>
         </div>
       </nav>

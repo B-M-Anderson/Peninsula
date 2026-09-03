@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Mail, Phone, Linkedin, Github, ArrowRight } from "lucide-react";
+import { Mail, Phone, Linkedin, Github, ArrowRight, FileText } from "lucide-react";
+import CopyButton from "../components/CopyButton";
 import StripeBand from "../components/brand/StripeBand";
 import { Button, TextLink } from "../components/ui";
-import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_TEL, LINKEDIN_URL, GITHUB_URL, GITHUB_USER } from "../data/site";
+import { CONTACT_EMAIL, CONTACT_MAILTO, CONTACT_PHONE, CONTACT_PHONE_TEL, LINKEDIN_URL, GITHUB_URL, GITHUB_USER, RESUME_META, RESUME_PATH } from "../data/site";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
 };
 
-type Row = { icon: React.ReactNode; label: string; value: string; href?: string; rel?: string };
+type Row = { icon: React.ReactNode; label: string; value: string; href?: string; rel?: string; copy?: string };
 
 /** The handle shown for a profile URL, derived so it can't drift from the link. */
 function handleOf(url: string): string {
@@ -23,10 +24,11 @@ function handleOf(url: string): string {
 
 export default function ContactPage() {
   const rows: Row[] = [
-    { icon: <Mail size={18} />, label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+    { icon: <Mail size={18} />, label: "Email", value: CONTACT_EMAIL, href: CONTACT_MAILTO, copy: CONTACT_EMAIL },
     { icon: <Phone size={18} />, label: "Phone", value: CONTACT_PHONE, href: `tel:${CONTACT_PHONE_TEL}` },
     { icon: <Linkedin size={18} />, label: "LinkedIn", value: handleOf(LINKEDIN_URL), href: LINKEDIN_URL, rel: "me" },
     { icon: <Github size={18} />, label: "GitHub", value: GITHUB_USER, href: GITHUB_URL, rel: "me" },
+    { icon: <FileText size={18} />, label: "Resume", value: `PDF · ${RESUME_META.pages} page · ${RESUME_META.updated}`, href: RESUME_PATH },
   ];
 
   return (
@@ -52,19 +54,20 @@ export default function ContactPage() {
                     {r.label}
                   </span>
                 </dt>
-                <dd className="md-contact-value" style={{ margin: 0 }}>
+                <dd className="md-contact-value" style={{ margin: 0, display: "flex", alignItems: "center", gap: "var(--space-4)", flexWrap: "wrap" }}>
                   {r.href ? (
                     <TextLink href={r.href} rel={r.rel}>{r.value}</TextLink>
                   ) : (
                     <span style={{ fontSize: "var(--text-sm)", color: "var(--text-body)" }}>{r.value}</span>
                   )}
+                  {r.copy ? <CopyButton text={r.copy} /> : null}
                 </dd>
               </div>
             ))}
           </dl>
 
           <div>
-            <Button variant="primary" href={`mailto:${CONTACT_EMAIL}`} iconRight={<ArrowRight size={15} />}>
+            <Button variant="primary" href={CONTACT_MAILTO} iconRight={<ArrowRight size={15} />}>
               Start an email
             </Button>
           </div>

@@ -145,7 +145,7 @@ export function Card({
 
 // ---- Badge -----------------------------------------------------------------
 
-const statusColor: Record<ProjectStatus, string> = {
+export const statusColor: Record<ProjectStatus, string> = {
   ongoing: "var(--status-ongoing)",
   complete: "var(--status-complete)",
   wip: "var(--status-wip)",
@@ -308,6 +308,10 @@ export type AccordionItem = {
   /** Stable id: element id for deep links, and the key React tracks the row by. */
   id: string;
   title: ReactNode;
+  /** One line under the title, shown only while the row is collapsed. */
+  subtitle?: ReactNode;
+  /** A row of chips (or similar) under the subtitle, also collapsed-only. */
+  extra?: ReactNode;
   meta?: ReactNode;
   content: ReactNode;
 };
@@ -344,29 +348,42 @@ export function Accordion({
   syncHash?: boolean;
 }) {
   const hash = useSyncExternalStore(subscribeHash, syncHash ? readHash : noHash, noHash);
-  // `undefined` = the visitor hasn't touched anything yet, so the hash (if it
-  // names a row) or the default decides. `null` = they closed everything.
-  const [choice, setChoice] = useState<string | null | undefined>(undefined);
+  // A click records the visitor's choice together with the hash it was made
+  // under; a later real hash change (an in-page #slug link, back/forward)
+  // outranks it, so deep links keep working after the first toggle.
+  const [choice, setChoice] = useState<{ hash: string; id: string | null } | undefined>(undefined);
   // The default is latched on first render: re-sorting the list must not hand
   // the open state to whichever row lands first.
   const [initial] = useState(defaultOpen ?? null);
   const hashOpen = hash && items.some((it) => it.id === hash) ? hash : null;
-  const open = choice !== undefined ? choice : (hashOpen ?? initial);
+  const chosen = choice !== undefined && choice.hash === hash;
+  const open = chosen ? choice.id : (hashOpen ?? initial);
 
-  // Bring a deep-linked row into view: once now, and again after the panels
-  // above it have finished collapsing (0.28s grid transition), since that
-  // shifts the row up. The fixed navbar is covered by scroll-margin-top.
+  // Bring a deep-linked row into view — once now, and again after the panels
+  // above it have finished collapsing (0.28s grid transition) — and light it
+  // briefly so the arrival reads. The fixed navbar is covered by
+  // scroll-margin-top.
   useEffect(() => {
-    if (!syncHash || !hashOpen || choice !== undefined) return;
-    const go = () => document.getElementById(hashOpen)?.scrollIntoView({ block: "start" });
+    if (!syncHash || !hashOpen || chosen) return;
+    const row = document.getElementById(hashOpen);
+    if (!row) return;
+    const go = () => row.scrollIntoView({ block: "start" });
     go();
     const t = setTimeout(go, 340);
-    return () => clearTimeout(t);
-  }, [syncHash, hashOpen, choice]);
+    row.classList.add("md-landed");
+    const done = () => row.classList.remove("md-landed");
+    row.addEventListener("animationend", done, { once: true });
+    return () => {
+      clearTimeout(t);
+      row.removeEventListener("animationend", done);
+    };
+  }, [syncHash, hashOpen, chosen]);
 
   const toggle = (id: string) => {
     const next = open === id ? null : id;
-    setChoice(next);
+    // Recorded under the store's current hash: replaceState below doesn't fire
+    // hashchange, so the store keeps that value and the choice stays in force.
+    setChoice({ hash, id: next });
     if (syncHash && typeof history !== "undefined") {
       const url = next ? `#${encodeURIComponent(next)}` : window.location.pathname + window.location.search;
       history.replaceState(history.state, "", url);
@@ -389,8 +406,12 @@ export function Accordion({
               aria-controls={panelId}
               onClick={() => toggle(item.id)}
             >
-              <span className="min-w-0" style={{ display: "flex", alignItems: "center", gap: "var(--space-5)", flexWrap: "wrap" }}>
-                {item.title}
+              <span className="min-w-0" style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", flex: "1 1 auto" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: "var(--space-5)", flexWrap: "wrap" }}>
+                  {item.title}
+                </span>
+                {item.subtitle ? <span className="md-acc-sub">{item.subtitle}</span> : null}
+                {item.extra ? <span className="md-acc-extra">{item.extra}</span> : null}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: "var(--space-5)" }}>
                 {item.meta ? (

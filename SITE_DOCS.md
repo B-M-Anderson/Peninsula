@@ -34,7 +34,7 @@ Everything visual comes from `app/globals.css`:
 - `html.light` / `.md-light` — the eggshell aliases. `color-scheme` follows the class so native scrollbars and form controls match. `@media print` uses a paper palette and hides chrome/textures.
 - Brand utilities: `.md-grain` (film grain), `.md-dapple` (foot dappling), `.md-above` (content above the textures).
 - Primitives: `.md-btn` (+ `-primary/-secondary/-ghost/-sm`, `:disabled`), `.md-chip`, `.md-card` (tighter padding on phones), `.md-link`, `.md-acc-*` (disclosure rows; collapsed panels are `inert` and hidden), `.md-contact-row`, `.md-project-card`, `.md-video-poster`, `.md-fade-in`, `.md-skip-link`.
-- Motion: one `md-pulse` keyframe for status dots, `md-fade-in` for page entrances; `prefers-reduced-motion` zeroes every CSS transition/animation, and `/ask` wraps framer-motion in `MotionConfig reducedMotion="user"`.
+- Motion: the two bands slide in on load (`md-band-in`), cards/rows/figures settle in as they scroll into view (`md-reveal`, CSS scroll-driven, no JS), a deep-linked row lights briefly (`md-landed`), a reading hairline grows along the navbar on `/projects`, the theme toggle's icons cross-fade, `md-pulse` for status dots, `md-fade-in` for small pages; `prefers-reduced-motion` neutralises all of it, and `/ask` wraps framer-motion in `MotionConfig reducedMotion="user"`.
 
 Theme switching: the inline script in `app/layout.tsx` sets `html.dark`/`html.light` (saved override, else OS preference) and the `theme-color` meta before paint; `Navbar` keeps both in sync afterwards through a `useSyncExternalStore` theme store. Storage access goes through `app/lib/storage.ts`, which never throws.
 
@@ -67,14 +67,15 @@ Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app
 
 ## 6. Data
 
-`app/data/site.ts` — every site-wide constant (name, tagline, description, blurb, URLs and handles, contact details, vault code/triggers, concierge priority code, darkroom upload limit).
+`app/data/site.ts` — every site-wide constant (name, tagline, description, blurb, hero fact line `HERO_FACTS`, the `CURRENTLY` now / looking-for lines, `RESUME_META`, URLs and handles, contact details and `CONTACT_MAILTO`, vault code/triggers, concierge priority code, darkroom upload limit).
 
-`app/data/projects.ts` — the `Project` type and list, plus `publishedProjects` (drafts filtered), `statusOf()` and `projectSlug()`.
+`app/data/projects.ts` — the `Project` type and list, plus `publishedProjects` (drafts filtered), `statusOf()`, `projectSlug()`, `summaryOf()`, `projectCounts()` (the ledger lines under headings) and `relatedProjects()` (the "Also see" links).
 
 | Field | Drives |
 |---|---|
 | `title` | Card/row heading; slug source |
 | `description` | Rendered through `RichText` (`whiteSpace: pre-line` on `/projects`; 2-line clamp without `~` asides on `/`) |
+| `summary` | One line on the collapsed `/projects` row; defaults to the description's first sentence (`summaryOf()`) |
 | `githubUrl`, `videoUrl` | "View on GitHub" / "Watch on YouTube" links; `videoUrl` also drives the embed |
 | `date` | Display + sort key (`new Date(date)`; keep it parseable) |
 | `skills`, `importantSkills` | Chips; important ones sort first and render strong |

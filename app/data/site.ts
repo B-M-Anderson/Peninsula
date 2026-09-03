@@ -6,6 +6,20 @@ export const SITE_TAGLINE = "Biomedical engineering · Iowa State University";
 // Default <meta name="description"> and social-card text.
 export const SITE_DESCRIPTION =
   "Biomedical engineering student at Iowa State University. Projects in lab-equipment repair, local AI, hardware and the web, plus a resume and how to get in touch.";
+// Hero fact line — who, what, where, when — read at a glance above the blurb.
+export const HERO_FACTS = [
+  "Senior · B.S. Biomedical Engineering",
+  "Minor in Pharmacology",
+  "Iowa State University · Ames, IA",
+  "Graduating May 2027",
+];
+
+// The two lines a recruiter or collaborator wants first.
+export const CURRENTLY = {
+  now: "Finishing senior year at Iowa State — reading papers, building small projects and learning new tools after wrapping an undergraduate research role in E. coli genetics.",
+  lookingFor: "Graduate school in pharmaceutical development, and open to industry. No location preference.",
+};
+
 // The homepage introduction.
 export const BLURB =
   "I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the pursuit of the betterment of global health.";
@@ -47,7 +61,10 @@ export const GITHUB_URL = `https://github.com/${GITHUB_USER}`;
 export const REPO_URL = `${GITHUB_URL}/Peninsula`;
 export const LINKEDIN_URL = "https://www.linkedin.com/in/bennett-m-anderson/";
 export const RESUME_PATH = "/ResumeBennettAnderson.pdf";
+export const RESUME_META = { pages: 1, updated: "August 2026" };
 export const CONTACT_EMAIL = "bennetta32.30@gmail.com";
+/** mailto: with a subject, so a blank compose window never lands in front of someone. */
+export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Hello from bennettanderson.com")}`;
 export const CONTACT_PHONE = "(815) 821-9604";
 // Darkroom upload ceiling. Vercel functions reject request bodies over 4.5 MB
 // before a route ever runs, so the advertised limit has to sit under that; the

@@ -44,7 +44,7 @@ export default function StripeBand({ title, subtitle, offset = "88px", size = "m
       className={`absolute left-0 right-0 flex flex-col pointer-events-none ${className ?? ""}`}
       style={{ top: offset, gap }}
     >
-      <div className={bar} style={{ minHeight: thick, paddingBlock: sm ? "4px" : "6px", background: "var(--stripe-color-a)" }}>
+      <div className={`${bar} md-band md-band-a`} style={{ minHeight: thick, paddingBlock: sm ? "4px" : "6px", background: "var(--stripe-color-a)" }}>
         <div style={column}>
           {title ? (
             <Title
@@ -62,7 +62,7 @@ export default function StripeBand({ title, subtitle, offset = "88px", size = "m
           ) : null}
         </div>
       </div>
-      <div className={bar} style={{ minHeight: thin, paddingBlock: sm ? "3px" : "5px", background: "var(--stripe-color-b)" }}>
+      <div className={`${bar} md-band md-band-b`} style={{ minHeight: thin, paddingBlock: sm ? "3px" : "5px", background: "var(--stripe-color-b)" }}>
         <div style={column}>
           {subtitle ? (
             <p

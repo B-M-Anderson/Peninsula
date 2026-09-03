@@ -1,3 +1,5 @@
+import { typeset } from "../lib/typeset";
+
 export type Project = {
   title: string;
   description: string;
@@ -233,14 +235,14 @@ The more I do and improve this website, the more I continue to learn to do on my
       "Web Development",
       "UI Design",
       "Responsive Design",
-      "Git/GitHub",
+      "Git & GitHub",
       "Next.js",
       "TypeScript",
       "Tailwind CSS",
       "Framer Motion",
       "Vercel",
     ],
-    importantSkills: ["TypeScript", "Web Development", "UI Design", "Responsive Design", "Git/GitHub"],
+    importantSkills: ["TypeScript", "Web Development", "UI Design", "Responsive Design", "Git & GitHub"],
     media: "none",
     aiUsage: 55,
     completion: 85,
@@ -259,7 +261,7 @@ The more I do and improve this website, the more I continue to learn to do on my
 ~(Section update & video demo coming soon)`,
     githubUrl: "https://github.com/B-M-Anderson/mp3-Playlist-Crossfader",
     date: "November 24, 2025",
-    skills: ["Python", "Audio Processing", "Git/GitHub", "pydub", "matplotlib"],
+    skills: ["Python", "Audio Processing", "Git & GitHub", "pydub", "matplotlib"],
     importantSkills: ["Python", "Audio Processing"],
     media: "video",
     aiUsage: 60,
@@ -305,8 +307,8 @@ Compiled in **XeLaTeX** using **AltaCV** document class, will be instated for al
 Visible on my mainpage as a downloadable PDF.`,
     githubUrl: "https://github.com/B-M-Anderson/resume-latex",
     date: "November 28, 2025",
-    skills: ["LaTeX", "Attention to Detail", "Technical Comm.", "Document Design", "Information Structuring"],
-    importantSkills: ["LaTeX", "Technical Comm."],
+    skills: ["LaTeX", "Attention to Detail", "Technical Communication", "Document Design", "Information Structuring"],
+    importantSkills: ["LaTeX", "Technical Communication"],
     media: "photo",
     aiUsage: 30,
     completion: 100,
@@ -348,7 +350,9 @@ export function summaryOf(p: Project): string {
   const line = p.description.split("\n").map((l) => l.trim()).find((l) => l && !l.startsWith("~")) ?? "";
   const plain = line.replace(/\*\*|`|\*/g, "");
   const first = plain.split(/(?<=[.!?])\s+/)[0] ?? plain;
-  return first.length > 150 ? `${first.slice(0, 147).trimEnd()}…` : first;
+  if (first.length <= 150) return typeset(first);
+  const cut = first.slice(0, 147);
+  return typeset(`${cut.slice(0, cut.lastIndexOf(" ")).trimEnd()}…`);
 }
 
 /** The short ledger under headings: how much is here, how far along, how recently it moved. */

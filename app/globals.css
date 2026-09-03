@@ -68,9 +68,10 @@
 
   --text-body: #F5EBDA;
   --text-strong: #FFFDF9;
-  --text-muted: rgba(240, 220, 188, 0.66);
-  /* faint sits at ~4.6:1 on the page ground — the 11px mono labels rely on it */
-  --text-faint: rgba(240, 220, 188, 0.58);
+  --text-muted: rgba(240, 220, 188, 0.74);
+  /* faint clears 4.5:1 on every dark surface, raised included — the 11px mono
+     labels rely on it; muted sits a clear step above it */
+  --text-faint: rgba(240, 220, 188, 0.64);
   --text-accent: #D3B68A;
 
   --border-subtle: rgba(245, 235, 218, 0.12);
@@ -129,11 +130,15 @@
   --space-9: 48px;
   --space-10: 64px;
   --space-11: 80px;
+  /* every subpage's <main> starts this far under its 232px title frame */
+  --page-top: var(--space-9);
 
   --text-3xs: 11px;
   --radius-md: 6px;
 
   --leading-relaxed: 1.64;
+  /* summaries and short prose: one rhythm wherever the same text appears */
+  --leading-body: 1.55;
 
   --tracking-display: -0.015em;
   --tracking-label: 0.13em;
@@ -150,8 +155,8 @@ html.light {
 
   --text-body: #3A2412;
   --text-strong: #1B1007;
-  --text-muted: rgba(42, 25, 13, 0.68);
-  --text-faint: rgba(42, 25, 13, 0.6);
+  --text-muted: rgba(42, 25, 13, 0.78);
+  --text-faint: rgba(42, 25, 13, 0.68);
   --text-accent: #6B4420;
 
   --border-subtle: rgba(42, 25, 13, 0.08);
@@ -379,6 +384,16 @@ select {
 }
 
 /* ---- component primitives (built from the tokens above) ---- */
+
+/* The opening paragraph of a page: a size that eases down on phones, and a
+   tighter leading than body copy so seven lines don't become a wall. */
+.md-lede {
+  margin: 0;
+  max-width: var(--measure);
+  font-size: clamp(17px, 1vw + 13px, 20px);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
 
 /* Buttons — 3px radius, never pills. Hover changes colour only; press nudges
    1px down and one step darker. */
@@ -612,7 +627,7 @@ select {
 .md-acc-sub {
   display: block;
   font-size: var(--text-sm);
-  line-height: 1.45;
+  line-height: var(--leading-body);
   color: var(--text-muted);
   max-width: var(--measure);
 }
@@ -630,6 +645,13 @@ select {
 @media (max-width: 639px) {
   .md-acc-meta,
   .md-acc-extra {
+    display: none;
+  }
+}
+/* …and on wider screens the panel's own date line steps aside instead, so the
+   date is printed once either way. */
+@media (min-width: 640px) {
+  .md-acc-date {
     display: none;
   }
 }

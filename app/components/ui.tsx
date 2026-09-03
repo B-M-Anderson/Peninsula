@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useState, useSyncExternalStore, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import type { ProjectStatus } from "../data/projects";
 
@@ -153,6 +153,15 @@ export const statusColor: Record<ProjectStatus, string> = {
   terminated: "var(--status-terminated)",
 };
 
+/** What the badge says. The keys are the data's; the words are a reader's. */
+export const statusLabel: Record<ProjectStatus, string> = {
+  ongoing: "ongoing",
+  complete: "complete",
+  wip: "in progress",
+  shelved: "shelved",
+  terminated: "stopped",
+};
+
 export function Badge({
   children,
   status,
@@ -237,7 +246,30 @@ export function ProgressBar({
 
 // ---- SectionHeading --------------------------------------------------------
 
-export function SectionHeading({ children, kicker, id }: { children: ReactNode; kicker?: string; id?: string }) {
+/**
+ * "a · b · c" as items rather than one string: the dot travels with the item
+ * after it, so a wrap can only fall before a separator, never leave one
+ * hanging at the end of a line.
+ */
+export function Dotted({ items }: { items: Array<string | null | undefined | false> }) {
+  const list = items.filter((x): x is string => typeof x === "string" && x.length > 0);
+  return (
+    <>
+      {list.map((t, i) => (
+        <Fragment key={`${i}-${t}`}>
+          {/* a real space between items is the only break opportunity */}
+          {i > 0 ? " " : null}
+          <span style={{ whiteSpace: "nowrap" }}>
+            {i > 0 ? "· " : null}
+            {t}
+          </span>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+export function SectionHeading({ children, kicker, id }: { children: ReactNode; kicker?: ReactNode; id?: string }) {
   return (
     <div style={{ marginBottom: "var(--space-7)" }}>
       {kicker ? (

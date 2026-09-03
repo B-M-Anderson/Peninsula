@@ -84,7 +84,7 @@ export default function VaultClient() {
           />
         </label>
         <p className="mt-4 text-xs" style={{ color: "var(--text-faint)" }}>
-          hint: the cat guards this. ask the machine about her.
+          hint: the cat guards this. ask the concierge about her.
         </p>
       </form>
     );
@@ -97,10 +97,19 @@ export default function VaultClient() {
       <section style={card} aria-labelledby="vault-currently">
         <h2 id="vault-currently" style={prompt}>&gt; cat currently.log</h2>
         <ul className="space-y-2 text-sm" style={{ margin: 0, padding: 0, listStyle: "none" }}>
-          <li><span style={{ color: "var(--text-accent)" }}>building:</span> {CURRENTLY.building}</li>
-          <li><span style={{ color: "var(--text-accent)" }}>reading:</span> {CURRENTLY.reading}</li>
-          <li><span style={{ color: "var(--text-accent)" }}>listening:</span> {CURRENTLY.listening}</li>
-          <li><span style={{ color: "var(--text-accent)" }}>obsessed with:</span> {CURRENTLY.obsessedWith}</li>
+          {(
+            [
+              ["building", CURRENTLY.building],
+              ["reading", CURRENTLY.reading],
+              ["listening", CURRENTLY.listening],
+              ["obsessed with", CURRENTLY.obsessedWith],
+            ] as const
+          )
+            // an unfilled line stays out of the log rather than printing "…"
+            .filter(([, v]) => v && v !== "…")
+            .map(([k, v]) => (
+              <li key={k}><span style={{ color: "var(--text-accent)" }}>{k}:</span> {v}</li>
+            ))}
         </ul>
       </section>
 

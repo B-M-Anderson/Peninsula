@@ -15,7 +15,7 @@ export default function DarkroomPage() {
       <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
         <StripeBand offset="80px" title="Darkroom" subtitle="Field observations, developed on site" />
       </div>
-      <main id="main" tabIndex={-1} className="md-dapple" style={{ maxWidth: "var(--max-width)", margin: "0 auto", minHeight: "50vh", padding: "var(--space-9) var(--gutter-page) var(--space-11)" }}>
+      <main id="main" tabIndex={-1} className="md-dapple" style={{ maxWidth: "var(--max-width)", margin: "0 auto", minHeight: "50vh", padding: "var(--page-top) var(--gutter-page) var(--space-11)" }}>
         <div className="md-above md-fade-in">
           <DarkroomClient />
         </div>

@@ -55,7 +55,7 @@ function progressLabel(p: Progress): string {
 
 // Short topics for the empty state; each fires a fuller question.
 const TOPICS: { label: string; q: string }[] = [
-  { label: "His research", q: "What research is Bennett doing right now?" },
+  { label: "Research", q: "What research is Bennett doing right now?" },
   { label: "Projects", q: "What are Bennett's projects?" },
   { label: "After graduation", q: "What is Bennett looking for after he graduates?" },
   { label: "Penny", q: "Tell me about Penny the cat." },
@@ -200,7 +200,7 @@ export default function AskClient() {
       ? { dot: "var(--text-faint)", label: "Connecting…", pulse: true }
       : online
       ? { dot: "var(--status-complete)", label: "Online", pulse: true }
-      : { dot: "var(--status-wip)", label: "Offline — the desktop's asleep", pulse: false };
+      : { dot: "var(--status-wip)", label: "Offline", pulse: false };
 
   const empty = lines.length === 0;
   const asleep = status !== null && !online;
@@ -424,7 +424,7 @@ export default function AskClient() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value.slice(0, MAX))}
-                placeholder={asleep ? "The desktop is asleep — ask anyway…" : "Ask about Bennett…"}
+                placeholder={asleep ? "Ask anyway…" : "Ask about Bennett…"}
                 aria-label="Ask about Bennett"
                 enterKeyHint="send"
                 autoComplete="off"

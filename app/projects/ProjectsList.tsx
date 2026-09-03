@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Button, Badge, Chip, ProgressBar, TextLink, Accordion, type AccordionItem } from "../components/ui";
+import { Button, Badge, Chip, ProgressBar, TextLink, Accordion, statusLabel, type AccordionItem } from "../components/ui";
 import MediaBadge from "../components/MediaBadge";
 import RichText from "../components/RichText";
 import YouTubeEmbed, { youTubeId } from "../components/YouTubeEmbed";
@@ -16,9 +16,8 @@ function ProjectDetail({ p }: { p: Project }) {
   const related = relatedProjects(p);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
-        most recently updated:{" "}
-        <span style={{ color: "var(--text-muted)" }}>{p.date}</span>
+      <div className="md-acc-date" style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
+        Updated <span style={{ color: "var(--text-muted)" }}>{p.date}</span>
       </div>
       {p.imageUrl && (
         <div style={{ borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--border-subtle)", maxWidth: 420 }}>
@@ -108,15 +107,18 @@ export default function ProjectsList() {
     ),
     title: (
       <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-5)", flexWrap: "wrap" }}>
-        <Image
-          src={p.thumbnailUrl ?? "/thumbnails/default.png"}
-          alt=""
-          width={34}
-          height={34}
-          style={{ borderRadius: "var(--radius-sm)", objectFit: "cover", border: "1px solid var(--border-subtle)", background: "var(--surface-sunken)", width: 34, height: 34 }}
-        />
-        <span style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", letterSpacing: "var(--tracking-display)", color: "var(--text-strong)" }}>{p.title}</span>
-        <Badge status={statusOf(p)}>{statusOf(p)}</Badge>
+        {/* Thumbnail and title stay together; only the badges may wrap to the next line */}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-4)", minWidth: 0 }}>
+          <Image
+            src={p.thumbnailUrl ?? "/thumbnails/default.png"}
+            alt=""
+            width={34}
+            height={34}
+            style={{ borderRadius: "var(--radius-sm)", objectFit: "cover", border: "1px solid var(--border-subtle)", background: "var(--surface-sunken)", width: 34, height: 34, flex: "0 0 auto" }}
+          />
+          <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px, 5.5vw, var(--text-xl))", lineHeight: 1.2, letterSpacing: "var(--tracking-display)", color: "var(--text-strong)" }}>{p.title}</span>
+        </span>
+        <Badge status={statusOf(p)}>{statusLabel[statusOf(p)]}</Badge>
         <MediaBadge media={p.media} />
       </span>
     ),

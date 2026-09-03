@@ -37,11 +37,11 @@ export default function ContactPage() {
         <StripeBand offset="80px" title="Get in touch" subtitle="Context in the first message, please" />
       </div>
 
-      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", minHeight: "60vh", padding: "var(--space-11) var(--gutter-page)" }}>
-        <div className="md-above" style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
-          <p style={{ margin: 0, fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-            Feel free to reach out via email, phone, or LinkedIn. If using phone or email, please provide context in your first
-            message or it will likely be ignored.
+      {/* The column sits in the page's content column so the copy starts under the band's title */}
+      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", minHeight: "60vh", maxWidth: "var(--max-width)", margin: "0 auto", padding: "var(--page-top) var(--gutter-page) var(--space-11)" }}>
+        <div className="md-above" style={{ maxWidth: 720, display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
+          <p className="md-lede">
+            Email, phone or LinkedIn all work. Say what it&rsquo;s about in your first message, or it will likely be ignored.
           </p>
 
           <dl className="md-surface" style={{ margin: 0, border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", background: "var(--surface-raised)", boxShadow: "var(--shadow-sm)", padding: "var(--space-2)" }}>

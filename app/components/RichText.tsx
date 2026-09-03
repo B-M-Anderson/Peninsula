@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { typeset } from "../lib/typeset";
 
 /**
  * Renders the small amount of markdown the project descriptions actually use:
@@ -38,13 +39,13 @@ function inline(text: string, keyPrefix: string, links: boolean): ReactNode[] {
     const key = `${keyPrefix}-${i}`;
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={key} style={{ fontWeight: 650, color: "var(--text-body)" }}>
-          {part.slice(2, -2)}
+        <strong key={key} style={{ fontWeight: 600, color: "var(--text-body)" }}>
+          {typeset(part.slice(2, -2))}
         </strong>
       );
     }
     if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) {
-      return <em key={key}>{part.slice(1, -1)}</em>;
+      return <em key={key}>{typeset(part.slice(1, -1))}</em>;
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
@@ -57,7 +58,7 @@ function inline(text: string, keyPrefix: string, links: boolean): ReactNode[] {
       // Inside a card that is itself a link, a nested <a> is invalid HTML.
       return links ? <UrlLink key={key} href={part} /> : urlLabel(part);
     }
-    return part;
+    return typeset(part);
   });
 }
 

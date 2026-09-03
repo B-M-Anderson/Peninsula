@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 type Props = {
   title?: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   /** Distance from the top edge to the top of the thick band. */
   offset?: string;
   size?: "md" | "sm";

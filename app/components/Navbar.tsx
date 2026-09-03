@@ -118,8 +118,10 @@ export default function Navbar() {
     >
       <nav aria-label="Primary" className="flex justify-between items-center gap-3 px-4 sm:px-6 py-2.5">
         {/* Left: mark + name */}
-        <Link href="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0 rounded-sm" aria-label={`${SITE_NAME} — home`}>
+        <Link href="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0 rounded-sm">
           <Mark variant="favicon" size={26} />
+          {/* The name is the link's accessible name at every width; phones only show the mark */}
+          <span className="sr-only sm:hidden">{SITE_NAME}</span>
           <span
             className="hidden sm:block whitespace-nowrap"
             style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", letterSpacing: "-0.015em", color: "var(--text-strong)" }}
@@ -163,8 +165,8 @@ export default function Navbar() {
           <button
             type="button"
             onClick={toggleTheme}
-            aria-label={dark ? "Switch to the light ground" : "Switch to the dark ground"}
-            title={dark ? "Light ground" : "Dark ground"}
+            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+            title={dark ? "Light mode" : "Dark mode"}
             className="md-theme-btn flex-shrink-0 grid place-items-center -my-1"
             style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)", color: "var(--text-muted)" }}
           >

@@ -31,7 +31,7 @@ const categories = [
   {
     name: "microbiology",
     skills: [
-      { name: "Bacterial experimental techniques", strong: true },
+      { name: "Bacterial Experimental Techniques", strong: true },
       { name: "Cloning & Transformation", strong: true },
       { name: "PCR & Gel Electrophoresis", strong: true },
       { name: "PRISM", strong: false },

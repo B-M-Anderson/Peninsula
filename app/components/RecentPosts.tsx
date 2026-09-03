@@ -35,7 +35,7 @@ function PostCard({ p }: { p: Post }) {
         </h3>
         <span className="sr-only"> (opens in a new tab)</span>
         {p.blurb ? (
-          <p style={{ margin: "var(--space-3) 0 0", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)", maxWidth: "var(--measure)" }}>
+          <p style={{ margin: "var(--space-3) 0 0", fontSize: "var(--text-sm)", lineHeight: "var(--leading-body)", color: "var(--text-muted)", maxWidth: "var(--measure)" }}>
             {p.blurb}
           </p>
         ) : null}

@@ -112,7 +112,7 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
             {status?.model ? (
               <>
                 Running <span style={{ ...mono, color: "var(--text-body)" }}>{status.model}</span>
-                {cpuShort ? ` on a ${cpuShort}` : ""} — no GPU, no API key, no data centre.
+                {cpuShort ? ` on a ${cpuShort}` : ""} — no GPU, no API key, no data center.
               </>
             ) : (
               "What actually happens when you ask a question."
@@ -152,7 +152,7 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
               gap: "var(--space-4)",
             }}
           >
-            <Stat k="Model" v={status?.model ?? "—"} note="3 billion parameters, 4-bit quantised" />
+            <Stat k="Model" v={status?.model ?? "—"} note={status?.model ? "3 billion parameters, 4-bit quantized" : undefined} />
             <Stat k="Machine" v={cpuShort ?? "desktop"} note={[cores, ram].filter(Boolean).join(" · ") || undefined} />
             <Stat
               k="Graphics"
@@ -194,7 +194,7 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
           </div>
 
           <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>
-            The slow part is honest: a small model thinking on four CPU cores in a house, not a rented GPU.
+            The slow part is real: a small model thinking on four CPU cores in a house, not a rented GPU.
             While nobody is asking, it works ahead — writing answers to likely questions so the common ones come
             back the moment you hit enter. Ask something new and you will feel the machine actually think.
           </p>

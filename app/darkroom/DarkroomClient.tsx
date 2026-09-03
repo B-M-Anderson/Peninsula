@@ -110,7 +110,7 @@ export default function DarkroomClient() {
         setMsg(`Rejected: ${data.error ?? `HTTP ${res.status}`}.`);
       }
     } catch {
-      setMsg("Transmission failed. Try again.");
+      setMsg("The print didn't make it. Try again.");
     }
     setBusy(false);
   };
@@ -175,7 +175,7 @@ export default function DarkroomClient() {
             <p role="status" aria-live="polite" style={{ margin: 0, gridColumn: "1 / -1", fontSize: "var(--text-sm)", color: "var(--text-muted)", minHeight: "1.4em" }}>
               {msg}
               {!gallery.loading && !gallery.configured && !gallery.error
-                ? " Storage isn't provisioned yet — uploads will work once a blob store is attached."
+                ? " Storage isn't set up yet, so nothing can be hung."
                 : null}
             </p>
           </form>

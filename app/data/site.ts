@@ -7,12 +7,8 @@ export const SITE_TAGLINE = "Biomedical engineering · Iowa State University";
 export const SITE_DESCRIPTION =
   "Biomedical engineering student at Iowa State University. Projects in lab-equipment repair, local AI, hardware and the web, plus a resume and how to get in touch.";
 // Hero fact line — who, what, where, when — read at a glance above the blurb.
-export const HERO_FACTS = [
-  "Senior · B.S. Biomedical Engineering",
-  "Minor in Pharmacology",
-  "Iowa State University · Ames, IA",
-  "Graduating May 2027",
-];
+// The band above already says the degree and the school, so this carries the rest.
+export const HERO_FACTS = ["Senior, graduating May 2027", "Minor in pharmacology", "Ames, IA"];
 
 // The two lines a recruiter or collaborator wants first.
 export const CURRENTLY = {
@@ -22,7 +18,7 @@ export const CURRENTLY = {
 
 // The homepage introduction.
 export const BLURB =
-  "I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the pursuit of the betterment of global health.";
+  "I'm working to improve my skills, computational and otherwise, to become the best engineer and scientist I can in the pursuit of better global health.";
 
 export const SUBSTACK_URL: string | null = "https://bennettmanderson.substack.com";
 

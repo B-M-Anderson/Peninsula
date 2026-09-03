@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FileText, Linkedin, Github, ArrowRight, Youtube } from "lucide-react";
+import { FileText, Linkedin, Github } from "lucide-react";
 import profile from "../public/profile.jpeg";
 import penny1 from "../public/cats/Penny1.jpeg";
 import penny2 from "../public/cats/Penny2.jpeg";
@@ -12,7 +12,8 @@ import StripeBand from "./components/brand/StripeBand";
 import SkillsSection from "./components/SkillsSection";
 import RecentPosts from "./components/RecentPosts";
 import MediaBadge from "./components/MediaBadge";
-import { Button, Card, Badge, Chip, ProgressBar, SectionHeading, TextLink, statusColor } from "./components/ui";
+import { Button, Card, Badge, Chip, Dotted, ProgressBar, SectionHeading, TextLink, statusColor, statusLabel } from "./components/ui";
+import { typeset } from "./lib/typeset";
 import RichText from "./components/RichText";
 import { projectCounts, publishedProjects, projectSlug, statusOf, type Project } from "./data/projects";
 import { getPosts } from "./lib/posts";
@@ -22,7 +23,6 @@ import {
   GITHUB_URL,
   HERO_FACTS,
   LINKEDIN_URL,
-  RESUME_META,
   RESUME_PATH,
   SITE_NAME,
   SITE_TAGLINE,
@@ -35,14 +35,6 @@ import {
 // The page is built once and refreshed every 15 minutes so the "Recent posts"
 // rail is in the HTML on first paint (see app/lib/posts.ts).
 export const revalidate = 900;
-
-function XLogo({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden focusable="false">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
 
 // Static imports so each photo blurs up from its own colours instead of a
 // blank box; the health check reads the import paths above.
@@ -69,14 +61,14 @@ function ProjectCard({ p }: { p: Project }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-5)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
             <h3 style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", margin: 0, color: "var(--text-strong)" }}>{p.title}</h3>
-            <Badge status={status}>{status}</Badge>
+            <Badge status={status}>{statusLabel[status]}</Badge>
             <MediaBadge media={p.media} suffix=" demo" />
           </div>
           <p
             style={{
               margin: "0 0 var(--space-5)",
               fontSize: "var(--text-sm)",
-              lineHeight: "var(--leading-relaxed)",
+              lineHeight: "var(--leading-body)",
               color: "var(--text-muted)",
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -107,9 +99,7 @@ export default async function HomePage() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   const counts = projectCounts();
-  const ledger = ["Selected work", `${counts.total} projects`, `${counts.byStatus.complete} complete`, counts.latestLabel ? `updated ${counts.latestLabel}` : null]
-    .filter(Boolean)
-    .join(" · ");
+  const ledger = ["Selected work", `${counts.total} projects`, `${counts.byStatus.complete} complete`, counts.latestLabel ? `updated ${counts.latestLabel}` : null];
 
   // Structured data: who this site is about, and the profiles it links to.
   const person = {
@@ -139,7 +129,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(person) }} />
 
       {/* Hero — the two-band motif; no divider dapple, so it flows into the content */}
-      <div style={{ position: "relative", overflow: "hidden", paddingBottom: "var(--space-11)" }}>
+      <div style={{ position: "relative", overflow: "hidden", paddingBottom: "var(--space-7)" }}>
         <StripeBand offset={HERO_OFFSET} title={SITE_NAME} subtitle={SITE_TAGLINE} />
         <div
           className="md-above"
@@ -156,11 +146,9 @@ export default async function HomePage() {
             />
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: "0 0 var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)", lineHeight: 1.8 }}>
-                {HERO_FACTS.join(" · ")}
+                <Dotted items={HERO_FACTS} />
               </p>
-              <p style={{ margin: 0, maxWidth: "var(--measure)", fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-                {BLURB}
-              </p>
+              <p className="md-lede">{typeset(BLURB)}</p>
               <div style={{ display: "flex", gap: "var(--space-5)", marginTop: "var(--space-7)", flexWrap: "wrap", alignItems: "center" }}>
                 <Button variant="primary" href={RESUME_PATH} newTab iconLeft={<FileText size={15} />}>
                   Resume (PDF)
@@ -171,36 +159,26 @@ export default async function HomePage() {
                 <Button variant="secondary" href={GITHUB_URL} rel="me" iconLeft={<Github size={15} />}>
                   GitHub
                 </Button>
-                {YOUTUBE_URL && (
-                  <Button variant="secondary" href={YOUTUBE_URL} rel="me" iconLeft={<Youtube size={15} />}>
-                    YouTube
-                  </Button>
-                )}
-                {X_URL && (
-                  <Button variant="secondary" href={X_URL} rel="me" iconLeft={<XLogo />}>
-                    X
-                  </Button>
-                )}
-                {SUBSTACK_URL && (
-                  <Button variant="ghost" href={SUBSTACK_URL} rel="me" iconRight={<ArrowRight size={15} />}>
-                    Substack
-                  </Button>
-                )}
               </div>
-              <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
-                Resume · PDF · {RESUME_META.pages} page · updated {RESUME_META.updated}
-              </p>
+              {/* The places I publish — one quiet line, not three more buttons */}
+              {(YOUTUBE_URL || X_URL || SUBSTACK_URL) && (
+                <div style={{ display: "flex", gap: "var(--space-6)", marginTop: "var(--space-5)", flexWrap: "wrap" }}>
+                  {YOUTUBE_URL && <TextLink href={YOUTUBE_URL} rel="me" arrow>YouTube</TextLink>}
+                  {SUBSTACK_URL && <TextLink href={SUBSTACK_URL} rel="me" arrow>Substack</TextLink>}
+                  {X_URL && <TextLink href={X_URL} rel="me" arrow>X</TextLink>}
+                </div>
+              )}
               <dl className="md-status-list">
                 <div className="md-status-row">
                   <dt>
                     <span aria-hidden className="md-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--status-complete)", display: "inline-block", marginRight: "var(--space-2)" }} />
                     Now
                   </dt>
-                  <dd>{CURRENTLY.now}</dd>
+                  <dd>{typeset(CURRENTLY.now)}</dd>
                 </div>
                 <div className="md-status-row">
                   <dt>Looking for</dt>
-                  <dd>{CURRENTLY.lookingFor}</dd>
+                  <dd>{typeset(CURRENTLY.lookingFor)}</dd>
                 </div>
               </dl>
             </div>
@@ -215,7 +193,7 @@ export default async function HomePage() {
       >
         <div className="md-above md-content-split">
           <section className="md-col-main" aria-labelledby="projects-heading">
-            <SectionHeading kicker={ledger} id="projects-heading">Projects</SectionHeading>
+            <SectionHeading kicker={<Dotted items={ledger} />} id="projects-heading">Projects</SectionHeading>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
               {recentProjects.slice(0, 3).map((p) => (
                 <ProjectCard key={p.title} p={p} />
@@ -228,9 +206,10 @@ export default async function HomePage() {
             </div>
           </section>
 
-          <aside className="md-rail" aria-labelledby="posts-heading">
+          {/* With nothing published the rail stacks under Projects instead of holding an empty column */}
+          <aside className={posts.length ? "md-rail" : "md-col-main"} aria-labelledby="posts-heading">
             <section>
-              <SectionHeading kicker="Video · essays · posts" id="posts-heading">Recent posts</SectionHeading>
+              <SectionHeading kicker={<Dotted items={["Video", "essays", "posts"]} />} id="posts-heading">Recent posts</SectionHeading>
               <RecentPosts posts={posts} />
               <div style={{ display: "flex", gap: "var(--space-6)", marginTop: "var(--space-6)", flexWrap: "wrap" }}>
                 {YOUTUBE_URL && (
@@ -258,7 +237,7 @@ export default async function HomePage() {
           </section>
 
           <section className="md-col-main" aria-labelledby="penrose-heading">
-            <SectionHeading kicker="Lab assistant · quality assurance (naps on keyboards) · morale" id="penrose-heading">Penrose</SectionHeading>
+            <SectionHeading kicker={<Dotted items={["Lab assistant", "quality assurance (naps on keyboards)", "morale"]} />} id="penrose-heading">Penrose</SectionHeading>
             <p style={{ margin: "0 0 var(--space-6)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
               She answers to her name. Type it anywhere.
             </p>

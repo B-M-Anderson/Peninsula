@@ -1,9 +1,9 @@
 // Recent posts across every platform — YouTube, Substack, X.
 //
-// Hand-maintained on purpose. X has no free feed, YouTube's RSS needs a channel
-// ID, and the Substack RSS route (`/api/substack`) only covers one of the three;
-// one list here keeps all platforms in the same order, with the same shape, and
-// gives you a place to say what a post actually is. Newest first.
+// The YouTube and Substack feeds are merged in live (app/lib/posts.ts, rendered
+// into the homepage on the server); X has no free feed, so its entries only
+// ever come from here. Entries in this file win over the feeds and are the
+// place to say what a post actually is. Newest first.
 //
 // To add a post: paste the URL, set the platform, write a one-line blurb, done.
 

@@ -17,6 +17,12 @@ const MAX_QUESTION_LENGTH = 500;
 const MAX_HISTORY_TURNS = 2;
 const MAX_HISTORY_CHARS = 400;
 
+// Guard rails against a flood: the node is one CPU in a house and the relay's
+// free tier has a daily command budget. Priority sessions are exempt from the
+// per-address limit (that is what the passphrase buys) but not the queue cap.
+const RATE_LIMIT_PER_MIN = 6;
+const QUEUE_CAP = 25;
+
 type Turn = { q: string; a: string };
 
 function cleanHistory(raw: unknown): Turn[] {
@@ -33,11 +39,24 @@ function cleanHistory(raw: unknown): Turn[] {
     .filter((t) => t.q.trim() && t.a.trim());
 }
 const ANSWER_WAIT_MS = 45000; // warm answers ~9-25s; generous ceiling before failing closed
-const POLL_INTERVAL_MS = 700;
+// Cached answers land within a second or two, so poll briskly at first, then
+// settle down — the browser's own progress poll covers the long waits.
+const POLL_FAST_MS = 500;
+const POLL_FAST_FOR_MS = 3000;
+const POLL_SLOW_MS = 1200;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const offline = () => NextResponse.json({ online: false, canned: false, answer: null });
+
 export async function POST(req: Request) {
+  // A cross-site form post can't set this header without a CORS preflight, so
+  // requiring it keeps third-party pages from enqueuing questions on a
+  // visitor's behalf.
+  if (!(req.headers.get("content-type") ?? "").includes("application/json")) {
+    return NextResponse.json({ error: "expected application/json" }, { status: 415 });
+  }
+
   let question = "";
   let history: Turn[] = [];
   let clientId = "";
@@ -57,14 +76,34 @@ export async function POST(req: Request) {
   }
 
   // No relay configured -> honest offline (unchanged behavior).
-  if (!relayConfigured()) {
-    return NextResponse.json({ online: false, canned: false, answer: null });
-  }
+  if (!relayConfigured()) return offline();
 
   // Priority pass: the /ask box sends this header once someone has unlocked the
   // fast lane. Priority jobs RPUSH to the tail so the poller's BRPOP grabs them
-  // next — ahead of everyone already queued — and they skip any request limits.
+  // next — ahead of everyone already queued — and skip the per-address limit.
   const priority = req.headers.get("x-concierge-priority") === CONCIERGE_PRIORITY_CODE;
+
+  if (!priority) {
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+    try {
+      const n = Number(await redis(["INCR", KEYS.rate(ip)], 3000));
+      if (n === 1) redis(["EXPIRE", KEYS.rate(ip), 60], 2000).catch(() => {});
+      if (n > RATE_LIMIT_PER_MIN) {
+        return NextResponse.json({ online: true, limited: true, answer: null }, { status: 429 });
+      }
+    } catch {
+      /* relay hiccup: don't block a real visitor over the counter */
+    }
+  }
+
+  try {
+    const depth = Number(await redis(["LLEN", KEYS.jobs], 3000));
+    if (depth >= QUEUE_CAP) {
+      return NextResponse.json({ online: true, busy: true, answer: null }, { status: 503 });
+    }
+  } catch {
+    /* as above */
+  }
 
   const id = clientId || randomUUID();
   const secret = process.env.CONCIERGE_SHARED_SECRET;
@@ -80,12 +119,13 @@ export async function POST(req: Request) {
   try {
     await redis([priority ? "RPUSH" : "LPUSH", KEYS.jobs, job], 5000);
   } catch {
-    return NextResponse.json({ online: false, canned: false, answer: null });
+    return offline();
   }
 
-  const deadline = Date.now() + ANSWER_WAIT_MS;
+  const started = Date.now();
+  const deadline = started + ANSWER_WAIT_MS;
   while (Date.now() < deadline) {
-    await sleep(POLL_INTERVAL_MS);
+    await sleep(Date.now() - started < POLL_FAST_FOR_MS ? POLL_FAST_MS : POLL_SLOW_MS);
     try {
       const ans = await redis(["GET", KEYS.answer(id)], 4000);
       if (ans) {
@@ -103,5 +143,5 @@ export async function POST(req: Request) {
   }
 
   // timed out waiting for the node -> fail closed
-  return NextResponse.json({ online: false, canned: false, answer: null });
+  return offline();
 }

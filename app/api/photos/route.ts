@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { list, put } from "@vercel/blob";
+import { redis, relayConfigured } from "../concierge/upstash";
+import { DARKROOM_MAX_UPLOAD_BYTES as MAX_UPLOAD_BYTES } from "../../data/site";
 
 // Photo gallery backed by Vercel Blob.
 // - GET: public list of uploaded photos (prefix gallery/)
@@ -7,11 +10,36 @@ import { list, put } from "@vercel/blob";
 //   unlike the vault easter egg). Requires BLOB_READ_WRITE_TOKEN, which Vercel
 //   injects automatically once a Blob store is attached to the project.
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+// Failed code attempts per address before a cool-down (only when the Upstash
+// relay is configured; without it the check is the constant-time compare alone).
+const FAIL_LIMIT = 5;
+const FAIL_WINDOW_S = 600;
 
 function blobConfigured() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+function sameSecret(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** What the bytes say the file is — the browser-supplied type is only a claim. */
+async function sniffImageType(file: File): Promise<string | null> {
+  const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const at = (i: number, ...bytes: number[]) => bytes.every((b, j) => head[i + j] === b);
+  if (at(0, 0xff, 0xd8, 0xff)) return "image/jpeg";
+  if (at(0, 0x89, 0x50, 0x4e, 0x47)) return "image/png";
+  if (at(0, 0x47, 0x49, 0x46, 0x38)) return "image/gif";
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return "image/webp";
+  return null;
+}
+
+function clientIp(req: Request): string {
+  return (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
 }
 
 export async function GET() {
@@ -23,9 +51,14 @@ export async function GET() {
     const photos = blobs
       .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
       .map((b) => ({ url: b.url, pathname: b.pathname, uploadedAt: b.uploadedAt }));
-    return NextResponse.json({ configured: true, photos });
+    return NextResponse.json(
+      { configured: true, photos },
+      // Ordinary visits are served from the CDN; the page re-fetches with
+      // no-store right after an upload so a new print shows up at once.
+      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
+    );
   } catch {
-    return NextResponse.json({ configured: true, photos: [], error: "list failed" });
+    return NextResponse.json({ configured: true, photos: [], error: "list failed" }, { status: 502 });
   }
 }
 
@@ -40,26 +73,65 @@ export async function POST(req: Request) {
   if (!expected) {
     return NextResponse.json({ error: "darkroom code not configured" }, { status: 503 });
   }
+
+  const ip = clientIp(req);
+  const failKey = `darkroom:fail:${ip}`;
+  if (relayConfigured()) {
+    try {
+      const fails = Number((await redis(["GET", failKey], 2000)) ?? 0);
+      if (fails >= FAIL_LIMIT) {
+        return NextResponse.json({ error: "too many attempts — try again later" }, { status: 429 });
+      }
+    } catch {
+      /* relay hiccup: fall through to the code check */
+    }
+  }
+
   const provided = req.headers.get("x-darkroom-code") ?? "";
-  if (provided !== expected) {
+  if (!sameSecret(provided, expected)) {
+    if (relayConfigured()) {
+      redis(["INCR", failKey], 2000)
+        .then(() => redis(["EXPIRE", failKey, FAIL_WINDOW_S], 2000))
+        .catch(() => {});
+    }
     return NextResponse.json({ error: "access denied" }, { status: 401 });
   }
 
-  const form = await req.formData();
-  const file = form.get("photo");
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "no file" }, { status: 400 });
+  // Refuse oversized bodies before buffering them.
+  const declared = Number(req.headers.get("content-length") ?? 0);
+  if (declared > MAX_UPLOAD_BYTES + 4096) {
+    return NextResponse.json({ error: "file too large (4 MB max)" }, { status: 413 });
   }
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: `type ${file.type} not allowed` }, { status: 400 });
+
+  let file: File;
+  try {
+    const form = await req.formData();
+    const f = form.get("photo");
+    if (!(f instanceof File)) {
+      return NextResponse.json({ error: "no file" }, { status: 400 });
+    }
+    file = f;
+  } catch {
+    return NextResponse.json({ error: "expected a multipart form" }, { status: 400 });
   }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "file too large (8 MB max)" }, { status: 400 });
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return NextResponse.json({ error: "file too large (4 MB max)" }, { status: 413 });
+  }
+  const type = await sniffImageType(file);
+  if (!type || !ALLOWED_TYPES.includes(type)) {
+    return NextResponse.json({ error: "not a JPEG, PNG, WebP or GIF" }, { status: 400 });
   }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const blob = await put(`gallery/${Date.now()}-${safeName}`, file, {
-    access: "public",
-  });
-  return NextResponse.json({ ok: true, url: blob.url });
+  try {
+    const blob = await put(`gallery/${Date.now()}-${safeName}`, file, {
+      access: "public",
+      contentType: type,
+      addRandomSuffix: true,
+    });
+    return NextResponse.json({ ok: true, url: blob.url });
+  } catch (err) {
+    console.error("darkroom upload failed", err);
+    return NextResponse.json({ error: "upload failed — try again" }, { status: 502 });
+  }
 }

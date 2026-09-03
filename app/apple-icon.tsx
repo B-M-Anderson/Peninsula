@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { Monogram } from "./icon";
+import { Monogram } from "./components/brand/MonogramOg";
 
 // Home-screen icon for iOS/iPadOS. Apple ignores SVG icons and composites its
 // own corner radius, so this is a full-bleed brown tile with the monogram.

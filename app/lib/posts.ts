@@ -1,4 +1,3 @@
-import "server-only";
 import { posts as manualPosts, type Post } from "../data/posts";
 import { SITE_URL, YOUTUBE_CHANNEL_ID, SUBSTACK_URL, YOUTUBE_URL } from "../data/site";
 

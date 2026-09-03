@@ -10,6 +10,8 @@ export type Project = {
   completion?: number;
   thumbnailUrl?: string;
   imageUrl?: string;
+  /** width / height of imageUrl, so the panel reserves the right space before it loads. */
+  imageAspect?: number;
   wip?: boolean;
   terminated?: boolean;
   completed?: boolean;
@@ -24,7 +26,7 @@ export type Project = {
 export const projects: Project[] = [
   {
     title: "Centrifuge Repair",
-    description: `A dead centrifuge, fully dissasembled on a folding table and assessed for issues. After a few youtube videos, multimeter testing,  capacitor replacements, soldering, and some blind luck, it's back to life! 
+    description: `A dead centrifuge, fully disassembled on a folding table and assessed for issues. After a few YouTube videos, multimeter testing, capacitor replacements, soldering, and some blind luck, it's back to life! 
 
 This great video was a lot of help: 
 https://youtu.be/f-lBA9Kq3T4?si=uDx0hGnT-V_UUTgt
@@ -47,15 +49,15 @@ https://youtu.be/f-lBA9Kq3T4?si=uDx0hGnT-V_UUTgt
 
   {
     title: "PiTV",
-    description: `An old Sony CRT television, a Raspberry Pi, and a phone-friendly web remote is all thats needed to steam anything you want to a classic (heavy) piece of machinery.
+    description: `An old Sony CRT television, a Raspberry Pi, and a phone-friendly web remote is all that's needed to stream anything you want to a classic (heavy) piece of machinery.
 
-**The hardware.** The Pi outputs HDMI, which an active converter turns into composite video, feeding into the CRT's RCA inputs. Getting there meant opening the set up, splicing some cables, and soldering... then resoldering connections between all 3 elements while maintaining accessability. 
+**The hardware.** The Pi outputs HDMI, which an active converter turns into composite video, feeding into the CRT's RCA inputs. Getting there meant opening the set up, splicing some cables, and soldering... then resoldering connections between all 3 elements while maintaining accessibility. 
 
 **The remote** is a web page served off the Pi and opened on any typical device. Making it easy to control without an app, remote, or anything, which although potentially leaves some security gaps, if someone wants to change the channel that badly I'll let it slide. It shows what's playing with a scrub bar and running time, transport controls, a loop toggle, a volume slider, and a library of everything on the Pi. Paste any video URL and it plays that instead.
 
-When not in use, or when using late, theres a sleep timer that tells the pi when to stop the steam. It's the single feature a CRT in a bedroom actually needs, and it's also something most smart TVs dont make easy. All moments of stoppage, whether pausing, restarting, or sleeping saves the current status so you can kick right back off where you left it when its booted back up.
+When not in use, or when using late, there's a sleep timer that tells the Pi when to stop the stream. It's the single feature a CRT in a bedroom actually needs, and it's also something most smart TVs don't make easy. All moments of stoppage, whether pausing, restarting, or sleeping saves the current status so you can kick right back off where you left it when it's booted back up.
 
-Finished and in use playing wii, watching the matrix, and eventually for use in an art intallation (it was technically a commissioned project).`,
+Finished and in use playing Wii, watching The Matrix, and eventually for use in an art installation (it was technically a commissioned project).`,
     date: "June 20, 2026",
     skills: ["Raspberry Pi Zero 2 W", "Linux", "Web Development", "Hardware", "Electronics", "Home Automation", "UI Design"],
     importantSkills: ["Raspberry Pi", "Hardware", "Web Development"],
@@ -89,7 +91,7 @@ Finished and in use playing wii, watching the matrix, and eventually for use in 
 
 **Built with** Next.js API routes and Upstash Redis on the site side; a single-file Python poller, Ollama and systemd on the desktop side.
 
-It must be noted with such a machine running it hard indefinetly is a lot, so it often shuts down and auto-reboot systems fail. I'm working to improve this, which may include switching from linux mint, which I am now comfortable enough to do, to something with even less overhead. A headless distro may be in order for such a project.`,
+It must be noted with such a machine running it hard indefinitely is a lot, so it often shuts down and auto-reboot systems fail. I'm working to improve this, which may include switching from Linux Mint, which I am now comfortable enough to do, to something with even less overhead. A headless distro may be in order for such a project.`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
     date: "August 11, 2026",
     skills: [
@@ -220,7 +222,7 @@ It features an **auto-detecting dark mode toggle**, a screen-size responsive nav
 Feel free to explore the code on my GitHub in my first public repository!
 (It took some time to realize I didn't need to push every update to see how it works, and I still have to for mobile testing, so early commits are messy and abundant.)
 
-Note: my learning of textscript website development sourced a lot of early information from LLM-AIs.
+Note: my learning of TypeScript website development sourced a lot of early information from LLM-AIs.
 Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted.
 The more I do and improve this website, the more I continue to learn to do on my own!`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
@@ -250,8 +252,7 @@ The more I do and improve this website, the more I continue to learn to do on my
 
   {
     title: "MP3 Merger / Cross-Fader",
-    description: `A quick **Python** project for blending multiple MP3 files with **smooth crossfades**,
-**dynamic EQ tweaks**, and **audio visualization**. Made to give a **gift CD** some personal touch. Likely to be updated soon in the future!.
+    description: `A quick **Python** project for blending multiple MP3 files with **smooth crossfades**, **dynamic EQ tweaks**, and **audio visualization**. Made to give a **gift CD** some personal touch. Likely to be updated soon in the future!
 
 ~(Section update & video demo coming soon)`,
     githubUrl: "https://github.com/B-M-Anderson/mp3-Playlist-Crossfader",
@@ -296,9 +297,8 @@ Customer feedback: TBD
     title: "Resume Refresh",
     description: `Simple resume refresh using **LaTeX** to produce a **clean, modern design** that highlights my skills and experience effectively.
 
-    Project intended to demonstate proficiency in LaTeX document creation and design.
-Compiled in **XeLaTeX** using using **AltaCV** document class,
-Will be instated for all future applicable use-cases.
+Project intended to demonstrate proficiency in LaTeX document creation and design.
+Compiled in **XeLaTeX** using **AltaCV** document class, will be instated for all future applicable use-cases.
 
 Visible on my mainpage as a downloadable PDF.`,
     githubUrl: "https://github.com/B-M-Anderson/resume-latex",
@@ -310,6 +310,7 @@ Visible on my mainpage as a downloadable PDF.`,
     completion: 100,
     thumbnailUrl: "/thumbnails/resume.png",
     imageUrl: "/Previews/BennettAndersonResume1.png",
+    imageAspect: 1632 / 2112,
     wip: false,
     ongoing: false,
     terminated: false,
@@ -320,3 +321,30 @@ Visible on my mainpage as a downloadable PDF.`,
 
 /** What the site renders. Drafts stay in the file but off the pages. */
 export const publishedProjects: Project[] = projects.filter((p) => !p.draft);
+
+export type ProjectStatus = "terminated" | "complete" | "ongoing" | "wip" | "shelved";
+
+/**
+ * The one badge a project shows. The status booleans above are independent,
+ * so this resolves them in a fixed order — and an entry flagged `completed`
+ * while its completion bar is still short reads as the working state it is,
+ * not as done.
+ */
+export function statusOf(p: Project): ProjectStatus {
+  if (p.terminated) return "terminated";
+  const done = p.completion === undefined || p.completion >= 100;
+  if (p.completed && done) return "complete";
+  if (p.ongoing) return "ongoing";
+  if (p.wip) return "wip";
+  if (p.shelved) return "shelved";
+  if (p.completed) return "complete";
+  return "ongoing";
+}
+
+/** URL-safe id for a project: the element id on /projects and its #hash deep link. */
+export function projectSlug(p: Project): string {
+  return p.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

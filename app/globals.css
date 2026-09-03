@@ -69,7 +69,8 @@
   --text-body: #F5EBDA;
   --text-strong: #FFFDF9;
   --text-muted: rgba(240, 220, 188, 0.66);
-  --text-faint: rgba(240, 220, 188, 0.42);
+  /* faint sits at ~4.6:1 on the page ground — the 11px mono labels rely on it */
+  --text-faint: rgba(240, 220, 188, 0.58);
   --text-accent: #D3B68A;
 
   --border-subtle: rgba(245, 235, 218, 0.12);
@@ -86,6 +87,15 @@
   --status-wip: #A3452A;
   --status-shelved: #A98A5C;
   --status-terminated: #A6743E;
+  /* clay for *text* (denials, over-limit counters): the dot colour is too dark to read on brown */
+  --status-wip-text: #E08A6E;
+
+  /* the BA mark — follows the ground with no JS, so it never flips after hydration */
+  --mark-ground: #2A190D;
+  --mark-letter: #F5EBDA;
+  --mark-ring: #D3B68A;
+  --mark-band-a: #D3B68A;
+  --mark-band-b: #BE9E70;
 
   --focus-ring: 0 0 0 2px #3A2412, 0 0 0 4px #D3B68A;
 
@@ -96,7 +106,6 @@
   --stripe-color-a: #D3B68A;
   --stripe-color-b: #BE9E70;
   --stripe-text: #2A190D;
-  --stripe-inset: max(48px, calc((100vw - 1180px) / 2 + 48px));
 
   /* textures */
   --texture-grain-opacity: 0.13;
@@ -104,7 +113,8 @@
   --dapple-height: 20%;
 
   --max-width: 1180px;
-  --gutter-page: 48px;
+  /* one horizontal gutter for every page: 20px on a phone, 48px from ~960px up */
+  --gutter-page: clamp(20px, 5vw, 48px);
   --measure: 68ch;
 
   /* prototype scale, ported from the reference implementation */
@@ -140,8 +150,8 @@ html.light {
 
   --text-body: #3A2412;
   --text-strong: #1B1007;
-  --text-muted: rgba(42, 25, 13, 0.62);
-  --text-faint: rgba(42, 25, 13, 0.38);
+  --text-muted: rgba(42, 25, 13, 0.68);
+  --text-faint: rgba(42, 25, 13, 0.6);
   --text-accent: #6B4420;
 
   --border-subtle: rgba(42, 25, 13, 0.08);
@@ -156,15 +166,35 @@ html.light {
   --stripe-color-a: #BE9E70;
   --stripe-color-b: #A98A5C;
 
+  --status-wip-text: #8E3A22;
+
+  --mark-ground: #FAF4E9;
+  --mark-letter: #2A190D;
+  --mark-ring: #A98A5C;
+  --mark-band-a: #BE9E70;
+  --mark-band-b: #A98A5C;
+
   --texture-grain-opacity: 0.07;
   --dapple-color: rgba(42, 25, 13, 0.20);
 
   --focus-ring: 0 0 0 2px #FAF4E9, 0 0 0 4px #6B4420;
 }
 
+/* Native scrollbars, form controls and autofill follow the ground. */
+:root,
+html.dark {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}
+
 html {
   background-color: var(--surface-page);
   color: var(--text-body);
+  /* clip, not hidden: guards against stray horizontal overflow without turning
+     the root into a scroll container (which would also disable position: sticky) */
+  overflow-x: clip;
 }
 
 body {
@@ -174,6 +204,53 @@ body {
   font-family: var(--font-body);
   background-color: var(--surface-page);
   color: var(--text-body);
+  overflow-x: clip;
+}
+
+/* The ground toggle fades every surface at the same speed, not just <body>. */
+html,
+body,
+.md-surface,
+.md-card {
+  transition: background-color 0.3s var(--ease-standard), color 0.3s var(--ease-standard),
+    border-color 0.3s var(--ease-standard);
+}
+
+/* iOS Safari zooms the page when a focused field is under 16px. */
+input,
+textarea,
+select {
+  font: inherit;
+  font-size: max(1em, 16px);
+}
+
+/* Print on paper: the eggshell tokens, no chrome, no textures. */
+@media print {
+  :root {
+    --surface-page: #FFFFFF;
+    --surface-raised: #FFFFFF;
+    --surface-sunken: #F5EBDA;
+    --surface-card: #FFFFFF;
+    --text-body: #1B1007;
+    --text-strong: #1B1007;
+    --text-muted: rgba(27, 16, 7, 0.75);
+    --text-faint: rgba(27, 16, 7, 0.6);
+    --text-accent: #4E3018;
+    --border-subtle: rgba(27, 16, 7, 0.15);
+    --border-default: rgba(27, 16, 7, 0.3);
+    --stripe-color-a: #E3CCA8;
+    --stripe-color-b: #D3B68A;
+  }
+  .md-site-header,
+  .md-site-footer,
+  .md-skip-link,
+  .md-grain::before,
+  .md-dapple::after {
+    display: none !important;
+  }
+  a {
+    color: inherit;
+  }
 }
 
 /* ---- brand utilities ---- */
@@ -238,12 +315,7 @@ body {
    buried beneath the cat photos). On wide screens the grid re-places the rail
    into column 2, row 1.
 
-   No `position: sticky` on the rail: three ancestors clip (the page wrapper's
-   overflow:hidden, plus overflow-x-hidden on html/body), each of which is its
-   own scroll container, so sticky silently never engages. Making it work would
-   mean switching all three to overflow:clip, and the html/body rule is
-   load-bearing for the mobile full-bleed DNA strip. Not worth it — the rail
-   reads fine top-aligned.
+   The rail is deliberately not sticky — it reads fine top-aligned.
 
    The 900px line is set by the project cards, not the rail: below it the main
    column drops under ~520px and a card's thumbnail + title + badges + progress
@@ -304,8 +376,13 @@ body {
   padding: 7px 12px;
   font-size: var(--text-xs);
 }
-.md-btn:active {
+.md-btn:not(:disabled):active {
   transform: translateY(1px);
+}
+.md-btn:disabled,
+.md-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .md-btn-primary {
   background: var(--action-primary-bg);
@@ -362,6 +439,56 @@ body {
   box-shadow: var(--shadow-sm);
   padding: var(--space-6);
 }
+@media (max-width: 639px) {
+  .md-card {
+    padding: var(--space-5);
+  }
+}
+
+/* Homepage project card: thumbnail beside the text; on phones the thumbnail
+   shrinks so the title keeps a usable measure. */
+.md-project-card {
+  display: flex;
+  gap: var(--space-6);
+}
+.md-project-card > .md-project-thumb {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+}
+@media (max-width: 639px) {
+  .md-project-card {
+    gap: var(--space-4);
+  }
+  .md-project-card > .md-project-thumb {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Contact rows: icon · label · value. The value column can shrink and wrap, so
+   a long email address never pushes the row off a phone screen. */
+.md-contact-row {
+  display: grid;
+  grid-template-columns: auto 84px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+.md-contact-row > .md-contact-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 479px) {
+  .md-contact-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: var(--space-2);
+    padding: var(--space-5);
+  }
+  .md-contact-row > .md-contact-value {
+    grid-column: 2;
+  }
+}
 .md-card-interactive {
   cursor: pointer;
   transition: border-color 0.15s var(--ease-standard);
@@ -391,6 +518,8 @@ body {
    panels open by animating grid-template-rows. */
 .md-acc-row {
   border-top: 1px solid var(--border-subtle);
+  /* deep links (#slug) land below the fixed navbar */
+  scroll-margin-top: 88px;
 }
 .md-acc-row:last-child {
   border-bottom: 1px solid var(--border-subtle);
@@ -435,9 +564,66 @@ body {
   overflow: hidden;
   min-height: 0;
 }
+/* A collapsed panel is inert (no focus, no screen-reader announcement); hide it
+   visually once the close animation has run so nothing paints during scroll. */
+.md-acc-panel > .md-acc-inner[inert] {
+  visibility: hidden;
+  transition: visibility 0s 0.28s;
+}
+/* The date/count beside a row title is repeated inside the panel; on phones it
+   costs the title most of its width, so it steps aside. */
+@media (max-width: 639px) {
+  .md-acc-meta {
+    display: none;
+  }
+}
 
-/* legacy terminal pages (/ask, /vault, /darkroom) still lean on a mono face —
-   they have no MarcDesign01 layout yet, so keep them monospaced and readable */
+/* Click-to-play video poster */
+.md-video-poster {
+  display: block;
+  width: 100%;
+  padding: 0;
+  cursor: pointer;
+}
+.md-video-poster .md-video-play {
+  transition: transform 0.15s var(--ease-standard), background-color 0.15s var(--ease-standard);
+}
+.md-video-poster:hover .md-video-play {
+  transform: scale(1.06);
+  background: var(--action-primary-bg-hover);
+}
+
+/* Entrance fade for the small pages (vault, darkroom, 404) — CSS, not JS, so
+   the reduced-motion rule below neutralises it. */
+@keyframes md-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.md-fade-in {
+  animation: md-fade-in 0.35s var(--ease-out) both;
+}
+
+/* Skip link: invisible until it has keyboard focus. */
+.md-skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 60;
+  transform: translateY(-200%);
+  transition: transform 0.15s var(--ease-standard);
+}
+.md-skip-link:focus-visible {
+  transform: none;
+}
+
+/* The vault keeps a monospaced "terminal" voice on purpose — it's the easter
+   egg — inside the same header/card frame as every other page. */
 .font-term {
   font-family: var(--font-mono);
 }

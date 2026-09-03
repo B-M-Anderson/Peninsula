@@ -21,7 +21,7 @@ function ProjectDetail({ p }: { p: Project }) {
       </div>
       {p.imageUrl && (
         <div style={{ borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--border-subtle)", maxWidth: 420 }}>
-          <Image src={p.imageUrl} alt={`${p.title} preview`} width={420} height={420} sizes="(max-width: 640px) 100vw, 420px" style={{ width: "100%", height: "auto", display: "block" }} />
+          <Image src={p.imageUrl} alt={`${p.title} preview`} width={420} height={Math.round(420 / (p.imageAspect ?? 1))} sizes="(max-width: 640px) 100vw, 420px" style={{ width: "100%", height: "auto", display: "block" }} />
         </div>
       )}
       <p style={{ margin: 0, maxWidth: "var(--measure)", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)", whiteSpace: "pre-line" }}>
@@ -96,7 +96,7 @@ export default function ProjectsList() {
         <MediaBadge media={p.media} />
       </span>
     ),
-    meta: p.date,
+    meta: <span className="md-acc-meta">{p.date}</span>,
     content: <ProjectDetail p={p} />,
   }));
 

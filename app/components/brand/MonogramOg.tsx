@@ -1,14 +1,8 @@
-import { ImageResponse } from "next/og";
-
-// PNG favicon fallback for browsers that ignore SVG icons (older Safari, some
-// bookmark/tab-strip renderers). Same monogram as public/ba-favicon.svg.
-export const size = { width: 64, height: 64 };
-export const contentType = "image/png";
-
-export default function Icon() {
-  return new ImageResponse(<Monogram px={64} />, size);
-}
-
+/**
+ * The BA monogram drawn with plain boxes for next/og's ImageResponse (Satori),
+ * which cannot render the SVG clip paths Mark.tsx uses. Same geometry and
+ * colours as public/ba-favicon.svg on a 120-unit design grid.
+ */
 export function Monogram({ px }: { px: number }) {
   // Everything scales from the 120-unit design grid of the SVG.
   const u = px / 120;

@@ -28,6 +28,7 @@ const FIELDS = [
   { key: "completion", type: "number" },
   { key: "thumbnailUrl", type: "string" },
   { key: "imageUrl", type: "string" },
+  { key: "imageAspect", type: "number" },
   { key: "wip", type: "boolean" },
   { key: "terminated", type: "boolean" },
   { key: "completed", type: "boolean" },

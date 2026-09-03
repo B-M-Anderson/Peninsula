@@ -1,13 +1,24 @@
 // Central site configuration — edit values here, everything reads from this file.
 
+export const SITE_URL = "https://www.bennettanderson.com";
+export const SITE_NAME = "Bennett M. Anderson";
+export const SITE_TAGLINE = "Biomedical engineering · Iowa State University";
+// Default <meta name="description"> and social-card text.
+export const SITE_DESCRIPTION =
+  "Biomedical engineering student at Iowa State University. Projects in lab-equipment repair, local AI, hardware and the web, plus a resume and how to get in touch.";
+// The homepage introduction.
+export const BLURB =
+  "I'm a biomedical engineering student working to improve my skills, computational and otherwise, to become the best engineer/scientist I can in the pursuit of the betterment of global health.";
+
 export const SUBSTACK_URL: string | null = "https://bennettmanderson.substack.com";
 
 // Access code for the hidden /vault page (client-side easter egg, not real
 // security — anyone reading the bundle can find it, which is part of the fun).
 export const VAULT_CODE = "helix";
 
-// Keystroke sequence typed anywhere on the site that summons the vault gate.
-export const VAULT_TRIGGER = "penny";
+// Keystroke sequences typed anywhere on the site that summon the vault gate.
+// The homepage says "type her name", so both the name and the nickname work.
+export const VAULT_TRIGGERS = ["penny", "penrose"];
 
 // Concierge (local desktop AI) — displayed on /ask. Update when the desktop
 // node comes online for real.
@@ -18,19 +29,30 @@ export const CONCIERGE = {
 };
 
 // Priority passphrase for the /ask concierge. Typing this in the ask box grants
-// queue-priority (the question jumps ahead of everyone) and skips any request
-// limits. Soft gate only — it's in the client bundle, so it's not real security;
-// it's a "for now" fast lane for me + friends. Swap for a server-only secret later.
+// queue-priority (the question jumps ahead of everyone) and exempts the session
+// from the per-visitor request limit. Soft gate only — it's in the client
+// bundle, so it's not real security; it's a "for now" fast lane for me +
+// friends. Swap for a server-only secret later.
 export const CONCIERGE_PRIORITY_CODE = "Penrose122";
 
 // Channels the "Recent posts" homepage section links out to. Set to null to
 // hide that platform's link; entries themselves live in app/data/posts.ts.
-export const YOUTUBE_URL: string | null = "https://www.youtube.com/channel/UCY7H6pvaCxxdUModczjw_ew";
-export const X_URL: string | null = "https://x.com/Bennett4Now";
+export const YOUTUBE_CHANNEL_ID = "UCY7H6pvaCxxdUModczjw_ew";
+export const YOUTUBE_URL: string | null = `https://www.youtube.com/channel/${YOUTUBE_CHANNEL_ID}`;
+export const X_HANDLE = "Bennett4Now";
+export const X_URL: string | null = `https://x.com/${X_HANDLE}`;
 
 export const GITHUB_USER = "B-M-Anderson";
-export const GITHUB_URL = "https://github.com/B-M-Anderson";
+export const GITHUB_URL = `https://github.com/${GITHUB_USER}`;
+export const REPO_URL = `${GITHUB_URL}/Peninsula`;
 export const LINKEDIN_URL = "https://www.linkedin.com/in/bennett-m-anderson/";
 export const RESUME_PATH = "/ResumeBennettAnderson.pdf";
 export const CONTACT_EMAIL = "bennetta32.30@gmail.com";
 export const CONTACT_PHONE = "(815) 821-9604";
+// Darkroom upload ceiling. Vercel functions reject request bodies over 4.5 MB
+// before a route ever runs, so the advertised limit has to sit under that; the
+// page checks it before sending and the route checks it again.
+export const DARKROOM_MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+/** Dial-able form of CONTACT_PHONE for tel: links. */
+export const CONTACT_PHONE_TEL = `+1${CONTACT_PHONE.replace(/\D/g, "")}`;

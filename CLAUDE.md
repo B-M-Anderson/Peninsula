@@ -1,33 +1,40 @@
 # CLAUDE.md — Operating guide for this repo
 
-Personal portfolio site (Next.js 16 + TypeScript + Tailwind v4), deployed on Vercel with a custom domain. Full reference docs: [SITE_DOCS.md](SITE_DOCS.md).
+Personal portfolio site (Next.js 16 + TypeScript + Tailwind v4), deployed on Vercel with a custom domain (`www.bennettanderson.com`). Full reference docs: [SITE_DOCS.md](SITE_DOCS.md).
 
-## July 2026 redesign — key facts
+## Current design (MarcDesign01) — key facts
 
-- **Cyber-bio terminal aesthetic**, dark-first with a functional light mode. Design tokens live in `app/globals.css` (`@theme` block: `bio-*` for light, `phos`/`cyto`/`plasmid`/`abyss` for dark). The `dark:` Tailwind variant is **class-based** via `@custom-variant dark` in globals.css — all theme styling uses `dark:` utilities, never JS branching.
-- **Site config** (Substack URL, vault code/trigger, contact info, GitHub user) is centralized in `app/data/site.ts`. Project entries live in `app/data/projects.ts` (shared by `/projects` and `scripts/site-health-check.mjs`).
-- **Substack**: `SUBSTACK_URL` in `app/data/site.ts` is `null` until configured; the homepage feed section shows a placeholder. Feed is fetched server-side via `app/api/substack/route.ts` (RSS, hourly revalidate).
-- **Hidden vault page** (`/vault`): summoned by typing `penny` anywhere on the site or triple-clicking the DNA helix; access code is `helix` (both in `app/data/site.ts`). Client-side easter egg, NOT real security. Excluded from the sitemap (`next-sitemap.config.js` `exclude`). Vault content is the `CURRENTLY`/`PENNY_STATS` block at the top of `app/vault/page.tsx` — edit freely.
-- **ASCII DNA helix**: `app/components/AsciiDna.tsx`, pauses under `prefers-reduced-motion` and in hidden tabs (rAF).
+- **Look**: brown ground with tan two-band motif, cream type; a functional light ("eggshell") ground. Dark-first. Design tokens live in `app/globals.css` — `@theme` holds the raw ramps, `:root` the dark semantic aliases (`--surface-*`, `--text-*`, `--border-*`, `--status-*`, `--mark-*`), `html.light` / `.md-light` the light aliases. **Author against the semantic aliases, never the raw ramps.** Component primitives (`.md-btn`, `.md-chip`, `.md-card`, `.md-acc-*`, `.md-link`, `.md-contact-row`, `.md-project-card`) live in the same file; their React wrappers are in `app/components/ui.tsx`.
+- **Theme switching** is a class on `<html>` (`dark` / `light`), set before paint by the inline script in `app/layout.tsx` and kept in sync by `Navbar`. Tailwind's `dark:` variant is class-based via `@custom-variant dark`. The BA mark and the `<meta name="theme-color">` follow the class with no JS branching.
+- **Brand components**: `StripeBand` (the two bands; renders the page `<h1>` by default, text shares the page's content column) and `Mark` (the BA monogram) in `app/components/brand/`. Every subpage opens with a 232px `md-grain` title frame (a `<div>`, not a `<header>` — the navbar is the page's one banner) + `StripeBand`, then `<main id="main" className="md-dapple">`; the homepage is the one exception — it puts the grain and foot dapple on a single wrapper around its hero and main (see `app/page.tsx`).
+- **Layout tokens**: `--max-width: 1180px`, `--gutter-page: clamp(20px, 5vw, 48px)` (use it for every page's horizontal padding — never a fixed `var(--space-9)`), `--measure: 68ch`.
+- **Site config** (name, tagline, description, URLs, contact, easter-egg codes, upload limit) is centralized in `app/data/site.ts`. Project entries live in `app/data/projects.ts` (with `statusOf()` and `projectSlug()`; shared by `/`, `/projects` and `scripts/site-health-check.mjs`). Hand-written posts live in `app/data/posts.ts`.
+- **Recent posts** are merged server-side in `app/lib/posts.ts` (YouTube + Substack feeds + the hand list) and rendered into the homepage HTML; the homepage is ISR with `revalidate = 900`. `/api/posts` exposes the same list as JSON.
+- **Server/client split**: `app/page.tsx`, `app/contact/page.tsx`, `app/projects/page.tsx`, `app/ask/page.tsx`, `app/darkroom/page.tsx`, `app/vault/page.tsx` are server components that export `metadata`; interactive halves are `ProjectsList.tsx`, `AskClient.tsx`, `DarkroomClient.tsx`, `VaultClient.tsx`. Keep it that way — a `"use client"` page cannot export metadata.
+- **Metadata**: root `layout.tsx` sets `metadataBase`, a title template, description, Open Graph/Twitter defaults, `viewport.themeColor`. `app/opengraph-image.tsx` generates the share card; `app/icon0.svg`, `app/icon1.tsx`, `app/apple-icon.tsx` are the favicons (file-based, so don't also set `metadata.icons`). `app/sitemap.ts` and `app/robots.ts` serve `/sitemap.xml` and `/robots.txt` — nothing is generated into `public/`. `/vault` and `/darkroom` are `noindex` and left out of the sitemap.
+- **Hidden vault page** (`/vault`): summoned by typing `penny` or `penrose` anywhere on the site (outside a text field); access code is `helix` (both in `app/data/site.ts`). Client-side easter egg, NOT real security. Vault content is the `CURRENTLY`/`PENNY_STATS` block at the top of `app/vault/VaultClient.tsx` — edit freely.
 - **Gotcha that has bitten twice**: multi-line plain-string JSX attributes (e.g. a `className="..."` spanning lines) break hydration in Next 16. Keep string attributes on one line; template literals are fine.
-- **Lint**: `eslint-config-next` 16 enforces `react-hooks/set-state-in-effect` — don't seed state via `setState` in `useEffect`; use `useSyncExternalStore` (see Navbar/AsciiDna/vault page for the pattern) or `useMemo` for derived state.
+- **Lint**: `eslint-config-next` 16 enforces `react-hooks/set-state-in-effect` — don't seed state via `setState` in `useEffect`; use `useSyncExternalStore` (see Navbar, the Accordion's hash store, VaultClient) or derive it during render.
 - **Dev-server quirk**: if styling looks stale after big CSS changes, restart the dev server — Turbopack has served stale CSS from cache before.
-- **JSX gotcha**: a literal `//` at the start of JSX text is parsed as a comment (`react/jsx-no-comment-textnodes` lint error). Wrap terminal-style `// comment` UI text in a string expression: `{"// text"}`.
-- **Layout padding — do NOT re-add global padding to `app/layout.tsx`.** The root `<main>` is intentionally padding-free. Every page supplies its own (`px-6` + `max-w-* mx-auto`, or the homepage's per-section `p-4 sm:p-8`). A global `p-8` there boxes the homepage's `md:h-screen` full-viewport layout inside a 32px frame, pushing total height past 100vh and producing **two competing scrollbars** on desktop (outer page + the internal `#scroll-panel`). If you add a new page, give it its own padding.
-- **Full-bleed elements**: the mobile DNA strip uses `w-screen` inside a centered flex column (the flex centering does the edge-to-edge positioning — no negative-margin hacks needed, and it's independent of ancestor padding). `overflow-x-hidden` on `<html>` and `<body>` is required alongside it, because `100vw` includes the scrollbar width and would otherwise force a horizontal scrollbar.
+- **JSX gotcha**: a literal `//` at the start of JSX text is parsed as a comment (`react/jsx-no-comment-textnodes` lint error). Wrap such text in a string expression: `{"// text"}`.
+- **Layout padding — do NOT add global padding or a `<main>` to `app/layout.tsx`.** The root layout renders `{children}` bare; every page owns its single `<main id="main">` (the skip-link target) and its own gutters via `var(--gutter-page)`. Two `<main>` landmarks per page was a real bug once.
+- **Accordion** (`ui.tsx`): rows are keyed by a stable `id`, collapsed panels are `inert`, and with `syncHash` the open row follows `#id` in the URL (homepage cards link to `/projects#<slug>`).
+- **YouTube** embeds go through `YouTubeEmbed` (click-to-play poster) — never a bare `<iframe>`.
 
 ## Pages & routes (current)
 
 - `/` home, `/projects`, `/ask` (concierge), `/contact` — in the navbar.
-- `/vault` — hidden easter-egg page (not in nav/sitemap).
-- `/darkroom` — photo gallery + gated upload (not in nav/sitemap; linked from the cat section).
-- API routes: `/api/substack` (RSS feed), `/api/concierge/status` + `/api/concierge/ask` (AI node), `/api/photos` (Blob gallery/upload).
+- `/vault` — hidden easter-egg page (noindex, not in nav/sitemap).
+- `/darkroom` — photo gallery + gated upload (noindex, not in nav/sitemap; linked from the cat section).
+- `not-found.tsx` / `error.tsx` — branded 404 and error boundary.
+- API routes: `/api/posts` (merged feed), `/api/concierge/status` + `/api/concierge/ask` + `/api/concierge/progress` (AI node relay), `/api/photos` (Blob gallery/upload).
 
 ## Environment variables (set in Vercel; all optional — features degrade gracefully without them)
 
-- `CONCIERGE_STATUS_URL` — heartbeat endpoint of the desktop AI node. Unset → `/ask` shows OFFLINE / "not yet provisioned".
-- `BLOB_READ_WRITE_TOKEN` — auto-injected by Vercel when a Blob store is attached to the project. Unset → darkroom shows "chemicals not yet delivered" and uploads 503.
-- `DARKROOM_CODE` — the upload password (server-checked, real auth). Unset → uploads 503 even with a token.
+- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` — the concierge relay. Unset → `/ask` reports "not yet provisioned" and questions fail closed.
+- `CONCIERGE_SHARED_SECRET` — attached to each queued job so the desktop node can verify origin.
+- `BLOB_READ_WRITE_TOKEN` — auto-injected by Vercel when a Blob store is attached. Unset → darkroom shows "storage isn't provisioned" and uploads 503.
+- `DARKROOM_CODE` — the upload password (server-checked, constant-time compare, failed attempts rate-limited through the relay when it's configured). Unset → uploads 503 even with a token.
 
 ## AI concierge reference doc
 
@@ -47,37 +54,36 @@ Personal portfolio site (Next.js 16 + TypeScript + Tailwind v4), deployed on Ver
 |---|---|
 | `npm run dev` | Local dev server at `localhost:3000` |
 | `npm run lint` | ESLint (flat config, `eslint.config.mjs`) |
-| `npx tsc --noEmit` | Type-check without emitting output |
-| `npm run build` | Production build (also runs `postbuild` → `next-sitemap`, regenerating `public/sitemap*.xml` and `public/robots.txt`) |
-| `npm run preflight` | **Proposed** — runs lint + type-check + build together; see Phase 3 setup |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run build` | Production build |
+| `npm run preflight` | lint + type-check + build together — run before every push |
 
 ### Safe order of operations for any change
 1. Create a branch off `main`.
 2. Make the change.
-3. Run `npm run preflight` (or lint + `tsc --noEmit` + `build` individually) — fix anything it flags.
-4. Push the branch, open a PR (or just push — Vercel comments/builds a preview on any branch push if the GitHub integration is configured that way).
+3. Run `npm run preflight` — fix anything it flags.
+4. Push the branch, open a PR (Vercel builds a preview on any branch push).
 5. Share the Vercel preview URL and wait for explicit approval.
 6. Only then merge to `main`.
 
 ## Where things live
 
-- **Thumbnails**: `public/thumbnails/<Name>.png` — for GitHub-repo cards on the homepage, the filename must exactly match the live repo name (case-sensitive; Vercel's filesystem is case-sensitive even though Windows dev machines aren't) with whitespace stripped. Missing thumbnails fall back to `public/thumbnails/default.png` automatically via an `onError` handler.
-- **Project preview images**: `public/Previews/<Name>.png`, referenced via a project's `imageUrl`. The `imageUrl` field in `app/projects/page.tsx` is currently typed as a literal union of one exact string — adding a second project's preview image means widening that type to `string` (or a union including the new path) first, otherwise TypeScript will reject it.
+- **Thumbnails**: `public/thumbnails/<name>.png`, referenced from a project's `thumbnailUrl`. Missing files fall back to `public/thumbnails/default.png` (the health check flags dangling references).
+- **Project preview images**: `public/Previews/<Name>.png`, referenced via `imageUrl`; set `imageAspect` (width / height) alongside it so the panel reserves the right space before the image loads.
 - **Cat photos**: `public/cats/Penny<N>.jpeg`.
-- **Resume**: `public/ResumeBennettAnderson.pdf` (downloadable) + `public/Previews/BennettAndersonResume1.png` (preview screenshot).
-- **Favicon**: `app/favicon.ico` (App Router convention — lives in `app/`, not `public/`). `public/thumbnails/favicon.png` is an unrelated thumbnail asset (the "BA" logo), not the actual browser favicon.
+- **Resume**: `public/ResumeBennettAnderson.pdf` (opens in a new tab from the hero) + `public/Previews/BennettAndersonResume1.png` (preview screenshot).
+- **Favicons**: `app/icon0.svg` (the monogram; browsers that support SVG icons use it), `app/icon1.tsx` (64px PNG fallback, generated), `app/apple-icon.tsx` (180px home-screen icon, generated). `public/thumbnails/favicon.png` is a project thumbnail, not the browser favicon.
+- **Share image**: `app/opengraph-image.tsx` (1200×630, generated at build).
 
 ## Add-a-project procedure
 
-1. Add a new entry to the `projects` array in `app/projects/page.tsx`, matching the `Project` type (see `SITE_DOCS.md` §5 for what every field controls).
+1. Add a new entry to the `projects` array in `app/data/projects.ts`, matching the `Project` type (see `SITE_DOCS.md` for what every field controls). `date` must parse with `new Date()` (e.g. `"August 21, 2026"`).
 2. Drop the thumbnail into `public/thumbnails/` and set `thumbnailUrl` to match.
-3. If there's demo media (screenshot/video), add it under `public/Previews/` (or wherever appropriate) and set `imageUrl` — widen the `imageUrl` type first if it's a new path (see above).
-4. Set `media` (`"photo" | "video" | "both" | "none"`), `completion`, `aiUsage`, and exactly the status booleans that apply (`wip`/`ongoing`/`completed`/`terminated`/`shelved`).
-5. Run `npm run build` locally (or let `preflight` do it) so `postbuild` regenerates the sitemap — don't hand-edit `public/sitemap*.xml`.
-6. Run `npm run preflight`.
-7. Push a branch, get a Vercel preview, walk `/projects` in the preview to confirm the card renders as expected (thumbnail loads, badges correct, description formatting correct).
-8. Get explicit approval.
-9. Merge to `main`.
+3. If there's demo media, add it under `public/Previews/` and set `imageUrl` + `imageAspect`; for a video set `videoUrl` to any YouTube link.
+4. Set `media` (`"photo" | "video" | "both" | "none"`), `completion`, `aiUsage`, and the status booleans. `completed: true` only reads as "complete" when `completion` is 100; otherwise the badge shows `wip`/`ongoing`.
+5. Run `npm run preflight`.
+6. Push a branch, get a Vercel preview, walk `/projects` (and the deep link `/projects#<slug>`) in the preview to confirm the card renders as expected.
+7. Get explicit approval, then merge to `main`.
 
 ## Branch → preview → approve → merge flow
 
@@ -90,11 +96,21 @@ npm run preflight
 git add <specific files>
 git commit -m "..."
 git push -u origin <branch-name>
-# → Vercel builds a preview URL automatically (if GitHub integration is connected)
+# → Vercel builds a preview URL automatically
 # → share the preview URL, wait for approval
-# → only after approval: merge to main (PR merge, or fast-forward merge — ask which the operator prefers)
+# → only after approval: merge to main
 ```
 
 ## Weekly automated health check
 
-`.github/workflows/site-maintenance.yml` runs on a weekly schedule and is strictly read-only: lint, type-check, build, `npm audit`, `npm outdated`, sitemap/media sanity checks. It reports to the workflow job summary / a GitHub issue — it never modifies code, bumps dependencies, or pushes/merges anything. See the workflow file for exact steps.
+`.github/workflows/ci.yml` runs lint + type-check + build on every pull request and branch push. `.github/workflows/site-maintenance.yml` runs weekly and is strictly read-only: lint, type-check, build, `npm audit`, `npm outdated`, then `scripts/site-health-check.mjs` (media references, project data sanity). It reports to the workflow job summary / a GitHub issue — it never modifies code, bumps dependencies, or pushes/merges anything.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

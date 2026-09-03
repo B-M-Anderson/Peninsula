@@ -88,8 +88,10 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
       }}
     >
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-controls="system-panel"
         style={{
           width: "100%",
           display: "flex",
@@ -127,6 +129,8 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
       </button>
 
       <motion.div
+        id="system-panel"
+        inert={!open}
         initial={false}
         animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
         transition={{ duration: reduce ? 0 : 0.3, ease: EASE }}
@@ -150,7 +154,11 @@ export default function SystemPanel({ status }: { status: SystemStatus | null })
           >
             <Stat k="Model" v={status?.model ?? "—"} note="3 billion parameters, 4-bit quantised" />
             <Stat k="Machine" v={cpuShort ?? "desktop"} note={[cores, ram].filter(Boolean).join(" · ") || undefined} />
-            <Stat k="Graphics" v="None" note="every token is computed on the CPU" />
+            <Stat
+              k="Graphics"
+              v={m?.gpu || "None"}
+              note={m?.gpu ? "the model runs on the GPU" : "every token is computed on the CPU"}
+            />
             <Stat
               k="Answer library"
               v={cache?.entries != null ? String(cache.entries) : "—"}

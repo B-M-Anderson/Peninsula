@@ -19,13 +19,12 @@ export async function GET(req: Request) {
   }
 
   try {
-    const [raw, depth] = await Promise.all([
-      redis(["GET", KEYS.progress(id)], 4000),
-      redis(["LLEN", KEYS.jobs], 4000),
-    ]);
-    const ahead = typeof depth === "number" ? depth : Number(depth ?? 0) || 0;
+    const raw = await redis(["GET", KEYS.progress(id)], 4000);
     if (!raw) {
-      // no state yet: the node has not picked it up, so it is still in line
+      // No state yet: the node has not picked it up, so it is still in line —
+      // and only now is the queue depth worth a second command.
+      const depth = await redis(["LLEN", KEYS.jobs], 4000);
+      const ahead = typeof depth === "number" ? depth : Number(depth ?? 0) || 0;
       return NextResponse.json({ state: "queued", ahead });
     }
     const p = JSON.parse(String(raw)) as { state?: string; via?: string; ms?: number };
@@ -33,7 +32,7 @@ export async function GET(req: Request) {
       state: p.state ?? "queued",
       via: p.via ?? null,
       ms: p.ms ?? null,
-      ahead,
+      ahead: 0,
     });
   } catch {
     return NextResponse.json({ state: "unknown" });

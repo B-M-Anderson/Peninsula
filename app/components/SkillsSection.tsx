@@ -103,6 +103,7 @@ export default function SkillsSection() {
   const items: AccordionItem[] = categories.map((cat) => {
     const sorted = [...cat.skills].sort((a, b) => Number(b.strong) - Number(a.strong));
     return {
+      id: `skills-${cat.name}`,
       title: (
         <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--text-body)" }}>
           {cat.name}
@@ -110,16 +111,16 @@ export default function SkillsSection() {
       ),
       meta: String(cat.skills.length),
       content: (
-        <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+        <ul aria-label={`${cat.name} skills`} style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", listStyle: "none", margin: 0, padding: 0 }}>
           {sorted.map((s) => (
-            <Chip key={s.name} emphasis={s.strong ? "strong" : "normal"}>
-              {s.name}
-            </Chip>
+            <li key={s.name}>
+              <Chip emphasis={s.strong ? "strong" : "normal"}>{s.name}</Chip>
+            </li>
           ))}
-        </div>
+        </ul>
       ),
     };
   });
 
-  return <Accordion items={items} defaultOpen={0} />;
+  return <Accordion items={items} defaultOpen={items[0]?.id} />;
 }

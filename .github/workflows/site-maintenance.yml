@@ -1,7 +1,7 @@
 name: Weekly Site Health Report
 
 # Strictly read-only: lints, type-checks, builds, audits, and scans for broken
-# media/sitemap drift, then reports via the job summary and (if anything needs
+# media and inconsistent project data, then reports via the job summary and (if anything needs
 # attention) a GitHub issue. Never commits, pushes, merges, or bumps dependencies.
 
 on:
@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: package.json
           cache: npm
 
       - name: Install dependencies
@@ -52,7 +52,7 @@ jobs:
         continue-on-error: true
         run: npm outdated 2>&1 | tee outdated.log
 
-      - name: Sitemap & media reference check
+      - name: Asset & project-data check
         id: media
         continue-on-error: true
         run: node scripts/site-health-check.mjs 2>&1 | tee media.log

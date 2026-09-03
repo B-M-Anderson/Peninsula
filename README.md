@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# bennettanderson.com
 
-## Getting Started
+Personal portfolio of Bennett M. Anderson — biomedical engineering student at Iowa State University. Live at [www.bennettanderson.com](https://www.bennettanderson.com), deployed on Vercel from `main`.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, React Compiler) + **React 19** + **TypeScript**
+- **Tailwind v4** for utilities; the design system itself is plain CSS custom properties and component primitives in `app/globals.css` + `app/components/ui.tsx`
+- `next/font/google` (Newsreader, Hanken Grotesk, JetBrains Mono)
+- Vercel Analytics, Vercel Blob (photo gallery), Upstash Redis (relay for the local-LLM concierge)
+
+## Running it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm run preflight  # lint + type-check + production build (run before every push)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Where things live
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Path | What |
+|---|---|
+| `app/data/site.ts` | Every site-wide constant: name, tagline, URLs, contact details, easter-egg codes |
+| `app/data/projects.ts` | The project list rendered on `/` and `/projects` |
+| `app/data/posts.ts` | Hand-maintained "Recent posts" entries (merged with the live YouTube/Substack feeds) |
+| `app/data/ABOUT_BENNETT.md` | Grounding document for the `/ask` concierge model |
+| `app/globals.css` | Design tokens (light + dark grounds), brand textures, component primitives |
+| `app/components/` | Navbar, brand marks (`StripeBand`, `Mark`), UI primitives, shared widgets |
+| `app/api/` | Posts feed, concierge relay, photo gallery |
+| `public/` | Static assets — thumbnails, previews, cat photos, resume PDF |
+| `scripts/site-health-check.mjs` | Read-only asset and project-data check run by the weekly GitHub Action |
+| `tools/` | Offline helpers: resume builder, project editor, concierge desktop node |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See [CLAUDE.md](CLAUDE.md) for the operating guardrails and [SITE_DOCS.md](SITE_DOCS.md) for the full reference.
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+All optional — each feature degrades to an honest "not configured" state without them.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Feature |
+|---|---|
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | `/ask` concierge relay (queue + heartbeat) |
+| `CONCIERGE_SHARED_SECRET` | Attached to each queued question so the desktop node can verify origin |
+| `BLOB_READ_WRITE_TOKEN` | `/darkroom` gallery storage (auto-injected by Vercel when a Blob store is attached) |
+| `DARKROOM_CODE` | Upload password for `/darkroom` (server-checked) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy flow
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Branch → push → Vercel preview → review → merge to `main`. Never push to `main` directly; every push there is a production deploy.

@@ -51,11 +51,16 @@ export default function DarkroomClient() {
     fetch(fresh ? `/api/photos?fresh=${Date.now()}` : "/api/photos", { signal, cache: fresh ? "no-store" : "default" })
       .then((r) => r.json())
       .then((data) =>
-        setGallery({ loading: false, configured: Boolean(data.configured), photos: data.photos ?? [], error: Boolean(data.error) })
+        setGallery((g) =>
+          data.error
+            ? // keep whatever is already on the wall; just flag that the list call failed
+              { ...g, loading: false, configured: Boolean(data.configured), error: true }
+            : { loading: false, configured: Boolean(data.configured), photos: data.photos ?? [], error: false }
+        )
       )
       .catch((err) => {
         if ((err as { name?: string })?.name === "AbortError") return;
-        setGallery({ loading: false, configured: false, photos: [], error: true });
+        setGallery((g) => ({ ...g, loading: false, error: true }));
       });
 
   useEffect(() => {

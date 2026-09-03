@@ -279,6 +279,9 @@ export default function AskClient() {
             {/* messages / topic picker */}
             <div
               ref={logRef}
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -330,7 +333,7 @@ export default function AskClient() {
                   </div>
                 </motion.div>
               ) : (
-                <div role="log" aria-live="polite" aria-relevant="additions" style={{ display: "contents" }}>
+                <>
                 {lines.map((line, i) => {
                   if (line.from === "sys") {
                     return (
@@ -371,7 +374,7 @@ export default function AskClient() {
                     </motion.div>
                   );
                 })}
-                </div>
+                </>
               )}
 
               {busy && (

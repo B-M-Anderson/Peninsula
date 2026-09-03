@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Play } from "lucide-react";
 
@@ -19,6 +19,13 @@ export function youTubeId(url: string): string | null {
  */
 export default function YouTubeEmbed({ id, title }: { id: string; title: string }) {
   const [playing, setPlaying] = useState(false);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+
+  // The poster button unmounts when the player mounts; keep keyboard focus
+  // with the video instead of dropping it to <body>.
+  useEffect(() => {
+    if (playing) frameRef.current?.focus();
+  }, [playing]);
   const frame = {
     position: "relative" as const,
     width: "100%",
@@ -33,6 +40,7 @@ export default function YouTubeEmbed({ id, title }: { id: string; title: string 
     return (
       <div style={frame}>
         <iframe
+          ref={frameRef}
           src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
           title={title}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -50,7 +58,7 @@ export default function YouTubeEmbed({ id, title }: { id: string; title: string 
       onClick={() => setPlaying(true)}
       aria-label={`Play video: ${title}`}
       className="md-video-poster"
-      style={{ ...frame, display: "block", padding: 0, cursor: "pointer" }}
+      style={frame}
     >
       <Image
         src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
@@ -70,19 +78,7 @@ export default function YouTubeEmbed({ id, title }: { id: string; title: string 
           background: "linear-gradient(to top, rgba(27,16,7,0.55), rgba(27,16,7,0.05) 60%)",
         }}
       >
-        <span
-          className="md-video-play"
-          style={{
-            display: "grid",
-            placeItems: "center",
-            width: 64,
-            height: 64,
-            borderRadius: "50%",
-            background: "var(--action-primary-bg)",
-            color: "var(--action-primary-fg)",
-            boxShadow: "var(--shadow-md)",
-          }}
-        >
+        <span className="md-video-play">
           <Play size={26} fill="currentColor" style={{ marginLeft: 3 }} />
         </span>
       </span>

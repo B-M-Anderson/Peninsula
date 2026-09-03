@@ -102,6 +102,7 @@ function renderCard(p, i) {
     } else if (f.type === 'number') {
       input = document.createElement('input');
       input.type = 'number';
+      input.step = 'any';
       input.value = p[f.key] ?? '';
       input.oninput = () => p[f.key] = input.value === '' ? undefined : Number(input.value);
     } else if (f.type === 'stringArray') {

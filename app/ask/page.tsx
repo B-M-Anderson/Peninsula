@@ -11,12 +11,12 @@ export const metadata: Metadata = {
 export default function AskPage() {
   return (
     <div>
-      <header className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
+      <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
         <StripeBand offset="80px" title="Ask" subtitle="A small model on my desktop, answering for me" />
-      </header>
+      </div>
 
       <main
-        id="main"
+        id="main" tabIndex={-1}
         className="md-dapple"
         style={{ position: "relative", minHeight: "60vh", padding: "clamp(28px, 6vw, 64px) var(--gutter-page)" }}
       >

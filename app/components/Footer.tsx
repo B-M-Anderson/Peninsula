@@ -1,4 +1,5 @@
 import { TextLink } from "./ui";
+import Year from "./Year";
 import { CONTACT_EMAIL, GITHUB_URL, LINKEDIN_URL, REPO_URL, SITE_NAME } from "../data/site";
 
 /** One hairline row at the foot of every page: name, year, the places to find me. */
@@ -18,7 +19,7 @@ export default function Footer() {
         }}
       >
         <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
-          {SITE_NAME} · © {new Date().getFullYear()}
+          {SITE_NAME} · © <Year />
         </span>
         <nav aria-label="Footer" style={{ display: "flex", gap: "var(--space-6)", flexWrap: "wrap" }}>
           <TextLink href={GITHUB_URL}>GitHub</TextLink>

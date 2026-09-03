@@ -40,7 +40,7 @@ Theme switching: the inline script in `app/layout.tsx` sets `html.dark`/`html.li
 
 ## 4. App Router structure
 
-Root layout `app/layout.tsx`: fonts, site-wide `metadata` (metadataBase, title template, description, Open Graph, Twitter) and `viewport.themeColor`; a skip link to `#main`; `VaultGate` (the typed-word easter egg) wrapping `Navbar`, the page, and `Footer`. No global padding and no landmark — each page renders its own `<header>` + `<main id="main">`.
+Root layout `app/layout.tsx`: fonts, site-wide `metadata` (metadataBase, title template, description, Open Graph, Twitter) and `viewport.themeColor`; a skip link to `#main`; `VaultGate` (the typed-word easter egg) wrapping `Navbar`, the page, and `Footer`. No global padding and no landmark — each page renders its own title frame + `<main id="main" tabIndex={-1}>` (the skip-link target; `Navbar` is the single banner landmark).
 
 | Route | Server file (metadata) | Client half | Notes |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app
 - `components/brand/Mark.tsx` — the BA monogram; colours come from `--mark-*` tokens (a `tone` prop forces a ground). `MonogramOg.tsx` is the box-drawn version for `next/og`.
 - `components/ui.tsx` — `Button` (internal routes go through `next/link`, external links open in a new tab with a screen-reader cue, `pressed`, `disabled`, `newTab`, `rel`), `Chip`, `Card`, `Badge` (typed `ProjectStatus`), `ProgressBar` (real `role="progressbar"`), `SectionHeading`, `TextLink` (→ for internal, ↗ for external), `Accordion` (id-keyed, `aria-controls`, `inert` panels, optional `syncHash`).
 - `components/Navbar.tsx` — fixed bar with `<header><nav>`, `aria-current` on the active link, 44px theme toggle with a state-dependent label; tucks away on scroll-down on phones only (matchMedia store), pinned elsewhere; `inert` while hidden.
-- `components/Footer.tsx` — one row: name + year, GitHub / LinkedIn / Email / Source.
+- `components/Footer.tsx` — one row: name + year (`Year.tsx`, computed in the browser), GitHub / LinkedIn / Email / Source. `components/SkipLink.tsx` focuses `#main` without touching the URL fragment.
 - `components/RecentPosts.tsx` — renders a `Post[]` passed from the server.
 - `components/RichText.tsx` — `**bold**`, `*italic*`, `` `code` ``, bare URLs (shown as host + path), and `~` aside lines; `stripAsides` for clamped previews.
 - `components/MediaBadge.tsx`, `components/YouTubeEmbed.tsx` (poster + play button; loads the player only on click), `components/SkillsSection.tsx`, `components/VaultGate.tsx` (dialog semantics, Escape at any stage, focus restore, scroll lock).
@@ -81,7 +81,7 @@ Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app
 | `media` | `"photo" | "video" | "both" | "none"` badge |
 | `aiUsage`, `completion` | Progress bars |
 | `thumbnailUrl`, `imageUrl`, `imageAspect` | Row thumbnail; expanded preview image and its width/height ratio |
-| `wip` / `ongoing` / `completed` / `terminated` / `shelved` | Resolved by `statusOf()`: terminated → complete (only at 100%) → ongoing → wip → shelved |
+| `wip` / `ongoing` / `completed` / `terminated` / `shelved` | Resolved by `statusOf()`: terminated → complete (only at 100%) → ongoing → wip → shelved → ongoing |
 | `draft` | Keeps an entry out of the site |
 
 `app/data/posts.ts` — hand-written posts (X entries can only come from here). `app/lib/posts.ts` merges them with the YouTube and Substack feeds (fetch cache 15 min, failures not cached).

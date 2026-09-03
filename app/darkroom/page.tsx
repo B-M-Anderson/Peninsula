@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 export default function DarkroomPage() {
   return (
     <div>
-      <header className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
+      <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
         <StripeBand offset="80px" title="Darkroom" subtitle="Field observations, developed on site" />
-      </header>
-      <main id="main" className="md-dapple" style={{ maxWidth: "var(--max-width)", margin: "0 auto", minHeight: "50vh", padding: "var(--space-9) var(--gutter-page) var(--space-11)" }}>
+      </div>
+      <main id="main" tabIndex={-1} className="md-dapple" style={{ maxWidth: "var(--max-width)", margin: "0 auto", minHeight: "50vh", padding: "var(--space-9) var(--gutter-page) var(--space-11)" }}>
         <div className="md-above md-fade-in">
           <DarkroomClient />
         </div>

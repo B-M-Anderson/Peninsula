@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div>
-      <header className="md-grain" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
+      <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
         <StripeBand offset="80px" title="Not found" subtitle="404 · nothing lives at this address" />
-      </header>
-      <main id="main" className="md-dapple" style={{ position: "relative", minHeight: "50vh", padding: "var(--space-11) var(--gutter-page)" }}>
+      </div>
+      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", minHeight: "50vh", padding: "var(--space-11) var(--gutter-page)" }}>
         <div className="md-above" style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-7)" }}>
           <p style={{ margin: 0, fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)", maxWidth: "var(--measure)" }}>
             The page you were after has moved, never existed, or is hiding somewhere it shouldn&rsquo;t be. The

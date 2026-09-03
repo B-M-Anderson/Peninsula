@@ -103,7 +103,7 @@ export default function Navbar() {
   return (
     <header
       inert={hidden}
-      className={`md-site-header fixed top-0 left-0 w-full z-50 transition-[opacity,transform] duration-300 ease-in-out ${
+      className={`md-site-header fixed top-0 left-0 w-full z-50 transition-[opacity,transform,background-color,border-color,color] duration-300 ease-in-out ${
         hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"
       }`}
       style={{

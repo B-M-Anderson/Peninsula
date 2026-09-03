@@ -337,7 +337,6 @@ export function statusOf(p: Project): ProjectStatus {
   if (p.ongoing) return "ongoing";
   if (p.wip) return "wip";
   if (p.shelved) return "shelved";
-  if (p.completed) return "complete";
   return "ongoing";
 }
 

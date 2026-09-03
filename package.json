@@ -5,7 +5,7 @@
   "homepage": "https://www.bennettanderson.com",
   "repository": "github:B-M-Anderson/Peninsula",
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",

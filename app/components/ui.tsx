@@ -320,7 +320,16 @@ function subscribeHash(cb: () => void) {
   window.addEventListener("hashchange", cb);
   return () => window.removeEventListener("hashchange", cb);
 }
-const readHash = () => decodeURIComponent(window.location.hash.slice(1));
+// Total: a mangled fragment (#%E2) must not throw inside render — it just
+// matches no row.
+const readHash = () => {
+  const raw = window.location.hash.slice(1);
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+};
 const noHash = () => "";
 
 export function Accordion({
@@ -385,7 +394,7 @@ export function Accordion({
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: "var(--space-5)" }}>
                 {item.meta ? (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: "var(--text-faint)", whiteSpace: "nowrap" }}>{item.meta}</span>
+                  <span className="md-acc-meta" style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: "var(--text-faint)", whiteSpace: "nowrap" }}>{item.meta}</span>
                 ) : null}
                 <span className="md-acc-marker" aria-hidden>+</span>
               </span>

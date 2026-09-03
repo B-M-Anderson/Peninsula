@@ -96,7 +96,7 @@ export default function ProjectsList() {
         <MediaBadge media={p.media} />
       </span>
     ),
-    meta: <span className="md-acc-meta">{p.date}</span>,
+    meta: p.date,
     content: <ProjectDetail p={p} />,
   }));
 

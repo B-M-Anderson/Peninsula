@@ -3,6 +3,7 @@ import "./globals.css";
 import { display, body, mono } from "./fonts";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import SkipLink from "./components/SkipLink";
 import VaultGate from "./components/VaultGate";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, X_HANDLE } from "./data/site";
@@ -46,10 +47,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="min-h-screen">
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
-        <a href="#main" className="md-skip-link md-btn md-btn-primary md-btn-sm">
-          Skip to content
-        </a>
         <VaultGate>
+          <SkipLink />
           <Navbar />
           {/* No global padding and no landmark here — each page owns its own
               <main id="main"> (the skip-link target) and its own gutters. */}

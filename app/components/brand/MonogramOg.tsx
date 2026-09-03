@@ -1,7 +1,7 @@
 /**
  * The BA monogram drawn with plain boxes for next/og's ImageResponse (Satori),
  * which cannot render the SVG clip paths Mark.tsx uses. Same geometry and
- * colours as public/ba-favicon.svg on a 120-unit design grid.
+ * colours as app/icon0.svg on a 120-unit design grid.
  */
 export function Monogram({ px }: { px: number }) {
   // Everything scales from the 120-unit design grid of the SVG.

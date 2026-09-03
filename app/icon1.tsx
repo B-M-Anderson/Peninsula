@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { Monogram } from "./components/brand/MonogramOg";
 
 // PNG favicon fallback for browsers that ignore SVG icons (older Safari, some
-// bookmark/tab-strip renderers). Same monogram as public/ba-favicon.svg.
+// bookmark/tab-strip renderers). Same monogram as app/icon0.svg.
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
 

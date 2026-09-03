@@ -31,11 +31,11 @@ export default function ContactPage() {
 
   return (
     <div>
-      <header className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
+      <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
         <StripeBand offset="80px" title="Get in touch" subtitle="Context in the first message, please" />
-      </header>
+      </div>
 
-      <main id="main" className="md-dapple" style={{ position: "relative", minHeight: "60vh", padding: "var(--space-11) var(--gutter-page)" }}>
+      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", minHeight: "60vh", padding: "var(--space-11) var(--gutter-page)" }}>
         <div className="md-above" style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
           <p style={{ margin: 0, fontSize: "var(--text-lg)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
             Feel free to reach out via email, phone, or LinkedIn. If using phone or email, please provide context in your first
@@ -45,9 +45,12 @@ export default function ContactPage() {
           <dl className="md-surface" style={{ margin: 0, border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", background: "var(--surface-raised)", boxShadow: "var(--shadow-sm)", padding: "var(--space-2)" }}>
             {rows.map((r, i) => (
               <div key={r.label} className="md-contact-row" style={{ borderTop: i ? "1px solid var(--border-subtle)" : "none" }}>
-                <span aria-hidden style={{ color: "var(--text-accent)", display: "flex" }}>{r.icon}</span>
-                <dt style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
-                  {r.label}
+                {/* display: contents so the icon and label are the grid's first two cells */}
+                <dt style={{ display: "contents" }}>
+                  <span aria-hidden style={{ color: "var(--text-accent)", display: "flex" }}>{r.icon}</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--text-faint)" }}>
+                    {r.label}
+                  </span>
                 </dt>
                 <dd className="md-contact-value" style={{ margin: 0 }}>
                   {r.href ? (

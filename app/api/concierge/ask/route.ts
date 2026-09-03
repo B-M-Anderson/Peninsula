@@ -83,6 +83,15 @@ export async function POST(req: Request) {
   // next — ahead of everyone already queued — and skip the per-address limit.
   const priority = req.headers.get("x-concierge-priority") === CONCIERGE_PRIORITY_CODE;
 
+  try {
+    const depth = Number(await redis(["LLEN", KEYS.jobs], 3000));
+    if (depth >= QUEUE_CAP) {
+      return NextResponse.json({ online: true, busy: true, answer: null }, { status: 503 });
+    }
+  } catch {
+    /* as above */
+  }
+
   if (!priority) {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
     try {
@@ -96,15 +105,6 @@ export async function POST(req: Request) {
     } catch {
       /* relay hiccup: don't block a real visitor over the counter */
     }
-  }
-
-  try {
-    const depth = Number(await redis(["LLEN", KEYS.jobs], 3000));
-    if (depth >= QUEUE_CAP) {
-      return NextResponse.json({ online: true, busy: true, answer: null }, { status: 503 });
-    }
-  } catch {
-    /* as above */
   }
 
   const id = clientId || randomUUID();

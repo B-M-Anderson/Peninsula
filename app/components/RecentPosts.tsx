@@ -32,8 +32,8 @@ function PostCard({ p }: { p: Post }) {
         <h3 style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", margin: 0, color: "var(--text-strong)", display: "flex", alignItems: "baseline", gap: "var(--space-3)" }}>
           {p.title}
           <ArrowUpRight size={14} aria-hidden style={{ flex: "0 0 auto", color: "var(--text-faint)" }} />
-          <span className="sr-only"> (opens in a new tab)</span>
         </h3>
+        <span className="sr-only"> (opens in a new tab)</span>
         {p.blurb ? (
           <p style={{ margin: "var(--space-3) 0 0", fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)", maxWidth: "var(--measure)" }}>
             {p.blurb}

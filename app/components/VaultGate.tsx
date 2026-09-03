@@ -25,6 +25,7 @@ export default function VaultGate({ children }: { children: React.ReactNode }) {
   const [denied, setDenied] = useState(0);
   const buffer = useRef("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const router = useRouter();
 
@@ -72,9 +73,11 @@ export default function VaultGate({ children }: { children: React.ReactNode }) {
     };
   }, [open]);
 
-  // Staged boot lines, then focus the code input.
+  // Staged boot lines, then focus the code input. While the lines are still
+  // typing, the dialog itself holds focus so Tab starts inside it.
   useEffect(() => {
     if (!open) return;
+    if (bootStep === 0) dialogRef.current?.focus();
     if (bootStep < BOOT_LINES.length) {
       const t = setTimeout(() => setBootStep((s) => s + 1), 350);
       return () => clearTimeout(t);
@@ -95,29 +98,33 @@ export default function VaultGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {children}
+      {/* The page behind the gate is inert while it is up — the dialog is the
+          only thing focus can reach, which is what aria-modal promises. */}
+      <div inert={open}>{children}</div>
       {open && (
         <div
           className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm flex items-center justify-center p-6"
           onClick={close}
         >
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label="Vault access"
-            className="w-full max-w-md rounded-lg p-6 font-term text-sm shadow-2xl"
+            tabIndex={-1}
+            className="w-full max-w-md rounded-lg p-6 font-term shadow-2xl"
             style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-default)", color: "var(--text-body)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {BOOT_LINES.slice(0, bootStep).map((line, i) => (
-              <p key={i} style={{ color: "var(--text-muted)" }}>{line}</p>
+              <p key={i} className="text-sm" style={{ color: "var(--text-muted)" }}>{line}</p>
             ))}
             {bootStep >= BOOT_LINES.length && (
               <div className="mt-3">
-                <p role="alert" className="mb-2" style={{ color: "var(--status-wip-text)", display: denied > 0 ? "block" : "none" }}>
+                <p role="alert" className="mb-2 text-sm" style={{ color: "var(--status-wip-text)", display: denied > 0 ? "block" : "none" }}>
                   access denied ({denied})
                 </p>
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm">
                   <span style={{ color: "var(--text-accent)" }}>ACCESS CODE:</span>
                   <input
                     ref={inputRef}

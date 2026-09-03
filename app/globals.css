@@ -211,22 +211,40 @@ body {
 html,
 body,
 .md-surface,
-.md-card {
+.md-card,
+.md-site-header,
+.md-site-footer {
   transition: background-color 0.3s var(--ease-standard), color 0.3s var(--ease-standard),
     border-color 0.3s var(--ease-standard);
 }
 
-/* iOS Safari zooms the page when a focused field is under 16px. */
+/* Focus lands on <main> from the skip link; the page itself needs no ring. */
+main:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 input,
 textarea,
 select {
   font: inherit;
-  font-size: max(1em, 16px);
+}
+/* Touch browsers (iOS Safari above all) zoom the page when a focused field is
+   under 16px; keep desktop fields at their surrounding size. */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: max(1em, 16px);
+  }
 }
 
 /* Print on paper: the eggshell tokens, no chrome, no textures. */
 @media print {
-  :root {
+  /* :root.light outranks html.light, so light-ground visitors get paper too */
+  :root,
+  :root.light,
+  .md-light {
     --surface-page: #FFFFFF;
     --surface-raised: #FFFFFF;
     --surface-sunken: #F5EBDA;
@@ -491,7 +509,9 @@ select {
 }
 .md-card-interactive {
   cursor: pointer;
-  transition: border-color 0.15s var(--ease-standard);
+  /* additive: keep the ground fade above, hover only quickens the border */
+  transition: background-color 0.3s var(--ease-standard), color 0.3s var(--ease-standard),
+    border-color 0.15s var(--ease-standard);
 }
 .md-card-interactive:hover {
   border-color: var(--border-accent);
@@ -585,7 +605,15 @@ select {
   padding: 0;
   cursor: pointer;
 }
-.md-video-poster .md-video-play {
+.md-video-play {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--action-primary-bg);
+  color: var(--action-primary-fg);
+  box-shadow: var(--shadow-md);
   transition: transform 0.15s var(--ease-standard), background-color 0.15s var(--ease-standard);
 }
 .md-video-poster:hover .md-video-play {

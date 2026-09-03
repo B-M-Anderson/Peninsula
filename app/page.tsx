@@ -122,7 +122,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(person) }} />
 
       {/* Hero — the two-band motif; no divider dapple, so it flows into the content */}
-      <header style={{ position: "relative", overflow: "hidden", paddingBottom: "var(--space-11)" }}>
+      <div style={{ position: "relative", overflow: "hidden", paddingBottom: "var(--space-11)" }}>
         <StripeBand offset={HERO_OFFSET} title={SITE_NAME} subtitle={SITE_TAGLINE} />
         <div
           className="md-above"
@@ -171,11 +171,11 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Content — shares the hero's ground; the foot dapple lives on the wrapper */}
       <main
-        id="main"
+        id="main" tabIndex={-1}
         style={{ maxWidth: "var(--max-width)", margin: "0 auto", padding: "var(--space-10) var(--gutter-page) var(--space-11)" }}
       >
         <div className="md-above md-content-split">

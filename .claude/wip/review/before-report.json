@@ -1,0 +1,470 @@
+[
+  {
+    "page": "/",
+    "view": "mobile",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 4478,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/projects",
+    "view": "mobile",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 5532,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/ask",
+    "view": "mobile",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 1025,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/contact",
+    "view": "mobile",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 1126,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/darkroom",
+    "view": "mobile",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [
+      "> darkroom"
+    ],
+    "mains": 1,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 812,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/vault",
+    "view": "mobile",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 1,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 812,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/nope-404",
+    "view": "mobile",
+    "scheme": "dark",
+    "status": 404,
+    "title": "B. A.",
+    "h1": [
+      "404"
+    ],
+    "mains": 1,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 812,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/",
+    "view": "mobile",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 4478,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/projects",
+    "view": "mobile",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 5532,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/ask",
+    "view": "mobile",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 1025,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/contact",
+    "view": "mobile",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 1126,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/darkroom",
+    "view": "mobile",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [
+      "> darkroom"
+    ],
+    "mains": 1,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 812,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/vault",
+    "view": "mobile",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 1,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 812,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/nope-404",
+    "view": "mobile",
+    "scheme": "light",
+    "status": 404,
+    "title": "B. A.",
+    "h1": [
+      "404"
+    ],
+    "mains": 1,
+    "scrollW": 375,
+    "innerW": 375,
+    "bodyH": 812,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/",
+    "view": "desktop",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 3004,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/projects",
+    "view": "desktop",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 2645,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/ask",
+    "view": "desktop",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 1075,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/contact",
+    "view": "desktop",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 883,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/darkroom",
+    "view": "desktop",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [
+      "> darkroom"
+    ],
+    "mains": 1,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 850,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/vault",
+    "view": "desktop",
+    "scheme": "dark",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 1,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 850,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/nope-404",
+    "view": "desktop",
+    "scheme": "dark",
+    "status": 404,
+    "title": "B. A.",
+    "h1": [
+      "404"
+    ],
+    "mains": 1,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 850,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/",
+    "view": "desktop",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 3004,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/projects",
+    "view": "desktop",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 2645,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/ask",
+    "view": "desktop",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 1075,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/contact",
+    "view": "desktop",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 2,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 883,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/darkroom",
+    "view": "desktop",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [
+      "> darkroom"
+    ],
+    "mains": 1,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 850,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/vault",
+    "view": "desktop",
+    "scheme": "light",
+    "status": 200,
+    "title": "B. A.",
+    "h1": [],
+    "mains": 1,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 850,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "page": "/nope-404",
+    "view": "desktop",
+    "scheme": "light",
+    "status": 404,
+    "title": "B. A.",
+    "h1": [
+      "404"
+    ],
+    "mains": 1,
+    "scrollW": 1366,
+    "innerW": 1366,
+    "bodyH": 850,
+    "desc": "Personal portfolio of B. Anderson",
+    "errors": [
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  }
+]

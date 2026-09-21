@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Button } from "../components/ui";
 import { Accordion, type AccordionItem } from "../components/Accordion";
+import { StyleSwitch } from "../lib/stylePref";
 
 /**
  * One row, built on the server (projects/page.tsx) so the data module never
@@ -40,15 +41,20 @@ export default function ProjectsList({ rows }: { rows: ProjectRow[] }) {
 
   return (
     <>
-      <div role="group" aria-label="Sort projects" style={{ display: "flex", gap: "var(--space-4)", marginBottom: "var(--space-8)", alignItems: "center", flexWrap: "wrap" }}>
-        <span aria-hidden className="md-label" style={{ marginRight: "var(--space-3)" }}>
-          Sort
-        </span>
-        {sortOptions.map(([k, label]) => (
-          <Button key={k} size="sm" variant={sort === k ? "primary" : "secondary"} pressed={sort === k} onClick={() => setSort(k)}>
-            {label}
-          </Button>
-        ))}
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-4)", marginBottom: "var(--space-8)", alignItems: "center", flexWrap: "wrap" }}>
+        <div role="group" aria-label="Sort projects" style={{ display: "flex", gap: "var(--space-4)", alignItems: "center", flexWrap: "wrap" }}>
+          <span aria-hidden className="md-label" style={{ marginRight: "var(--space-3)" }}>
+            Sort
+          </span>
+          {sortOptions.map(([k, label]) => (
+            <Button key={k} size="sm" variant={sort === k ? "primary" : "secondary"} pressed={sort === k} onClick={() => setSort(k)}>
+              {label}
+            </Button>
+          ))}
+        </div>
+        <StyleSwitch page="projects" to="themed">
+          MATLAB view
+        </StyleSwitch>
       </div>
       <Accordion items={items} syncHash />
       <div style={{ marginTop: "var(--space-9)" }}>

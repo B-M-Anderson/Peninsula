@@ -67,8 +67,36 @@ async function substackPosts(): Promise<Post[]> {
     const date = isoDate(tag(item, "pubDate"));
     const link = tag(item, "link");
     if (!title || !date || !link) return [];
-    return [{ platform: "substack" as const, title: decode(title), url: decode(link), date }];
+    const enclosure = item.match(/<enclosure\b[^>]*>/)?.[0] ?? "";
+    const enclosureType = enclosure.match(/\btype="([^"]+)"/)?.[1] ?? "";
+    const enclosureUrl = enclosure.match(/\burl="([^"]+)"/)?.[1];
+    // The cover is the enclosure when it is an image, otherwise the first image in the post body.
+    const body = tag(item, "content:encoded") ?? "";
+    const cover = enclosureType.startsWith("image/") ? enclosureUrl : body.match(/<img\b[^>]*\bsrc="([^"]+)"/)?.[1];
+    return [
+      {
+        platform: "substack" as const,
+        title: decode(title),
+        url: decode(link),
+        date,
+        ...(enclosureType.startsWith("audio/") ? { format: "podcast" as const } : {}),
+        ...(cover && substackImage(decode(cover)) ? { thumbnail: decode(cover) } : {}),
+      },
+    ];
   });
+}
+
+// next/image only optimises hosts listed in next.config.ts, so a feed image
+// from anywhere else is dropped and the card is text-only.
+const SUBSTACK_IMAGE_HOSTS = new Set(["substackcdn.com", "substack-post-media.s3.amazonaws.com"]);
+
+function substackImage(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && SUBSTACK_IMAGE_HOSTS.has(u.hostname);
+  } catch {
+    return false;
+  }
 }
 
 /** Every post we know about, newest first, de-duplicated by URL. */

@@ -1,6 +1,7 @@
-import { Youtube, FileText, MessageSquare, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import { Youtube, FileText, MessageSquare, ArrowUpRight, Play } from "lucide-react";
 import { Badge, Card } from "./ui";
-import { platformLabel, type Platform, type Post } from "../data/posts";
+import { formatOf, postLabel, thumbnailOf, type Platform, type Post } from "../data/posts";
 
 const platformIcon: Record<Platform, React.ReactNode> = {
   youtube: <Youtube size={11} />,
@@ -19,12 +20,68 @@ function formatDate(iso: string): string {
   });
 }
 
+/**
+ * The post's cover in a 16:9 frame. A Short is portrait, so it is cropped to
+ * its own 9:16 and centred in the frame (YouTube's thumbnail for one is the
+ * vertical video with bars either side; cover-fitting into a 9:16 box trims
+ * exactly those bars). Decorative: the card's own text names the post.
+ */
+function Thumb({ p }: { p: Post }) {
+  const src = thumbnailOf(p);
+  if (!src) return null;
+  const format = formatOf(p);
+  const short = format === "short";
+  const playable = format === "video" || short;
+  return (
+    <div
+      className="md-post-thumb"
+      style={{
+        position: "relative",
+        display: "flex",
+        justifyContent: "center",
+        width: "100%",
+        maxWidth: 320,
+        aspectRatio: "16 / 9",
+        overflow: "hidden",
+        marginBottom: "var(--space-4)",
+        borderRadius: "var(--radius-sm)",
+        border: "1px solid var(--border-subtle)",
+        background: "var(--surface-sunken)",
+      }}
+    >
+      <div style={{ position: "relative", height: "100%", aspectRatio: short ? "9 / 16" : "16 / 9" }}>
+        <Image src={src} alt="" fill sizes={short ? "180px" : "(max-width: 640px) 100vw, 320px"} style={{ objectFit: "cover" }} />
+      </div>
+      {playable ? (
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            right: 8,
+            bottom: 8,
+            display: "grid",
+            placeItems: "center",
+            width: 26,
+            height: 26,
+            borderRadius: "50%",
+            background: "rgba(27, 16, 7, 0.72)",
+            color: "#FFFDF9",
+          }}
+        >
+          <Play size={12} fill="currentColor" style={{ marginLeft: 1 }} />
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function PostCard({ p }: { p: Post }) {
   return (
     <a href={p.url} target="_blank" rel="noopener noreferrer" className="md-card-link md-reveal">
       <Card interactive>
+        <Thumb p={p} />
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-5)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
-          <Badge icon={platformIcon[p.platform]}>{platformLabel[p.platform]}</Badge>
+          <Badge icon={platformIcon[p.platform]}>{postLabel(p)}</Badge>
           <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", letterSpacing: "var(--tracking-label)", color: "var(--text-faint)" }}>
             {formatDate(p.date)}
           </span>

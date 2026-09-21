@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
       // Video posters, so they get a srcset and AVIF like every other image.
       { protocol: "https", hostname: "i.ytimg.com", pathname: "/vi/**" },
+      // Substack post covers, from the RSS feed (see app/lib/posts.ts).
+      { protocol: "https", hostname: "substackcdn.com" },
+      { protocol: "https", hostname: "substack-post-media.s3.amazonaws.com" },
     ],
   },
   async headers() {

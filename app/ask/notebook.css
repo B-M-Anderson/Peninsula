@@ -1,0 +1,250 @@
+/* Ask as a Jupyter-style notebook: chrome on --surface-sunken, the page on
+   --surface-raised, so it follows the ground toggle. The blue In / orange Out
+   prompts are the notebook convention, kept to the prompts. */
+.nb {
+  --nb-in: #7cc4ee;
+  --nb-out: #f0935c;
+  --nb-fn: #86b7ff;
+  --nb-str: #d3a6ee;
+  border-block: 1px solid var(--border-default);
+  background: var(--surface-raised);
+  font-family: var(--font-body);
+  color: var(--text-body);
+}
+html.light .nb,
+.md-light .nb {
+  --nb-in: #0b6aa8;
+  --nb-out: #b34a1a;
+  --nb-fn: #1a4fd6;
+  --nb-str: #8a2bb0;
+}
+
+.nb-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: 6px var(--space-4);
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  color: var(--text-muted);
+}
+.nb-kernel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+}
+.nb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.nb-tool {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  color: var(--text-body);
+  cursor: pointer;
+}
+.nb-tool:hover:not(:disabled) {
+  border-color: var(--nb-in);
+}
+.nb-tool:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (pointer: coarse) {
+  .nb-tool {
+    min-height: 44px;
+  }
+}
+
+.nb-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--gutter-page) var(--space-9);
+}
+.nb-cells,
+.nb-stream {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.nb-cells {
+  min-height: 280px;
+  padding-bottom: var(--space-4);
+}
+@keyframes nb-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.nb-cell {
+  animation: nb-in 0.3s var(--ease-out) both;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-2);
+  align-items: start;
+}
+.nb-row {
+  display: contents;
+}
+.nb-md {
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: calc(76px + var(--space-3));
+}
+.nb-md h2 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  color: var(--text-strong);
+}
+.nb-md p {
+  margin: 0;
+  max-width: var(--measure);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-muted);
+}
+
+.nb-prompt {
+  padding-top: 9px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+}
+.nb-in {
+  color: var(--nb-in);
+}
+.nb-outp {
+  color: var(--nb-out);
+}
+.nb-code {
+  min-width: 0;
+  padding: 9px 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1.6;
+  color: var(--text-strong);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.nb-running {
+  border-color: var(--nb-in);
+  box-shadow: inset 3px 0 0 var(--nb-in);
+}
+.nb-starter {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.nb-starter:hover:not(:disabled) {
+  border-color: var(--nb-in);
+}
+.nb-fn {
+  color: var(--nb-fn);
+}
+.nb-str {
+  color: var(--nb-str);
+}
+.nb-out {
+  min-width: 0;
+  padding: 9px 2px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.nb-notice {
+  padding: 9px 12px;
+  background: color-mix(in srgb, var(--status-wip) 20%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+}
+.nb-progress {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+.nb-compose {
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: center;
+  margin-top: var(--space-2);
+}
+.nb-compose .nb-prompt {
+  padding-top: 0;
+}
+.nb-field {
+  padding: 0;
+}
+.nb-field input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  color: var(--text-strong);
+}
+.nb-field:focus-within {
+  border-color: var(--nb-in);
+  box-shadow: 0 0 0 1px var(--nb-in);
+}
+.nb-field input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+.nb-run {
+  min-height: 44px;
+}
+
+.nb-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0 var(--space-6) calc(76px + var(--space-3));
+}
+.nb-links {
+  display: inline-flex;
+  gap: var(--space-5);
+}
+
+@media (max-width: 639px) {
+  .nb-cell,
+  .nb-compose {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nb-compose {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .nb-compose .nb-prompt {
+    grid-column: 1 / -1;
+  }
+  .nb-prompt {
+    text-align: left;
+    padding-top: 0;
+  }
+  .nb-md,
+  .nb-foot {
+    padding-left: 0;
+  }
+  .nb-out {
+    padding-left: 0;
+  }
+}

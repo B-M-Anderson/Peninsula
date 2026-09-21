@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Mail, Phone, Linkedin, Github, ArrowRight, FileText } from "lucide-react";
 import CopyButton from "../components/CopyButton";
 import PageFrame from "../components/PageFrame";
+import PlasmidContact, { type Feature } from "./PlasmidContact";
+import { StyleSwitch, StyleView } from "../lib/stylePref";
+import { serverStyleDefault } from "../lib/styleServer";
 import { openGraphFor } from "../lib/og";
 import { Button, TextLink } from "../components/ui";
 import { CONTACT_EMAIL, CONTACT_MAILTO, CONTACT_PHONE, CONTACT_PHONE_TEL, LINKEDIN_URL, GITHUB_URL, GITHUB_USER, RESUME_META, RESUME_PATH } from "../data/site";
@@ -13,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: openGraphFor("/contact", "How to reach me: email, phone, LinkedIn, and the resume."),
 };
 
-type Row = { icon: React.ReactNode; label: string; value: string; href?: string; rel?: string; copy?: string; newTab?: boolean };
+type Row = { key: Feature["key"]; icon: React.ReactNode; label: string; value: string; href?: string; rel?: string; copy?: string; newTab?: boolean };
 
 /** The handle shown for a profile URL, derived so it can't drift from the link. */
 function handleOf(url: string): string {
@@ -24,22 +27,24 @@ function handleOf(url: string): string {
   }
 }
 
-export default function ContactPage() {
+/* One copy of the page's words, so the two looks can never drift apart. */
+const NOTE = "Context in the first message, please";
+const LEDE = <>Email, phone or LinkedIn all work. Say what it&rsquo;s about in your first message, or it will likely be ignored.</>;
+
+export default async function ContactPage() {
   const rows: Row[] = [
-    { icon: <Mail size={18} />, label: "Email", value: CONTACT_EMAIL, href: CONTACT_MAILTO, copy: CONTACT_EMAIL },
-    { icon: <Phone size={18} />, label: "Phone", value: CONTACT_PHONE, href: `tel:${CONTACT_PHONE_TEL}` },
-    { icon: <Linkedin size={18} />, label: "LinkedIn", value: handleOf(LINKEDIN_URL), href: LINKEDIN_URL, rel: "me" },
-    { icon: <Github size={18} />, label: "GitHub", value: GITHUB_USER, href: GITHUB_URL, rel: "me" },
-    { icon: <FileText size={18} />, label: "Resume", value: `PDF · ${RESUME_META.pages} page · ${RESUME_META.updated}`, href: RESUME_PATH, newTab: true },
+    { key: "email", icon: <Mail size={18} />, label: "Email", value: CONTACT_EMAIL, href: CONTACT_MAILTO, copy: CONTACT_EMAIL },
+    { key: "phone", icon: <Phone size={18} />, label: "Phone", value: CONTACT_PHONE, href: `tel:${CONTACT_PHONE_TEL}` },
+    { key: "linkedin", icon: <Linkedin size={18} />, label: "LinkedIn", value: handleOf(LINKEDIN_URL), href: LINKEDIN_URL, rel: "me" },
+    { key: "github", icon: <Github size={18} />, label: "GitHub", value: GITHUB_USER, href: GITHUB_URL, rel: "me" },
+    { key: "resume", icon: <FileText size={18} />, label: "Resume", value: `PDF · ${RESUME_META.pages} page · ${RESUME_META.updated}`, href: RESUME_PATH, newTab: true },
   ];
 
-  return (
-    <PageFrame title="Get in touch" subtitle="Context in the first message, please" maxWidth={720} minHeight="60vh">
+  const plain = (
+    <PageFrame title="Get in touch" subtitle={NOTE} maxWidth={720} minHeight="60vh">
       {/* The column sits in the page's content column so the copy starts under the band's title */}
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-8)" }}>
-          <p className="md-lede">
-            Email, phone or LinkedIn all work. Say what it&rsquo;s about in your first message, or it will likely be ignored.
-          </p>
+          <p className="md-lede">{LEDE}</p>
 
           <dl className="md-surface" style={{ margin: 0, border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", background: "var(--surface-raised)", boxShadow: "var(--shadow-sm)", padding: "var(--space-2)" }}>
             {rows.map((r, i) => (
@@ -66,7 +71,18 @@ export default function ContactPage() {
               Start an email
             </Button>
           </div>
+          <div>
+            <StyleSwitch page="contact" to="themed">
+              Plasmid map view
+            </StyleSwitch>
+          </div>
         </div>
     </PageFrame>
   );
+
+  const spans: Record<Feature["key"], [number, number]> = { email: [8, 62], phone: [84, 124], linkedin: [146, 214], github: [236, 300], resume: [322, 346] };
+  const features: Feature[] = rows.map((r) => ({ key: r.key, label: r.label, value: r.value, href: r.href, rel: r.rel, copy: r.copy, newTab: r.newTab, span: spans[r.key] }));
+  const themed = <PlasmidContact features={features} note={NOTE} lede={LEDE} />;
+
+  return <StyleView page="contact" themed={themed} plain={plain} serverDefault={await serverStyleDefault()} />;
 }

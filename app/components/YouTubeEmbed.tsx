@@ -9,7 +9,7 @@ import { Play } from "lucide-react";
  * for the video, so a page with several videos doesn't pull the player's JS
  * (roughly half a megabyte per embed) for anyone who never presses play.
  */
-export default function YouTubeEmbed({ id, title }: { id: string; title: string }) {
+export default function YouTubeEmbed({ id, title, flush }: { id: string; title: string; flush?: boolean }) {
   const [playing, setPlaying] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
 
@@ -22,9 +22,10 @@ export default function YouTubeEmbed({ id, title }: { id: string; title: string 
     position: "relative" as const,
     width: "100%",
     aspectRatio: "16 / 9",
-    borderRadius: "var(--radius-lg)",
+    // flush: sits inside a frame that already has its own edge (the project browser's figure)
+    borderRadius: flush ? 0 : "var(--radius-lg)",
     overflow: "hidden",
-    border: "1px solid var(--border-subtle)",
+    border: flush ? 0 : "1px solid var(--border-subtle)",
     background: "var(--surface-sunken)",
   };
 

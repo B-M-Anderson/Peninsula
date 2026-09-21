@@ -24,20 +24,20 @@ export type AccordionItem = {
  * panel reads this so a collapsed row costs nothing to download; the text
  * stays in the HTML regardless, for deep links and crawlers.
  */
-const RowOpenContext = createContext(true);
+export const RowOpenContext = createContext(true);
 export const useRowOpened = () => useContext(RowOpenContext);
 
 // Location hash as an external store, so a `/projects#slug` link (or a
 // back/forward move between hashes) can open the matching row without a
 // setState-in-effect. The server snapshot is empty; the client re-reads on
 // hydration, which is the documented useSyncExternalStore behaviour.
-function subscribeHash(cb: () => void) {
+export function subscribeHash(cb: () => void) {
   window.addEventListener("hashchange", cb);
   return () => window.removeEventListener("hashchange", cb);
 }
 // Total: a mangled fragment (#%E2) must not throw inside render — it just
 // matches no row.
-const readHash = () => {
+export const readHash = () => {
   const raw = window.location.hash.slice(1);
   try {
     return decodeURIComponent(raw);
@@ -45,7 +45,7 @@ const readHash = () => {
     return raw;
   }
 };
-const noHash = () => "";
+export const noHash = () => "";
 
 export function Accordion({
   items,

@@ -748,6 +748,14 @@ button.md-link {
   }
 }
 
+/* Recent-post thumbnails ease in on hover. */
+.md-post-thumb img {
+  transition: transform 0.4s var(--ease-out);
+}
+.md-card-link:hover .md-post-thumb img {
+  transform: scale(1.05);
+}
+
 /* Click-to-play video poster */
 .md-video-poster {
   display: block;
@@ -950,6 +958,742 @@ html.light .md-theme-icon[data-icon="sun"] {
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* ---- Project browser: the /projects page as a MATLAB-style desktop ----
+   Chrome (title bar, ribbon, pane headers) sits on --surface-sunken and the
+   panes on --surface-raised, so it follows the ground toggle. The blue,
+   green and purple are MATLAB's own selection / comment / string colours,
+   kept to accents. */
+.mw {
+  --mw-blue: #7cc4ee;
+  --mw-blue-wash: rgba(124, 196, 238, 0.16);
+  --mw-green: #9cc474;
+  --mw-purple: #d3a6ee;
+  --mw-keyword: #86b7ff;
+  --mw-chrome: var(--surface-sunken);
+  --mw-pane: var(--surface-raised);
+  display: flex;
+  flex-direction: column;
+  border-block: 1px solid var(--border-default);
+  background: var(--mw-chrome);
+  overflow: clip;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--text-body);
+  scroll-margin-top: 88px;
+}
+html.light .mw,
+.md-light .mw {
+  --mw-blue: #0b6aa8;
+  --mw-blue-wash: rgba(11, 106, 168, 0.11);
+  --mw-green: #2e7d32;
+  --mw-purple: #8a2bb0;
+  --mw-keyword: #1a4fd6;
+}
+
+/* Ribbon: a tool strip whose groups are named underneath. */
+.mw-tools {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 6px var(--space-2) 4px;
+  background: var(--mw-pane);
+  border-bottom: 1px solid var(--border-default);
+}
+.mw-group {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-2);
+}
+@media (min-width: 720px) {
+  .mw-group:not(:last-child) {
+    border-right: 1px solid var(--border-subtle);
+  }
+}
+.mw-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.mw-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 60px;
+  padding: 6px 8px 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font: inherit;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--text-body);
+  cursor: pointer;
+}
+.mw-tool svg {
+  color: var(--mw-blue);
+}
+.mw-tool:hover {
+  background: var(--mw-blue-wash);
+  border-color: var(--border-default);
+}
+.mw-tool[aria-pressed="true"] {
+  background: var(--mw-blue-wash);
+  border-color: var(--mw-blue);
+  box-shadow: inset 0 -2px 0 var(--mw-blue);
+  color: var(--text-strong);
+}
+.mw-tool:focus-visible,
+.mw-file:focus-visible,
+.mw-scroll:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--text-accent);
+  outline-offset: -2px;
+}
+.mw-tool:focus-visible {
+  outline-offset: 1px;
+}
+.mw-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.mw-group-label {
+  padding-top: 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.mw-pathbar {
+  padding: 5px var(--space-3);
+  border-bottom: 1px solid var(--border-default);
+}
+.mw-address {
+  display: block;
+  padding: 3px 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--mw-pane);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+.mw-address i {
+  font-style: normal;
+  padding: 0 4px;
+  color: var(--text-faint);
+}
+.mw-address b {
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+/* Panes: divided by the 1px gap over the border colour. Stacked on phones;
+   folder | (editor, workspace, command) from 720px; the full desktop from 1080px. */
+.mw-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  background: var(--border-default);
+}
+.mw-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--mw-pane);
+}
+.mw-pane-head {
+  display: flex;
+  align-items: center;
+  min-height: 27px;
+  padding: 4px 10px;
+  background: var(--mw-chrome);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-strong);
+}
+.mw-editor {
+  scroll-margin-top: 88px;
+}
+.mw-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+.mw-cmd .mw-scroll {
+  max-height: 320px;
+}
+@media (min-width: 720px) {
+  .mw-body {
+    grid-template-columns: 290px minmax(0, 1fr);
+    grid-template-areas: "folder editor" "folder work" "folder cmd";
+  }
+  .mw-folder { grid-area: folder; }
+  .mw-editor { grid-area: editor; }
+  .mw-work { grid-area: work; }
+  .mw-cmd { grid-area: cmd; }
+}
+/* Tablet band: the panes are stacked, so cap the document or the Workspace and
+   Command Window end up a whole project's scroll below it. */
+@media (min-width: 720px) and (max-width: 1079.98px) {
+  .mw-editor-scroll {
+    max-height: 70vh;
+  }
+}
+@media (min-width: 1080px) {
+  .mw-body {
+    grid-template-columns: 290px minmax(0, 1fr) 260px;
+    grid-template-rows: minmax(0, 1fr) 200px;
+    grid-template-areas: "folder editor work" "folder cmd work";
+    /* ribbon, path bar and status bar plus the fixed navbar are ~230px; the panes take the rest of the viewport */
+    height: clamp(520px, calc(100vh - 240px), 1200px);
+  }
+  .mw-cmd .mw-scroll {
+    max-height: none;
+  }
+}
+@media (min-width: 1240px) {
+  .mw-body {
+    grid-template-columns: 300px minmax(0, 1fr) 320px;
+    grid-template-rows: minmax(0, 1fr) 220px;
+  }
+}
+
+/* Current Folder */
+.mw-files,
+.mw-vars {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.mw-col-date {
+  width: 76px;
+}
+.mw-files th,
+.mw-vars thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 3px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--mw-chrome);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.mw-files td {
+  padding: 0;
+}
+.mw-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 3px 10px 3px 7px;
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  font: inherit;
+  text-align: left;
+  color: var(--text-body);
+  cursor: pointer;
+}
+.mw-files tbody tr:hover,
+.mw-files tbody tr:has(.mw-file[aria-current="true"]) {
+  background: var(--mw-blue-wash);
+}
+.mw-file[aria-current="true"] {
+  border-left-color: var(--mw-blue);
+  color: var(--text-strong);
+  font-weight: 600;
+}
+.mw-file-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mw-thumb {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid var(--border-subtle);
+}
+.mw-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+}
+.mw-file .mw-dot {
+  margin-right: 0;
+}
+.mw-file-date {
+  padding: 0 10px;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Live Editor page */
+.mw-tabbar {
+  display: flex;
+  align-items: flex-end;
+  min-height: 30px;
+  padding: 4px 8px 0;
+  background: var(--mw-chrome);
+  border-bottom: 1px solid var(--border-default);
+}
+.mw-doctab {
+  margin-bottom: -1px;
+  padding: 5px 14px;
+  background: var(--mw-pane);
+  border: 1px solid var(--border-default);
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  font-size: var(--text-2xs);
+  color: var(--text-strong);
+}
+.mw-editor-scroll {
+  padding: var(--space-6) var(--space-6) var(--space-7);
+}
+@media (min-width: 1240px) {
+  .mw-editor-scroll {
+    padding: var(--space-7) var(--space-9) var(--space-8);
+  }
+}
+.mw-doc-title {
+  margin: 0 0 var(--space-5);
+  padding-left: calc(var(--space-5) + 3px);
+  font-family: var(--font-display);
+  font-size: clamp(22px, 4vw, var(--text-2xl));
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-display);
+  color: var(--text-strong);
+}
+.mw-sec {
+  margin-bottom: var(--space-4);
+  padding: 2px 0 var(--space-3) var(--space-5);
+  border-left: 3px solid transparent;
+}
+.mw-sec:hover,
+.mw-sec:focus-within {
+  border-left-color: var(--mw-blue);
+}
+.mw-sec-head {
+  margin-bottom: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mw-green);
+}
+.mw-prose {
+  margin: 0;
+  max-width: var(--measure);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-body);
+  white-space: pre-line;
+}
+.mw-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-outputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.mw-figure {
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--mw-chrome);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+}
+.mw-figbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.mw-figmark {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--mw-blue) 50%, var(--mw-green) 50%);
+}
+
+/* Workspace */
+.mw-vars {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+}
+.mw-vars tbody th,
+.mw-vars td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+  text-align: left;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.mw-vars tbody th {
+  color: var(--text-strong);
+}
+.mw-vicon {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 12px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--mw-blue);
+}
+.mw-vicon[data-k="str"] {
+  color: var(--mw-purple);
+}
+.mw-val {
+  color: var(--text-muted);
+}
+.mw-val[data-k="str"] {
+  color: var(--mw-purple);
+}
+.mw-bar {
+  display: block;
+  height: 3px;
+  margin-top: 5px;
+  background: var(--border-subtle);
+}
+.mw-bar > i {
+  display: block;
+  height: 100%;
+  background: var(--mw-blue);
+  transition: width 0.5s var(--ease-out);
+}
+
+/* Command Window */
+.mw-cmd-body {
+  padding: 8px 12px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1.75;
+}
+.mw-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+}
+.mw-out {
+  padding-left: 3ch;
+}
+.mw-prompt {
+  font-weight: 700;
+  color: var(--mw-blue);
+}
+.mw-kw {
+  color: var(--mw-keyword);
+}
+.mw-str {
+  color: var(--mw-purple);
+}
+.mw-key {
+  min-width: 9ch;
+  color: var(--text-muted);
+}
+.mw-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+.mw-cmd .md-link,
+.mw-cmd button.md-link {
+  color: var(--mw-blue);
+  font-size: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-bottom: 0;
+}
+.mw-cmd .md-link:hover {
+  color: var(--text-strong);
+}
+.mw-typed {
+  color: var(--text-strong);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mw-res {
+  white-space: pre;
+  color: var(--text-body);
+}
+.mw-err {
+  color: var(--status-wip-text);
+}
+.mw-input-line {
+  flex-wrap: nowrap;
+  align-items: center;
+  margin: 0 -12px;
+  padding: 0 12px;
+}
+.mw-input-line:focus-within {
+  background: var(--mw-blue-wash);
+}
+.mw-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  color: var(--text-strong);
+  caret-color: var(--mw-blue);
+}
+.mw-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Workspace plot: every project as a point, completion against date. */
+.mw-plot {
+  margin: var(--space-4) 10px;
+  overflow: hidden;
+  background: var(--mw-chrome);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+}
+.mw-plot-body {
+  position: relative;
+  height: 190px;
+}
+.mw-plot-area {
+  position: absolute;
+  inset: 14px 14px 26px 34px;
+  border-left: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+  background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px), linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+  background-size: 100% 50%, 25% 100%;
+}
+.mw-plot-field {
+  position: absolute;
+  inset: 8px;
+}
+.mw-plot-y,
+.mw-plot-x {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.mw-plot-y {
+  left: 6px;
+}
+.mw-plot-y100 { top: 16px; }
+.mw-plot-y50 { top: 83px; }
+.mw-plot-y0 { top: 150px; }
+.mw-plot-x {
+  bottom: 6px;
+}
+.mw-plot-x0 { left: 34px; }
+.mw-plot-x1 { right: 14px; }
+.mw-point {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border: 1.5px solid var(--mw-chrome);
+  border-radius: 50%;
+  transform: translate(-50%, 50%);
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-standard), box-shadow 0.15s var(--ease-standard);
+}
+.mw-point:hover {
+  transform: translate(-50%, 50%) scale(1.35);
+}
+.mw-point[data-on="true"] {
+  z-index: 2;
+  transform: translate(-50%, 50%) scale(1.5);
+  box-shadow: 0 0 0 2px var(--mw-blue);
+}
+.mw-cursor-x,
+.mw-cursor-y {
+  position: absolute;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.mw-cursor-x {
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--mw-blue);
+  transition: left 0.35s var(--ease-out);
+}
+.mw-cursor-y {
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--mw-blue);
+  transition: bottom 0.35s var(--ease-out);
+}
+.mw-datatip {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  padding: 3px 7px;
+  background: var(--surface-page);
+  border: 1px solid var(--mw-blue);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-body);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(var(--tx), var(--ty));
+  transition: left 0.35s var(--ease-out), bottom 0.35s var(--ease-out);
+}
+.mw-datatip b {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.mw-datatip[data-flip="right"] { --tx: 12px; }
+.mw-datatip[data-flip="left"] { --tx: calc(-100% - 12px); }
+.mw-datatip[data-drop="up"] { --ty: -10px; }
+.mw-datatip[data-drop="down"] { --ty: calc(100% + 10px); }
+
+/* A project's page arrives instead of blinking in (the Workspace bars above
+   grow to their new value the same way). */
+@keyframes mw-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.mw-editor-scroll > div:not([hidden]) {
+  animation: mw-in 0.32s var(--ease-out) both;
+}
+
+.mw-status {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 4px var(--space-3);
+  border-top: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (pointer: coarse) {
+  .mw-file,
+  .mw-tool {
+    min-height: 44px;
+  }
+}
+/* Phones: the ribbon folds into one strip of inline tools that scrolls
+   sideways, the path bar goes (the document tab names the file) and the folder
+   is capped at a few rows, so the project itself sits within the first screen
+   instead of 700px down. */
+@media (max-width: 719px) {
+  .mw-tools {
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    padding: 4px var(--space-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .mw-tools::-webkit-scrollbar {
+    display: none;
+  }
+  .mw-tools::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    flex: 0 0 20px;
+    margin-left: -20px;
+    background: linear-gradient(to right, transparent, var(--mw-pane));
+    pointer-events: none;
+  }
+  .mw-group {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+  }
+  .mw-group:not(:last-child) {
+    padding-right: var(--space-2);
+    border-right: 1px solid var(--border-subtle);
+  }
+  .mw-group-label {
+    display: none;
+  }
+  .mw-btns {
+    flex-wrap: nowrap;
+  }
+  .mw-tool {
+    flex-direction: row;
+    gap: 6px;
+    min-width: 0;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .mw-tool svg {
+    width: 16px;
+    height: 16px;
+  }
+  .mw-pathbar {
+    display: none;
+  }
+  .mw-folder-scroll {
+    max-height: 232px;
+  }
+  .mw-editor-scroll {
+    padding: var(--space-5) var(--space-4) var(--space-6);
+  }
+}
+/* Paper does not scroll: the panes lose their caps so the open project prints whole. */
+@media print {
+  .mw-body {
+    height: auto;
+    grid-template-rows: auto;
+  }
+  .mw-scroll,
+  .mw-cmd .mw-scroll,
+  .mw-editor-scroll,
+  .mw-folder-scroll {
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 /* subtle pulse for status dots — the one animation carried over */

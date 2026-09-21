@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { Play, Send } from "lucide-react";
 import { TextLink } from "../components/ui";
 import { json, type AskResponse, type ProgressResponse, type StatusResponse } from "../lib/api-types";
 import SystemPanel from "./SystemPanel";
+import { StyleSwitch } from "../lib/stylePref";
+import "./notebook.css";
 
 type Line = { from: "you" | "bot" | "sys"; text: string };
 
@@ -39,6 +41,25 @@ function progressLabel(p: Progress): string {
   return `working — ${p.seconds}s`;
 }
 
+type Cell = { n: number | null; q: string | null; out: { kind: "bot" | "sys"; text: string } | null };
+
+/** The transcript as notebook cells: each question with the output that answered it. */
+function toCells(lines: Line[]): Cell[] {
+  const cells: Cell[] = [];
+  let n = 0;
+  for (const l of lines) {
+    if (l.from === "you") {
+      cells.push({ n: ++n, q: l.text, out: null });
+      continue;
+    }
+    const last = cells[cells.length - 1];
+    const out = { kind: l.from === "bot" ? ("bot" as const) : ("sys" as const), text: l.text };
+    if (last && last.q !== null && last.out === null) last.out = out;
+    else cells.push({ n: null, q: null, out });
+  }
+  return cells;
+}
+
 // Short topics for the empty state; each fires a fuller question.
 const TOPICS: { label: string; q: string }[] = [
   { label: "Research", q: "What research is Bennett doing right now?" },
@@ -60,7 +81,7 @@ const bubble = {
   lineHeight: "var(--leading-relaxed)",
 } as const;
 
-export default function AskClient() {
+export default function AskClient({ variant = "plain" }: { variant?: "plain" | "notebook" }) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
@@ -192,6 +213,135 @@ export default function AskClient() {
 
   const empty = lines.length === 0;
   const asleep = status !== null && !online;
+
+  if (variant === "notebook") {
+    const cells = toCells(lines);
+    const kernel = busy ? "Busy" : status === null ? "Connecting…" : online ? "Idle" : "Offline";
+    return (
+      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", paddingTop: 59 }}>
+        <h1 className="sr-only">Ask</h1>
+        <div className="md-above">
+          <section className="nb" aria-label="Ask notebook">
+            <div className="nb-bar">
+              <span>ask.ipynb</span>
+              <span className="nb-kernel">
+                <span aria-hidden className={pill.pulse ? "nb-dot md-pulse" : "nb-dot"} style={{ background: busy ? "var(--status-ongoing)" : pill.dot }} />
+                {status?.model ? `${status.model} · ` : ""}
+                {kernel}
+                {priority ? " · priority" : ""}
+              </span>
+              <button type="button" className="nb-tool" disabled={busy || lines.length === 0} onClick={() => setLines([])}>
+                Clear outputs
+              </button>
+              <StyleSwitch page="ask" to="plain">
+                Plain view
+              </StyleSwitch>
+            </div>
+
+            <div className="nb-page">
+              <div className="nb-cells">
+                {/* The heading and the starters are the page, not transcript, so
+                    they stay outside the live region. */}
+                <div className="nb-cell nb-md">
+                  <h2>Ask about Bennett</h2>
+                  <p>
+                    A small language model on my own desktop answers for me — no cloud, no API key. Run a starter cell or write your own below.
+                    {asleep ? " The desktop is asleep right now: a question will wait up to 45 seconds for it to wake, then give up." : ""}
+                  </p>
+                </div>
+
+                {empty &&
+                  TOPICS.map((t) => (
+                    <div key={t.label} className="nb-cell">
+                      <span aria-hidden className="nb-prompt nb-in">
+                        In [&nbsp;]:
+                      </span>
+                      <button type="button" className="nb-code nb-starter" onClick={() => ask(t.q)} disabled={busy}>
+                        <span className="nb-fn">ask</span>(<span className="nb-str">&quot;{t.label}&quot;</span>)
+                      </button>
+                    </div>
+                  ))}
+
+                <div ref={logRef} role="log" aria-live="polite" aria-relevant="additions" className="nb-stream">
+                  {cells.map((c, i) => {
+                    const running = busy && i === cells.length - 1 && c.q !== null && c.out === null;
+                    return (
+                      <div key={i} className="nb-cell">
+                        {c.q !== null && (
+                          <div className="nb-row">
+                            <span aria-hidden className="nb-prompt nb-in">
+                              In [{running ? "*" : c.n}]:
+                            </span>
+                            <div className={running ? "nb-code nb-running" : "nb-code"}>{c.q}</div>
+                          </div>
+                        )}
+                        {c.out && (
+                          <div className="nb-row">
+                            <span aria-hidden className="nb-prompt nb-outp">
+                              {c.out.kind === "bot" && c.n !== null ? `Out[${c.n}]:` : ""}
+                            </span>
+                            <div className={c.out.kind === "sys" ? "nb-out nb-notice" : "nb-out"}>{c.out.text}</div>
+                          </div>
+                        )}
+                        {running && (
+                          <div className="nb-row">
+                            <span aria-hidden className="nb-prompt nb-outp" />
+                            <div className="nb-out nb-progress">{progress ? progressLabel(progress) : "thinking — real machine at home, give it a few seconds"}</div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <form
+                className="nb-cell nb-compose"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  ask(input);
+                }}
+              >
+                <span aria-hidden className="nb-prompt nb-in">
+                  In [&nbsp;]:
+                </span>
+                <div className="nb-code nb-field">
+                  <input
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value.slice(0, MAX))}
+                    placeholder={asleep ? "Ask anyway…" : "Ask about Bennett…"}
+                    aria-label="Ask about Bennett"
+                    enterKeyHint="send"
+                    autoComplete="off"
+                    readOnly={busy}
+                  />
+                </div>
+                <button type="submit" disabled={busy || input.trim().length === 0} className="md-btn md-btn-primary nb-run">
+                  <Play size={15} aria-hidden />
+                  <span>Run</span>
+                </button>
+              </form>
+
+              <div className="nb-foot">
+                <span className="nb-links">
+                  <TextLink href="/projects">Projects</TextLink>
+                  <TextLink href="/contact">Contact</TextLink>
+                </span>
+                {input.length > 0 && (
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip-text)" : "var(--text-faint)" }}>
+                    {input.length}/{MAX}
+                  </span>
+                )}
+              </div>
+
+              <SystemPanel status={status} />
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
@@ -388,11 +538,16 @@ export default function AskClient() {
           <TextLink href="/projects">Projects</TextLink>
           <TextLink href="/contact">Contact</TextLink>
         </span>
-        {input.length > 0 && (
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip-text)" : "var(--text-faint)" }}>
-            {input.length}/{MAX}
-          </span>
-        )}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-4)" }}>
+          {input.length > 0 && (
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip-text)" : "var(--text-faint)" }}>
+              {input.length}/{MAX}
+            </span>
+          )}
+          <StyleSwitch page="ask" to="themed">
+            Notebook view
+          </StyleSwitch>
+        </span>
       </div>
     </div>
   );

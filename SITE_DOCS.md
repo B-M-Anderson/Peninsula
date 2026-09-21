@@ -37,6 +37,8 @@ Everything visual comes from `app/globals.css`:
 
 Theme switching: the inline script in `app/layout.tsx` sets `html.dark`/`html.light` (saved override, else OS preference) and the `theme-color` meta before paint; `Navbar` keeps both in sync afterwards through a `useSyncExternalStore` theme store. Storage access goes through `app/lib/storage.ts`, which never throws.
 
+Per-page look: `/projects`, `/contact` and `/ask` each ship two server-built looks — a software-styled "themed" one (MATLAB desktop, plasmid map, Jupyter notebook) and the plain original. `app/lib/stylePref.tsx` holds the choice (`StyleView` picks, `StyleSwitch` flips, `useStyleChoice` is the `useSyncExternalStore` store behind `localStorage["style-<page>"]`). A saved choice always wins; with none, the look is automatic: plain when the viewport matches `(max-width: 719px), (forced-colors: active)`, themed otherwise. `app/lib/styleServer.ts` makes the same call for the first paint from the request headers (`sec-ch-ua-mobile`, then the User-Agent), so a phone never flashes the desktop layout — and so these three pages are rendered per request rather than statically. The client re-reads the real viewport after hydration and follows resizes; a saved choice that differs from the server's guess arrives one render after hydration. Only a deliberate switch moves focus (to the new `<main>`); an automatic swap leaves it alone. Both looks sit in the page's RSC payload, which is the price of switching without a round trip.
+
 ## 4. App Router structure
 
 Root layout `app/layout.tsx`: fonts, site-wide `metadata` (metadataBase, title template, description, Open Graph, Twitter) and `viewport.themeColor`; a skip link to `#main`; `VaultGate` (the typed-word easter egg) wrapping `Navbar`, the page, and `Footer`. No global padding and no landmark — each page renders its own title frame + `<main id="main" tabIndex={-1}>` (the skip-link target; `Navbar` is the single banner landmark).
@@ -44,9 +46,9 @@ Root layout `app/layout.tsx`: fonts, site-wide `metadata` (metadataBase, title t
 | Route | Server file (metadata) | Client half | Notes |
 |---|---|---|---|
 | `/` | `app/page.tsx` (ISR, `revalidate = 900`) | — | Hero (StripeBand, portrait, blurb, profile buttons), Projects (3 newest, deep-linked to `/projects#slug`), Recent posts rail (server-rendered from `app/lib/posts.ts`), Skills accordion, Penrose grid, Person JSON-LD |
-| `/projects` | `app/projects/page.tsx` | `ProjectsList.tsx` | Sort group (`aria-pressed`), accordion keyed by slug with `#hash` sync, click-to-play YouTube embeds |
-| `/ask` | `app/ask/page.tsx` | `AskClient.tsx`, `SystemPanel.tsx` | Chat with the desktop concierge; status pill refreshes every 30s; progress poll every 2s while a question is in flight |
-| `/contact` | `app/contact/page.tsx` | — | Email, phone (`tel:`), LinkedIn, GitHub as a `<dl>` |
+| `/projects` | `app/projects/page.tsx` (dynamic: reads request headers for the first-paint look) | `ProjectBrowser.tsx` + `CommandWindow.tsx` + `PlotFigure.tsx` (MATLAB look), `ProjectsList.tsx` (classic accordion) | MATLAB-style window: ribbon (filter + sort groups, `aria-pressed`; one scrolling strip on phones), Current Folder table, Live Editor page per project (`ProjectDoc.tsx`, demo figure first), Workspace (variables + a completion-vs-date figure with a data cursor and datatip on the selected project; decorative, `aria-hidden`), Command Window; selection follows `#slug`, otherwise the newest project with a demo; click-to-play YouTube embed in a Figure. Phones get the classic look unless they opt in |
+| `/ask` | `app/ask/page.tsx` (dynamic, as above) | `AskClient.tsx` (`variant="notebook"` / `"plain"`), `SystemPanel.tsx` | Chat with the desktop concierge; status pill refreshes every 30s; progress poll every 2s while a question is in flight. Notebook look: `In [n]` / `Out[n]` cells, `app/ask/notebook.css`; phones get the plain chat unless they opt in |
+| `/contact` | `app/contact/page.tsx` (dynamic, as above) | — | Email, phone (`tel:`), LinkedIn, GitHub as a `<dl>`; themed look is `PlasmidContact.tsx` (a Features list first, then a `role="img"` map whose arcs are mouse-only links and draw in on load; panel above the map below 900px), `app/contact/plasmid.css`; phones get the `<dl>` unless they opt in |
 | `/darkroom` | `app/darkroom/page.tsx` (noindex) | `DarkroomClient.tsx` | Gallery first; the upload station is behind "Keeper's entrance" |
 | `/vault` | `app/vault/page.tsx` (noindex) | `VaultClient.tsx` | Gate form is server-rendered; the unlocked view depends on a sessionStorage flag |
 | 404 / error | `app/not-found.tsx`, `app/error.tsx` | — | Same header/band frame as every page |
@@ -58,7 +60,7 @@ Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app
 - `components/brand/StripeBand.tsx` — the two bands. Title renders as `<h1>` (prop `as`), subtitle as `<p>`; text sits in a `max-width`/`--gutter-page` column so it aligns with page content at every width. `offset` is the distance from the top of the surface.
 - `components/brand/Mark.tsx` — the BA monogram; colours come from `--mark-*` tokens (a `tone` prop forces a ground). `MonogramOg.tsx` is the box-drawn version for `next/og`.
 - `components/ui.tsx` — `Button` (internal routes go through `next/link`, external links open in a new tab with a screen-reader cue, `pressed`, `disabled`, `newTab`, `rel`), `Chip`, `Card`, `Badge` (typed `ProjectStatus`), `ProgressBar` (real `role="progressbar"`), `SectionHeading`, `TextLink` (→ for internal, ↗ for external, `newTab` for files), `Dotted`, `statusLabel`. No `"use client"` — these render on the server.
-- `components/Accordion.tsx` — the one stateful primitive (id-keyed, `aria-controls`, `inert` panels, optional `syncHash`); it also tells `DeferredMedia` (`components/DeferredMedia.tsx`) whether a row has been opened, so collapsed rows download no images or video posters.
+- `components/Accordion.tsx` — the one stateful primitive (id-keyed, `aria-controls`, `inert` panels, optional `syncHash`); it also tells `DeferredMedia` (`components/DeferredMedia.tsx`) whether a row has been opened, so collapsed rows download no images or video posters. The project browser reuses that context (`RowOpenContext`) and the hash store, providing "selected" instead of "opened", so only the showing project mounts media and switching away stops a playing video.
 - `components/PageFrame.tsx` — every subpage's opening: title frame + bands + the page's `<main id="main">`.
 - `components/Navbar.tsx` — fixed bar with `<header><nav>`, `aria-current` on the active link, 44px theme toggle with a state-dependent label; tucks away on scroll-down on phones only (matchMedia store), pinned elsewhere; `inert` while hidden.
 - `components/Footer.tsx` — one row: name + year (`Year.tsx`, computed in the browser), GitHub / LinkedIn / Email / Source. `components/SkipLink.tsx` focuses `#main` without touching the URL fragment.
@@ -86,7 +88,7 @@ Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app
 | `wip` / `ongoing` / `completed` / `terminated` / `shelved` | Resolved by `statusOf()`: terminated → complete (only at 100%) → ongoing → wip → shelved → ongoing |
 | `draft` | Keeps an entry out of the site |
 
-`app/data/posts.ts` — hand-written posts (X entries can only come from here). `app/lib/posts.ts` merges them with the YouTube and Substack feeds (fetch cache 15 min, failures not cached).
+`app/data/posts.ts` — hand-written posts (X entries can only come from here) plus the helpers that give every post its tag (`postLabel`: "YouTube short", "Substack article", …) and thumbnail (`thumbnailOf`); an entry may set `format` or `thumbnail` to override. `app/lib/posts.ts` merges them with the YouTube and Substack feeds (fetch cache 15 min, failures not cached).
 
 ## 7. API routes
 

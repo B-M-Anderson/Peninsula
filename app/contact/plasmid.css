@@ -1,0 +1,221 @@
+/* Contact as a plasmid map. Chrome sits on --surface-sunken and the panes on
+   --surface-raised, like the projects browser, so it follows the ground toggle. */
+.pm {
+  --pm-email: #d3b68a;
+  --pm-phone: #9cc474;
+  --pm-linkedin: #7cc4ee;
+  --pm-github: #d3a6ee;
+  --pm-resume: #e08a6e;
+  border-block: 1px solid var(--border-default);
+  background: var(--surface-sunken);
+  font-family: var(--font-body);
+  color: var(--text-body);
+}
+html.light .pm,
+.md-light .pm {
+  --pm-email: #6b4420;
+  --pm-phone: #2e7d32;
+  --pm-linkedin: #0b6aa8;
+  --pm-github: #8a2bb0;
+  --pm-resume: #8e3a22;
+}
+
+.pm-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 6px var(--space-4);
+  border-bottom: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  color: var(--text-muted);
+}
+.pm-bar-note {
+  margin-right: auto;
+  color: var(--text-faint);
+}
+
+/* Panel above the map on a phone (the address first), map left of it from 900px. */
+.pm-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  background: var(--border-default);
+}
+@media (min-width: 900px) {
+  .pm-body {
+    grid-template-columns: minmax(0, 1fr) 440px;
+    grid-template-areas: "map panel";
+  }
+  .pm-map {
+    grid-area: map;
+  }
+  .pm-panel {
+    grid-area: panel;
+  }
+}
+
+.pm-map {
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+  background: var(--surface-raised);
+}
+.pm-feat {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+.pm-map svg {
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+}
+.pm-ring {
+  fill: none;
+  stroke: var(--border-default);
+  stroke-width: 1.25;
+}
+.pm-tick {
+  stroke: var(--border-default);
+  stroke-width: 1.5;
+}
+.pm-bp {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.pm-arc {
+  fill: none;
+  stroke-width: 18;
+  stroke: currentColor;
+  stroke-dasharray: 1;
+  transition: stroke-width 0.15s var(--ease-standard);
+  animation: pm-draw 0.9s var(--ease-out) both;
+}
+.pm-arc[data-k="phone"] { animation-delay: 0.1s; }
+.pm-arc[data-k="linkedin"] { animation-delay: 0.2s; }
+.pm-arc[data-k="github"] { animation-delay: 0.3s; }
+.pm-arc[data-k="resume"] { animation-delay: 0.4s; }
+@keyframes pm-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.pm-arc[data-k="email"] { color: var(--pm-email); }
+.pm-arc[data-k="phone"] { color: var(--pm-phone); }
+.pm-arc[data-k="linkedin"] { color: var(--pm-linkedin); }
+.pm-arc[data-k="github"] { color: var(--pm-github); }
+.pm-arc[data-k="resume"] { color: var(--pm-resume); }
+.pm-leader {
+  stroke: var(--border-default);
+  stroke-width: 1.25;
+}
+.pm-flabel {
+  fill: var(--text-strong);
+  font-size: 17px;
+}
+.pm-name-svg {
+  fill: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+.pm-sub-svg {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* A row lit by hover or keyboard focus thickens its arc, and a hovered arc
+   thickens and lights its row: the same feature, wherever it is pointed at. */
+.pm-feat:hover .pm-arc,
+.pm:has(.pm-row[data-k="email"]:is(:hover, :focus-within)) .pm-arc[data-k="email"],
+.pm:has(.pm-row[data-k="phone"]:is(:hover, :focus-within)) .pm-arc[data-k="phone"],
+.pm:has(.pm-row[data-k="linkedin"]:is(:hover, :focus-within)) .pm-arc[data-k="linkedin"],
+.pm:has(.pm-row[data-k="github"]:is(:hover, :focus-within)) .pm-arc[data-k="github"],
+.pm:has(.pm-row[data-k="resume"]:is(:hover, :focus-within)) .pm-arc[data-k="resume"] {
+  stroke-width: 30;
+}
+.pm-feat:hover .pm-flabel {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pm:has(.pm-feat[data-k="email"]:hover) .pm-row[data-k="email"],
+.pm:has(.pm-feat[data-k="phone"]:hover) .pm-row[data-k="phone"],
+.pm:has(.pm-feat[data-k="linkedin"]:hover) .pm-row[data-k="linkedin"],
+.pm:has(.pm-feat[data-k="github"]:hover) .pm-row[data-k="github"],
+.pm:has(.pm-feat[data-k="resume"]:hover) .pm-row[data-k="resume"] {
+  background: var(--surface-sunken);
+}
+
+.pm-panel {
+  background: var(--surface-raised);
+}
+.pm-panel-head {
+  padding: 5px var(--space-4);
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-strong);
+}
+.pm-features {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pm-row {
+  display: grid;
+  grid-template-columns: 12px 72px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: 6px var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.pm-row:is(:hover, :focus-within) {
+  background: var(--surface-sunken);
+}
+.pm-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.pm-row[data-k="email"] .pm-swatch { color: var(--pm-email); }
+.pm-row[data-k="phone"] .pm-swatch { color: var(--pm-phone); }
+.pm-row[data-k="linkedin"] .pm-swatch { color: var(--pm-linkedin); }
+.pm-row[data-k="github"] .pm-swatch { color: var(--pm-github); }
+.pm-row[data-k="resume"] .pm-swatch { color: var(--pm-resume); }
+.pm-fname {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.pm-fvalue {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-sm);
+}
+.pm-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4) var(--space-6);
+}
+.pm-notes p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--text-muted);
+}
+.pm-notes .md-btn {
+  align-self: flex-start;
+}

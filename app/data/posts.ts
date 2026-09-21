@@ -7,7 +7,12 @@
 //
 // To add a post: paste the URL, set the platform, write a one-line blurb, done.
 
+import { youTubeId } from "../lib/youtube";
+
 export type Platform = "youtube" | "substack" | "x";
+
+/** What kind of thing a post is on its platform. Left off, it is worked out from the platform and URL. */
+export type PostFormat = "video" | "short" | "article" | "podcast" | "post";
 
 export type Post = {
   platform: Platform;
@@ -17,13 +22,34 @@ export type Post = {
   date: string;
   /** One line. What it is, not a teaser. Optional. */
   blurb?: string;
+  format?: PostFormat;
+  /** Cover image URL. YouTube posts get theirs from the video id; Substack ones come from the feed. */
+  thumbnail?: string;
 };
 
-export const platformLabel: Record<Platform, string> = {
-  youtube: "video",
-  substack: "essay",
-  x: "post",
+const platformName: Record<Platform, string> = {
+  youtube: "YouTube",
+  substack: "Substack",
+  x: "X",
 };
+
+export function formatOf(p: Post): PostFormat {
+  if (p.format) return p.format;
+  if (p.platform === "youtube") return /youtube\.com\/shorts\//.test(p.url) ? "short" : "video";
+  return p.platform === "substack" ? "article" : "post";
+}
+
+/** What the tag on a post says: "YouTube video", "YouTube short", "Substack article", "X post". */
+export function postLabel(p: Post): string {
+  return `${platformName[p.platform]} ${formatOf(p)}`;
+}
+
+/** The post's cover image, or null when it has none (an X post, a Substack piece with no cover). */
+export function thumbnailOf(p: Post): string | null {
+  if (p.thumbnail) return p.thumbnail;
+  const id = p.platform === "youtube" ? youTubeId(p.url) : null;
+  return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
+}
 
 export const posts: Post[] = [
   // Nothing published yet. Until there is, the section renders a quiet

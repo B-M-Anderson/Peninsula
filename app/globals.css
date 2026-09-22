@@ -360,6 +360,14 @@ select {
   gap: var(--space-11);
 }
 
+/* Stacked (phones and narrow tablets): Recent posts sits above the Projects
+   preview. Only the visual order changes; the DOM keeps Projects first. */
+@media (max-width: 899.98px) {
+  .md-content-split > .md-rail {
+    order: -1;
+  }
+}
+
 @media (min-width: 900px) {
   .md-content-split {
     grid-template-columns: minmax(0, 1fr) clamp(236px, 27%, 312px);

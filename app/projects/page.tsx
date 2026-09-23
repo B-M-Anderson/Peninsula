@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import PageFrame from "../components/PageFrame";
 import MediaBadge from "../components/MediaBadge";
-import ProjectBrowser, { type BrowserRow, type WorkspaceVar } from "./ProjectBrowser";
+import ProjectBrowser, { ACTIVITY_ID, type ActivityPanel, type BrowserRow, type WorkspaceVar } from "./ProjectBrowser";
 import ProjectDoc from "./ProjectDoc";
+import ActivityDoc, { sourceName, type Channel, type DocItem } from "./ActivityDoc";
+import ActivityList from "./ActivityList";
 import ProjectsList, { type ProjectRow } from "./ProjectsList";
 import ProjectDetail from "./ProjectDetail";
 import { StyleView } from "../lib/stylePref";
@@ -12,6 +14,8 @@ import { Badge, Chip, Dotted, statusLabel } from "../components/ui";
 import { projectCounts, projectSlug, publishedProjects, relatedProjects, statusOf, summaryOf, type Project } from "../data/projects";
 import { youTubeId } from "../lib/youtube";
 import { openGraphFor } from "../lib/og";
+import { ageDays, timelineOf, getActivity, type ActivitySource } from "../lib/activity";
+import { GITHUB_URL, SUBSTACK_URL, X_URL, YOUTUBE_URL } from "../data/site";
 
 const description = "Everything I've built or fixed, with what it's made of and how far along it is.";
 
@@ -126,21 +130,80 @@ function browserRow(p: Project): BrowserRow {
   };
 }
 
+// ---- activity.mlx -------------------------------------------------------------
+
+const repoKey = (url: string) => url.toLowerCase().replace(/\/+$/, "");
+
+/** A repo links back to its project only when exactly one project points at it. */
+function projectsByRepo(): Map<string, { id: string; file: string }> {
+  const seen = new Map<string, Project[]>();
+  for (const p of publishedProjects) {
+    if (!p.githubUrl) continue;
+    const k = repoKey(p.githubUrl);
+    seen.set(k, [...(seen.get(k) ?? []), p]);
+  }
+  const out = new Map<string, { id: string; file: string }>();
+  for (const [k, ps] of seen) if (ps.length === 1) out.set(k, { id: projectSlug(ps[0]), file: `${projectSlug(ps[0])}.mlx` });
+  return out;
+}
+
+const channels: Channel[] = (
+  [
+    ["youtube", YOUTUBE_URL],
+    ["substack", SUBSTACK_URL],
+    ["x", X_URL],
+    ["github", GITHUB_URL],
+  ] as [ActivitySource, string | null][]
+).flatMap(([key, url]) => (url ? [{ key, name: sourceName[key], url }] : []));
+
+/** activity.mlx for the MATLAB look, and the items again for the classic look's section. */
+async function activityData(): Promise<{ panel: ActivityPanel; items: DocItem[] } | undefined> {
+  const { items, now } = await getActivity();
+  if (!items.length) return undefined;
+  const repos = projectsByRepo();
+  const docItems: DocItem[] = items.map((i) => {
+    const project = i.repoUrl ? repos.get(repoKey(i.repoUrl)) : undefined;
+    return project ? { ...i, project } : i;
+  });
+  const count = (s: ActivitySource) => items.filter((i) => i.source === s).length;
+  const vars: WorkspaceVar[] = (["youtube", "substack", "x", "github"] as ActivitySource[])
+    .filter((s) => count(s) > 0)
+    .map((s) => ({ name: s, value: `1×${count(s)} struct`, struct: true }));
+  vars.push({ name: "latest", value: `"${items[0].at.slice(0, 10)}"` });
+  vars.push({ name: "refreshMin", value: "15" });
+  const panel: ActivityPanel = {
+    doc: <ActivityDoc items={docItems} channels={channels} />,
+    vars,
+    total: timelineOf(items).length,
+    recent: items.filter((i) => ageDays(i.at, now) < 30).length,
+    fresh: ageDays(items[0].at, now) < 7,
+    feed: items.map((i) => ({ kind: i.kind, title: i.title, detail: i.detail, when: i.when, url: i.url, sha: i.sha })),
+    // `web github` already means the open project's repo, so only the other channels are offered by name.
+    channels: channels.filter((c) => c.key !== "github"),
+  };
+  return { panel, items: docItems };
+}
+
 export default async function ProjectsPage() {
+  const [activity, serverDefault] = await Promise.all([activityData(), serverStyleDefault()]);
+  const rows = publishedProjects.map(browserRow);
+  // A project named "activity" would collide with activity.mlx's #activity link.
+  const panel = rows.some((r) => r.id === ACTIVITY_ID) ? undefined : activity?.panel;
   const matlab = (
     // No title frame: the browser is the page. The h1 stays for screen readers,
     // and the padding clears the fixed navbar.
     <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", paddingTop: 59 }}>
       <h1 className="sr-only">Projects</h1>
       <div className="md-above">
-        <ProjectBrowser rows={publishedProjects.map(browserRow)} />
+        <ProjectBrowser rows={rows} activity={panel} />
       </div>
     </main>
   );
   const classic = (
     <PageFrame title="Projects" subtitle={<Dotted items={ledger()} />}>
       <ProjectsList rows={publishedProjects.map(classicRow)} />
+      {activity ? <ActivityList items={activity.items} channels={channels} /> : null}
     </PageFrame>
   );
-  return <StyleView page="projects" themed={matlab} plain={classic} serverDefault={await serverStyleDefault()} />;
+  return <StyleView page="projects" themed={matlab} plain={classic} serverDefault={serverDefault} />;
 }

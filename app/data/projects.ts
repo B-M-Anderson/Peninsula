@@ -79,7 +79,7 @@ Finished and in use playing Wii, watching The Matrix, and eventually for use in 
 
   {
     title: "Local-LLM Site Concierge",
-    description: `The **Ask** page on this site, answered by a small language model running on my own desktop at home. No cloud inference, no API key, no data centre.
+    description: `The **askAI** page on this site, answered by a small language model running on an old desktop in my house. No cloud inference, no API key, no data centre.
 
 **The plumbing is the hard part, not the model.** My desktop sits behind NAT with nothing open to the internet, and I wasn't willing to forward a port to run a toy. So the connection only ever runs outward: the Vercel route pushes a job onto an Upstash Redis queue, the desktop long-polls that queue over HTTPS, runs the question against a local Ollama model, and writes the answer back under the job's id. Nothing ever reaches in. The desktop also publishes a heartbeat with a short TTL — if it goes stale the site knows the node is down and says so, in plain language, with links, instead of hanging.
 
@@ -91,13 +91,13 @@ Finished and in use playing Wii, watching The Matrix, and eventually for use in 
 
 **Speed, without pretending.** A 3B model on four CPU cores takes 10–20 seconds a question, and no amount of tuning changes that. What does change it is not running the model at all: the box is idle almost all the time, so an idle worker precomputes answers to likely questions, generates several candidates, and scores them against a formal-register rubric — contractions, filler, fourth-wall leaks, sentence count — keeping only the best. Cache matching is normalised-exact on purpose. No embeddings, no fuzzy similarity: a near-miss would serve a confidently incorrect answer about a real person, which is far worse than being slow. The cache is keyed by a fingerprint of the system prompt plus the grounding doc, so editing either retires every stale entry automatically.
 
-**What the visitor sees.** The \`/ask\` page shows which model is loaded, the machine it's running on, your position in the queue, and whether the desktop is even awake. There's a passphrase fast-lane that jumps the queue for people I've given it to. It's deliberately un-magical: the point is that a small model on a normal computer in a house can do this, and you can watch it happen.
+**What the visitor sees.** The \`/ask\` page shows which model is loaded, the machine it's running on, your position in the queue, and whether the desktop is even awake. When the desktop is off, the page still shows the last numbers it reported and says when that was, instead of an empty panel. There's a passphrase fast-lane that jumps the queue for people I've given it to. It's deliberately un-magical: the point is that a small model on a normal computer in a house can do this, and you can watch it happen.
 
 **Built with** Next.js API routes and Upstash Redis on the site side; a single-file Python poller, Ollama and systemd on the desktop side.
 
 It must be noted with such a machine running it hard indefinitely is a lot, so it often shuts down and auto-reboot systems fail. I'm working to improve this, which may include switching from Linux Mint, which I am now comfortable enough to do, to something with even less overhead. A headless distro may be in order for such a project.`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
-    date: "August 11, 2026",
+    date: "September 23, 2026",
     skills: [
       "Local LLMs",
       "Ollama",
@@ -219,18 +219,24 @@ Its most useful feature is **pairs**: two clips joined into one item, composited
     title: "Bennett-Anderson.com",
     description: `**You're looking at this one!**
 
-My personal website, designed for desktop and mobile use, built from scratch using **Next.js, TypeScript, and Tailwind CSS**.
-Deployed & hosted by **Vercel** with a custom domain from Squarespace.
-It features an **auto-detecting dark mode toggle**, a screen-size responsive navigation bar (that retracts) & homepage + other designs & animations, all intended to showcase my projects and skills.
+My personal website, built from scratch with **Next.js, TypeScript and Tailwind CSS** and hosted on **Vercel** with a custom domain.
 
-Feel free to explore the code on my GitHub in my first public repository!
-(It took some time to realize I didn't need to push every update to see how it works, and I still have to for mobile testing, so early commits are messy and abundant.)
+It started in November 2025 as a project list and a resume. It's been redesigned twice since then, the second time into the brown and tan look it has now, and a lot got added along the way:
+- **askAI**, where a small language model on an old desktop in my house answers questions about me. It has its own entry below.
+- A **Recent posts** feed that pulls in my YouTube and Substack uploads by itself every 15 minutes.
+- Software-themed versions of three pages, each with a plain view that phones get by default. Projects is a MATLAB desktop with a working Command Window, askAI is a Jupyter notebook and Contact is a plasmid map.
+- An **activity.mlx** tab in the MATLAB view with my latest videos, posts and GitHub commits (the plain view has the same thing under the project list), plus editor tabs that open and close like the real program.
+- A darkroom photo gallery, and a hidden vault page if you know my cat's name.
+- A small local editor so I can add projects without hand-editing TypeScript.
+- A full pass on accessibility, page metadata and load speed.
 
-Note: my learning of TypeScript website development sourced a lot of early information from LLM-AIs.
-Many fixes & feature/content implementations were done by me, but original code and ongoing feature information is/was AI-assisted.
-The more I do and improve this website, the more I continue to learn to do on my own!`,
+Feel free to look through the code on GitHub, it was my first public repository.
+(It took me a while to realize I didn't need to push every change to see it working, so the early commits are messy and there are a lot of them.)
+
+Note: I learned TypeScript web development mostly from LLMs early on, and most of the newer features were built with AI coding tools, with me deciding what gets built, reviewing it and testing it.
+The more I work on this site, the more of it I can do on my own.`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
-    date: "November 22, 2025",
+    date: "September 23, 2026",
     skills: [
       "Web Development",
       "UI Design",
@@ -239,7 +245,7 @@ The more I do and improve this website, the more I continue to learn to do on my
       "Next.js",
       "TypeScript",
       "Tailwind CSS",
-      "Framer Motion",
+      "Accessibility",
       "Vercel",
     ],
     importantSkills: ["TypeScript", "Web Development", "UI Design", "Responsive Design", "Git & GitHub"],

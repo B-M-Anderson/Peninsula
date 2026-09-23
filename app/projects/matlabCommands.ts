@@ -1,6 +1,7 @@
 /* The Command Window's interpreter: a small, safe subset of classic MATLAB
    (arithmetic, magic, rand, disp, who/whos, ls/dir, lookfor, type, pwd, clc …)
-   plus the commands that drive this page (open, show, sort, web). Pure: it takes
+   plus the commands that drive this page (open, show, sort, web, activity,
+   git log). Pure: it takes
    the input and a snapshot of the page, and returns the lines to print and at
    most one action for the component to carry out. Nothing here is eval'd. */
 
@@ -17,8 +18,15 @@ export type CmdRow = {
   videoUrl?: string;
 };
 
+/** One line of recent activity, with its age already worked out on the server. */
+export type CmdFeedItem = { kind: string; title: string; detail?: string; when: string; url: string; sha?: string };
+
+/** A channel `web NAME` can open: youtube, substack, x. */
+export type CmdChannel = { key: string; name: string; url: string };
+
 export type CmdAction =
   | { type: "open"; id: string }
+  | { type: "activity" }
   | { type: "clear" }
   | { type: "filter"; filter: string }
   | { type: "sort"; sort: string }
@@ -33,6 +41,9 @@ export type CmdCtx = {
   /** Filter keys the page actually offers — an empty one would filter to nothing. */
   filters: string[];
   ans: number | null;
+  /** Recent activity, newest first (empty when no feed could be read). */
+  feed: CmdFeedItem[];
+  channels: CmdChannel[];
 };
 
 export type CmdResult = {
@@ -242,7 +253,9 @@ const USAGE: Record<string, string> = {
   lookfor: "lookfor WORD   Search project names and skills.   lookfor python",
   type: "type NAME      Print a project's one-line summary.",
   who: "who            List the Workspace variables (whos adds their values).",
-  web: "web github     Open the project's GitHub page.   web video   opens its YouTube video.",
+  web: "web github     Open the project's GitHub page.   web video   opens its YouTube video.\n               web youtube   web substack   web x   open a channel.",
+  activity: "activity       Open activity.mlx and list the newest posts and commits (also: news, whatsnew).",
+  git: "git log        The latest commit on each recently pushed repo.",
   show: "show FILTER    Filter the folder: all, complete, progress, other.",
   sort: "sort ORDER     Sort the folder: new, old, done (most complete).",
   pwd: "pwd            Print the current folder.",
@@ -266,9 +279,11 @@ const ALIASES: Record<string, string> = {
   whos: "who",
   quit: "exit",
   ver: "version",
+  news: "activity",
+  whatsnew: "activity",
 };
 
-const HELP_ORDER = ["ls", "open", "lookfor", "type", "who", "web", "show", "sort", "pwd", "clc", "date", "version", "exit"];
+const HELP_ORDER = ["ls", "open", "lookfor", "type", "who", "web", "activity", "git", "show", "sort", "pwd", "clc", "date", "version", "exit"];
 
 const COMMANDS: Record<string, (arg: string, ctx: CmdCtx, raw: string) => CmdResult> = {
   help(arg) {
@@ -326,8 +341,10 @@ const COMMANDS: Record<string, (arg: string, ctx: CmdCtx, raw: string) => CmdRes
   web(arg, ctx) {
     const a = unquote(arg).toLowerCase();
     if (!a) return fail("Not enough input arguments.", "Try:  web github   or   web video");
+    const channel = ctx.channels.find((c) => c.key === a);
+    if (channel) return { out: [`Opening ${channel.name}…`], action: { type: "web", url: channel.url } };
     const url = a === "github" ? ctx.selected.githubUrl : a === "video" ? ctx.selected.videoUrl : undefined;
-    if (a !== "github" && a !== "video") return fail(`web opens 'github' or 'video', not '${unquote(arg)}'.`);
+    if (a !== "github" && a !== "video") return fail(`web opens ${["github", "video", ...ctx.channels.map((c) => c.key)].map((k) => `'${k}'`).join(", ")}, not '${unquote(arg)}'.`);
     if (!url) return fail(`${ctx.selected.name} has no ${a} link.`);
     return { out: [`Opening ${a} for ${ctx.selected.name}…`], action: { type: "web", url } };
   },
@@ -340,6 +357,25 @@ const COMMANDS: Record<string, (arg: string, ctx: CmdCtx, raw: string) => CmdRes
     const a = unquote(arg).toLowerCase();
     if (!SORT_KEYS.includes(a)) return fail("Try:  sort new   sort old   sort done");
     return { out: [`Sorted by: ${a}`], action: { type: "sort", sort: a } };
+  },
+  activity(_arg, ctx) {
+    if (!ctx.feed.length) return fail("No recent activity could be read just now. Try again in a few minutes.");
+    const shown = ctx.feed.slice(0, 6);
+    const w = Math.max(...shown.map((f) => f.when.length));
+    const k = Math.max(...shown.map((f) => f.kind.length));
+    return {
+      out: ["Opening activity.mlx", ...shown.map((f) => `  ${f.when.padEnd(w)}  ${f.kind.padEnd(k)}  ${clip(f.title, 44)}`)],
+      action: { type: "activity" },
+    };
+  },
+  git(arg, ctx) {
+    const sub = unquote(arg).split(/\s+/)[0]?.toLowerCase();
+    if (sub === "status") return ok("On branch main", "nothing to commit, working tree clean");
+    if (sub !== "log") return fail(`git: only 'git log' works here${sub ? `, not 'git ${sub}'` : ""}.`);
+    const commits = ctx.feed.filter((f) => f.sha);
+    if (!commits.length) return fail("No commits could be read from GitHub just now.");
+    const w = Math.max(...commits.map((c) => c.title.length));
+    return ok(...commits.map((c) => `${c.sha}  ${c.title.padEnd(w)}  ${clip(c.detail ?? "", 52)}  (${c.when})`));
   },
   pwd() {
     return ok("/peninsula/projects");

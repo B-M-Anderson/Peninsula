@@ -5,10 +5,10 @@ import { openGraphFor } from "../lib/og";
 import { StyleView } from "../lib/stylePref";
 import { serverStyleDefault } from "../lib/styleServer";
 
-const description = "Ask a small language model, running on my own desktop, about my work — no cloud, no API key.";
+const description = "Questions about my work, answered by a small language model running on an old desktop in my house. No data center, no AI company in the middle.";
 
 export const metadata: Metadata = {
-  title: "Ask",
+  title: "askAI",
   description,
   alternates: { canonical: "/ask" },
   openGraph: openGraphFor("/ask", description),
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function AskPage() {
   const plain = (
-    <PageFrame title="Ask" subtitle="A small model on my desktop, answering for me" maxWidth={760} minHeight="60vh">
+    <PageFrame title="askAI" subtitle="A small model on an old desktop in my house, answering for me" maxWidth={760} minHeight="60vh">
       <AskClient variant="plain" />
     </PageFrame>
   );

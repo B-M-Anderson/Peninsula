@@ -46,11 +46,34 @@ function Stat({ k, v, note }: { k: string; v: string; note?: string }) {
   );
 }
 
-export default function SystemPanel({ status }: { status: StatusResponse | null }) {
+const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+/** "5 minutes ago", "yesterday", "3 days ago". */
+export function ago(at: number, now: number): string {
+  const s = Math.round((at - now) / 1000);
+  const a = Math.abs(s);
+  if (a < 60) return "just now";
+  if (a < 3600) return rtf.format(Math.round(s / 60), "minute");
+  if (a < 86400) return rtf.format(Math.round(s / 3600), "hour");
+  return rtf.format(Math.round(s / 86400), "day");
+}
+
+/** "Sep 23, 4:02 PM" in the visitor's own time zone. */
+export const stamp = (at: number) => new Date(at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+/**
+ * What's running, for anyone curious enough to open it. Live numbers while the
+ * desktop is on; while it's off, the last numbers it reported, labelled with
+ * when that was. `now` comes from the parent (a render must not read the clock).
+ */
+export default function SystemPanel({ status, now }: { status: StatusResponse | null; now: number }) {
   const [open, setOpen] = useState(false);
 
-  const m = status?.machine;
-  const cache = status?.cache;
+  const online = status?.online === true;
+  const seen = status?.lastSeen ?? null;
+  const model = status?.model ?? seen?.model ?? null;
+  const m = status?.machine ?? seen?.machine;
+  const cache = status?.cache ?? seen?.cache;
   const cores = m?.cores ? `${m.cores} cores` : null;
   const ram = m?.ramGb ? `${m.ramGb} GB RAM` : null;
   const cpuShort = m?.cpu?.replace(/\(R\)|\(TM\)|CPU|@.*/g, "").trim();
@@ -88,13 +111,14 @@ export default function SystemPanel({ status }: { status: StatusResponse | null 
         <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <span className="md-label">Under the hood</span>
           <span style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
-            {status?.model ? (
+            {model ? (
               <>
-                Running <span style={{ ...mono, color: "var(--text-body)" }}>{status.model}</span>
-                {cpuShort ? ` on a ${cpuShort}` : ""} — no GPU, no API key, no data center.
+                {online ? "Running " : "Last ran "}
+                <span style={{ ...mono, color: "var(--text-body)" }}>{model}</span>
+                {cpuShort ? ` on a ${cpuShort}` : ""}, an old desktop in my house. No GPU and no data center.
               </>
             ) : (
-              "What actually happens when you ask a question."
+              "What happens to your question, and the computer that answers it."
             )}
           </span>
         </span>
@@ -121,19 +145,21 @@ export default function SystemPanel({ status }: { status: StatusResponse | null 
                 gap: "var(--space-4)",
               }}
             >
-              <Stat k="Model" v={status?.model ?? "—"} note={status?.model ? "3 billion parameters, 4-bit quantized" : undefined} />
+              <Stat k="Model" v={model ?? "—"} note={model ? "3 billion parameters, 4-bit quantized" : undefined} />
               <Stat k="Machine" v={cpuShort ?? "desktop"} note={[cores, ram].filter(Boolean).join(" · ") || undefined} />
-              <Stat
-                k="Graphics"
-                v={m?.gpu || "None"}
-                note={m?.gpu ? "the model runs on the GPU" : "every token is computed on the CPU"}
-              />
-              <Stat
-                k="Answer library"
-                v={cache?.entries != null ? String(cache.entries) : "—"}
-                note="written ahead while the desktop is idle, and still growing"
-              />
+              <Stat k="Graphics" v={m?.gpu || "None"} note={m?.gpu ? "the model runs on the GPU" : "so every word gets worked out on the CPU"} />
+              <Stat k="Answer library" v={cache?.entries != null ? String(cache.entries) : "—"} note="answers it writes ahead of time while nobody's asking" />
             </div>
+
+            {seen ? (
+              <span style={{ ...mono, color: online ? "var(--text-faint)" : "var(--text-muted)" }}>
+                {online
+                  ? `Live numbers, checked ${stamp(seen.at)}`
+                  : `The desktop is off, so these are the last numbers it sent, from ${ago(seen.at, now)} (${stamp(seen.at)}).`}
+              </span>
+            ) : status && !online ? (
+              <span style={{ ...mono, color: "var(--text-muted)" }}>The desktop is off and hasn&apos;t reported any numbers yet.</span>
+            ) : null}
 
             <div>
               <span className="md-label">The trip your question takes</span>
@@ -146,29 +172,25 @@ export default function SystemPanel({ status }: { status: StatusResponse | null 
                   flexDirection: "column",
                 }}
               >
-                <Hop n={1} where="Your browser → this site" what="Vercel takes the question; it never touches the model." />
-                <Hop n={2} where="A queue in the middle" what="The desktop reaches out to collect it. Nothing can reach in." />
+                <Hop n={1} where="Your browser → this site" what="Vercel hosts the site and holds on to your question. It never runs the model." />
+                <Hop n={2} where="A queue in the middle" what="The desktop checks the queue and pulls questions down. Nothing on the internet can connect to it directly." />
                 <Hop
                   n={3}
                   where="Safety rails"
-                  what="Prompt-injection attempts, impersonation, and anything binding Bennett to work are answered by fixed rules — the model never sees them."
+                  what="Prompt-injection attempts, impersonation and anything that would commit me to work get a fixed reply, and the model never sees them."
                 />
-                <Hop
-                  n={4}
-                  where="The model reads a profile"
-                  what="One document about Bennett. If a fact is not in it, the honest answer is that it is not available."
-                />
-                <Hop n={5} where="Back to you" what="Usually 10–20 seconds. If it was asked before, it returns instantly." last />
+                <Hop n={4} where="The model reads a profile" what="It gets one document about me. If something isn't in there, it's supposed to say it doesn't know." />
+                <Hop n={5} where="Back to you" what="Usually 10 to 20 seconds, or right away if someone asked the same thing before." last />
               </ol>
             </div>
 
             <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>
-              The slow part is real: a small model thinking on four CPU cores in a house, not a rented GPU.
-              While nobody is asking, it works ahead — writing answers to likely questions so the common ones come
-              back the moment you hit enter. Ask something new and you will feel the machine actually think.
+              The wait is real. It&apos;s a small model on four CPU cores in my house, with no rented GPU anywhere in the chain. When nobody&apos;s asking it works
+              ahead, writing answers to the questions people tend to ask, so those come back as soon as you hit enter. Ask it something new and you&apos;re
+              waiting on that old desktop to actually think it through.
             </p>
 
-            {status?.latencyMs != null && (
+            {online && status?.latencyMs != null && (
               <span style={{ ...mono, color: "var(--text-faint)" }}>
                 last heartbeat from the desktop · {status.latencyMs}ms round trip
                 {cache?.hits ? ` · ${cache.hits} answers served from cache` : ""}

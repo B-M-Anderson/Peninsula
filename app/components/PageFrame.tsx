@@ -29,7 +29,7 @@ export default function PageFrame({
         id="main"
         tabIndex={-1}
         className="md-dapple"
-        style={{ position: "relative", maxWidth: "var(--max-width)", margin: "0 auto", minHeight, padding: "var(--page-top) var(--gutter-page) var(--space-11)" }}
+        style={{ position: "relative", maxWidth: "var(--max-width)", margin: "0 auto", minHeight, paddingTop: "var(--page-top)", paddingInline: "var(--gutter-page)" }}
       >
         <div className="md-above" style={maxWidth ? { maxWidth } : undefined}>
           {children}

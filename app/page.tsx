@@ -131,7 +131,7 @@ export default async function HomePage() {
         position: "relative",
         background: "var(--surface-sunken)",
         overflow: "hidden",
-        ["--dapple-height" as string]: "150px",
+        ["--dapple-height" as string]: "128px",
       } as React.CSSProperties}
     >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(person) }} />

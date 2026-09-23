@@ -6,6 +6,16 @@
 
 export type Machine = { cpu?: string; cores?: number; ramGb?: number; gpu?: string | null };
 
+/** What the desktop last reported, kept after its heartbeat expires so the page can still show it. */
+export type LastSeen = {
+  model: string | null;
+  machine?: Machine | null;
+  cache?: { entries?: number; hits?: number } | null;
+  idle?: { precomputed?: number; improved?: number } | null;
+  /** When these numbers were read from a live heartbeat (epoch ms). */
+  at: number;
+};
+
 export type StatusResponse = {
   online: boolean;
   provisioned: boolean;
@@ -17,6 +27,8 @@ export type StatusResponse = {
   machine?: Machine | null;
   cache?: { entries?: number; hits?: number } | null;
   idle?: { precomputed?: number; improved?: number } | null;
+  /** Online: when these numbers were read (now). Offline: the last live reading, or null if there has never been one. */
+  lastSeen?: LastSeen | null;
 };
 
 /** One of: an answer, a soft refusal (limited / busy), the fast-lane unlock, or offline. */

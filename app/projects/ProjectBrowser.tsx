@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import Image from "next/image";
-import { Archive, CalendarArrowDown, CalendarArrowUp, CircleCheck, Gauge, Layers, LayoutList, Loader, type LucideIcon } from "lucide-react";
+import { Archive, CalendarArrowDown, CalendarArrowUp, CircleCheck, Gauge, Layers, LayoutList, Loader, Rss, X, type LucideIcon } from "lucide-react";
 import { RowOpenContext, noHash, readHash, subscribeHash } from "../components/Accordion";
 import { statusColor, statusLabel } from "../components/ui";
 import CommandWindow from "./CommandWindow";
+import type { CmdChannel, CmdFeedItem } from "./matlabCommands";
 import PlotFigure from "./PlotFigure";
 import { useStyleChoice } from "../lib/stylePref";
 import type { ProjectStatus } from "../data/projects";
@@ -15,9 +16,29 @@ import type { ProjectStatus } from "../data/projects";
    (its facts as variables) and a Command Window (its links). Rows are built on
    the server (projects/page.tsx); this half only filters, sorts and swaps which
    project is showing, and keeps the selection in the #hash so /projects#slug
-   deep links keep working. */
+   deep links keep working. A second document, activity.mlx (#activity), holds
+   the recent posts and commits; it is built on the server too (ActivityDoc). */
 
-export type WorkspaceVar = { name: string; value: string; status?: ProjectStatus; bar?: number };
+export type WorkspaceVar = { name: string; value: string; status?: ProjectStatus; bar?: number; struct?: boolean };
+
+/** Everything the page needs for activity.mlx, made on the server. */
+export type ActivityPanel = {
+  doc: ReactNode;
+  vars: WorkspaceVar[];
+  /** Items listed in the document. */
+  total: number;
+  /** Items from the last 30 days: the ribbon button's count. */
+  recent: number;
+  /** Something landed in the last week: the tab gets a dot. */
+  fresh: boolean;
+  feed: CmdFeedItem[];
+  channels: CmdChannel[];
+};
+
+export const ACTIVITY_ID = "activity";
+const ACTIVITY_FILE = "activity.mlx";
+/** Past this many open documents, opening another closes the one opened longest ago. */
+const MAX_TABS = 8;
 
 export type BrowserRow = {
   id: string;
@@ -72,7 +93,7 @@ const still = () => window.matchMedia("(prefers-reduced-motion: reduce)").matche
 /** Scroll a pane into view, honouring a reduced-motion preference. */
 const bring = (el: HTMLElement | null, smooth = true) => el?.scrollIntoView({ block: "start", behavior: smooth && !still() ? "smooth" : "auto" });
 
-export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
+export default function ProjectBrowser({ rows, activity }: { rows: BrowserRow[]; activity?: ActivityPanel }) {
   const hash = useSyncExternalStore(subscribeHash, readHash, noHash);
   const [, setView] = useStyleChoice("projects");
   // A click records the visitor's pick with the hash it was made under; a later
@@ -91,11 +112,18 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
   const windowRef = useRef<HTMLElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const editorScrollRef = useRef<HTMLDivElement>(null);
+  const tabbarRef = useRef<HTMLDivElement>(null);
 
   const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows]);
-  const hashId = hash && byId.has(hash) ? hash : null;
+  const hasActivity = Boolean(activity?.total);
+  const hashId = hash && (byId.has(hash) || (hasActivity && hash === ACTIVITY_ID)) ? hash : null;
   const chosen = choice !== undefined && choice.hash === hash;
-  const wanted = byId.get((chosen ? choice.id : (hashId ?? initial)) ?? "");
+  const docId = (chosen ? choice.id : (hashId ?? initial)) ?? "";
+  const activityOn = hasActivity && docId === ACTIVITY_ID;
+  // With activity.mlx in front, the project tab keeps the last project shown.
+  const [lastProject, setLastProject] = useState(initial);
+  if (!activityOn && byId.has(docId) && docId !== lastProject) setLastProject(docId);
+  const wanted = byId.get(activityOn ? (lastProject ?? "") : docId);
   // A deep link to a project the current filter hides shows everything instead.
   const activeFilter = wanted && !matches(filter, wanted.status) ? "all" : filter;
   const shown = useMemo(() => order(rows, sort).filter((r) => matches(activeFilter, r.status)), [rows, sort, activeFilter]);
@@ -109,10 +137,43 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
   // A filter nothing falls into is offered neither in the ribbon nor at the prompt.
   const available = useMemo(() => filterOptions.filter(([k]) => k === "all" || counts[k] > 0), [counts]);
 
-  const selectedId = selected?.id;
+  const docShown = activityOn ? ACTIVITY_ID : selected?.id;
+
+  // The open documents, in tab order, like the editor's own tabs: opening one
+  // that isn't open (folder, plot, a link, a command, the #hash) adds a tab.
+  const [tabs, setTabs] = useState<string[]>(() => [...(initial ? [initial] : []), ...(hasActivity ? [ACTIVITY_ID] : [])]);
+  if (docShown && !tabs.includes(docShown)) {
+    const next = [...tabs, docShown];
+    setTabs(next.length > MAX_TABS ? next.slice(next.length - MAX_TABS) : next);
+  }
+
   useEffect(() => {
     editorScrollRef.current?.scrollTo({ top: 0 });
-  }, [selectedId]);
+    // Keep the tab in front visible in a tab strip that has overflowed sideways.
+    const bar = tabbarRef.current;
+    const tab = bar?.querySelector<HTMLElement>('[aria-selected="true"]')?.parentElement;
+    if (!bar || !tab) return;
+    if (tab.offsetLeft < bar.scrollLeft) bar.scrollLeft = tab.offsetLeft;
+    else if (tab.offsetLeft + tab.offsetWidth > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = tab.offsetLeft + tab.offsetWidth - bar.clientWidth;
+  }, [docShown]);
+
+  // The strip's scrollbar is hidden, so fade whichever edge has tabs out of view.
+  useEffect(() => {
+    const bar = tabbarRef.current;
+    if (!bar) return;
+    const mark = () => {
+      bar.dataset.moreLeft = String(bar.scrollLeft > 1);
+      bar.dataset.moreRight = String(bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 1);
+    };
+    mark();
+    bar.addEventListener("scroll", mark, { passive: true });
+    const ro = new ResizeObserver(mark);
+    ro.observe(bar);
+    return () => {
+      bar.removeEventListener("scroll", mark);
+      ro.disconnect();
+    };
+  }, [tabs, docShown]);
 
   useEffect(() => {
     if (!hashId || chosen) return;
@@ -138,6 +199,50 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
     if (isNarrow()) bring(editorRef.current);
   };
 
+  const openActivity = () => {
+    select(ACTIVITY_ID);
+    if (isNarrow()) bring(editorRef.current);
+  };
+
+  // The ribbon button toggles: pressed again, it puts the project back in front.
+  const toggleActivity = () => (activityOn ? select(selected.id) : openActivity());
+
+  const openTab = (id: string) => (id === ACTIVITY_ID ? openActivity() : select(id));
+
+  /** Close a tab; closing the one in front brings up its neighbour. The last tab stays open. */
+  const closeTab = (id: string) => {
+    if (tabs.length < 2) return;
+    const i = tabs.indexOf(id);
+    const rest = tabs.filter((t) => t !== id);
+    setTabs(rest);
+    const next = id === docShown ? rest[Math.min(i, rest.length - 1)] : (docShown ?? rest[0]);
+    if (id === docShown) select(next);
+    // The closed tab's buttons (its × included) leave the page with it, so focus
+    // would drop to the body: land on the tab in front instead.
+    const hadFocus = document.getElementById(`mw-tab-${id}`)?.parentElement?.contains(document.activeElement);
+    if (hadFocus) requestAnimationFrame(() => document.getElementById(`mw-tab-${next}`)?.focus({ preventScroll: true }));
+  };
+
+  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("[role=tab]"));
+    const i = btns.indexOf(document.activeElement as HTMLButtonElement);
+    if (i < 0) return;
+    if (e.key === "Delete") {
+      e.preventDefault();
+      closeTab(tabs[i]);
+      return;
+    }
+    const to = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? btns.length - 1 : null;
+    if (to === null) return;
+    e.preventDefault();
+    const next = btns[(to + btns.length) % btns.length];
+    next?.focus();
+    next?.click();
+  };
+
+  const file = activityOn ? ACTIVITY_FILE : selected.file;
+  const vars = activityOn && activity ? activity.vars : selected.vars;
+
   const onFilter = (f: string) => {
     // A filter with nothing in it is never offered in the ribbon; the Command
     // Window rejects it too, so this only guards against a stale key.
@@ -145,7 +250,11 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
     setFilter(f);
     if (!matches(f, selected.status)) {
       const first = order(rows, sort).find((r) => matches(f, r.status));
-      if (first) select(first.id);
+      // Filtering the folder leaves activity.mlx in front; only the project behind it changes.
+      if (first) {
+        if (activityOn) setLastProject(first.id);
+        else select(first.id);
+      }
     }
   };
 
@@ -189,6 +298,20 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
             SORT
           </div>
         </div>
+        {hasActivity && activity ? (
+          <div className="mw-group">
+            <div role="group" aria-label="Activity" className="mw-btns">
+              <button type="button" className="mw-tool" aria-pressed={activityOn} onClick={toggleActivity}>
+                <Rss size={20} strokeWidth={1.6} />
+                <span>What&apos;s new</span>
+                {activity.recent ? <span className="mw-count">{activity.recent}</span> : null}
+              </button>
+            </div>
+            <div className="mw-group-label" aria-hidden>
+              ACTIVITY
+            </div>
+          </div>
+        ) : null}
         <div className="mw-group">
           <div role="group" aria-label="View" className="mw-btns">
             <button type="button" className="mw-tool" onClick={() => setView("plain")}>
@@ -204,7 +327,7 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
 
       <div className="mw-pathbar" aria-hidden>
         <span className="mw-address">
-          Peninsula <i>›</i> projects <i>›</i> <b>{selected.file}</b>
+          Peninsula <i>›</i> projects <i>›</i> <b>{file}</b>
         </span>
       </div>
 
@@ -228,7 +351,7 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
                 {shown.map((r) => (
                   <tr key={r.id} id={r.id}>
                     <td>
-                      <button type="button" className="mw-file" aria-current={r.id === selected.id ? "true" : undefined} onClick={() => pick(r.id)}>
+                      <button type="button" className="mw-file" aria-current={!activityOn && r.id === selected.id ? "true" : undefined} onClick={() => pick(r.id)}>
                         <span aria-hidden className="mw-dot" style={{ background: statusColor[r.status] }} />
                         <Image src={r.thumb} alt="" width={20} height={20} className="mw-thumb" />
                         <span className="mw-file-name">{r.name}</span>
@@ -244,18 +367,54 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
         </div>
 
         <div ref={editorRef} className="mw-pane mw-editor">
-          <div className="mw-tabbar">
-            <span className="mw-doctab">{selected.file}</span>
+          <div ref={tabbarRef} className="mw-tabbar" role="tablist" aria-label="Open documents" onKeyDown={onTabKey}>
+            {tabs.map((id) => {
+              const isActivity = id === ACTIVITY_ID;
+              const label = isActivity ? (hasActivity ? ACTIVITY_FILE : null) : byId.get(id)?.file;
+              if (!label) return null;
+              const on = id === docShown;
+              return (
+                <div
+                  key={id}
+                  role="presentation"
+                  className="mw-doctab"
+                  data-on={on}
+                  onAuxClick={(e) => {
+                    // Middle-click closes, as in any editor.
+                    if (e.button !== 1) return;
+                    e.preventDefault();
+                    closeTab(id);
+                  }}
+                >
+                  <button type="button" role="tab" id={`mw-tab-${id}`} className="mw-tab-btn" aria-selected={on} aria-controls="mw-doc-panel" tabIndex={on ? 0 : -1} onClick={() => on || openTab(id)}>
+                    {label}
+                    {isActivity && activity?.fresh ? (
+                      <>
+                        <span aria-hidden className="mw-tabdot" />
+                        <span className="sr-only">, new this week</span>
+                      </>
+                    ) : null}
+                  </button>
+                  {tabs.length > 1 ? (
+                    // Mouse only: from the keyboard, Delete closes the focused tab.
+                    <button type="button" className="mw-tab-close" tabIndex={-1} aria-label={`Close ${label}`} title={`Close ${label}`} onClick={() => closeTab(id)}>
+                      <X size={12} strokeWidth={2} />
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
-          <div ref={editorScrollRef} className="mw-scroll mw-editor-scroll" tabIndex={0} role="region" aria-label={`${selected.name} document`}>
+          <div ref={editorScrollRef} id="mw-doc-panel" className="mw-scroll mw-editor-scroll" tabIndex={0} role="tabpanel" aria-labelledby={`mw-tab-${docShown}`}>
             {rows.map((r) => {
-              const on = r.id === selected.id;
+              const on = !activityOn && r.id === selected.id;
               return (
                 <div key={r.id} hidden={!on}>
                   <RowOpenContext.Provider value={on}>{r.doc}</RowOpenContext.Provider>
                 </div>
               );
             })}
+            {hasActivity && activity ? <div hidden={!activityOn}>{activity.doc}</div> : null}
           </div>
         </div>
 
@@ -263,7 +422,7 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
           <div className="mw-pane-head">Workspace</div>
           <div className="mw-scroll" tabIndex={0} role="region" aria-label="Workspace variables">
             <table className="mw-vars">
-              <caption className="sr-only">Variables for {selected.name}</caption>
+              <caption className="sr-only">Variables for {activityOn ? "recent activity" : selected.name}</caption>
               <thead>
                 <tr>
                   <th scope="col">Name</th>
@@ -271,13 +430,14 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
                 </tr>
               </thead>
               <tbody>
-                {selected.vars.map((v) => {
+                {vars.map((v) => {
                   const str = v.value.includes('"') || v.value.includes("string");
+                  const kind = v.struct ? "struct" : str ? "str" : "num";
                   return (
                     <tr key={v.name}>
                       <th scope="row">
-                        <span aria-hidden className="mw-vicon" data-k={str ? "str" : "num"}>
-                          {str ? "ab" : "#"}
+                        <span aria-hidden className="mw-vicon" data-k={kind}>
+                          {kind === "struct" ? "{}" : str ? "ab" : "#"}
                         </span>
                         {v.name}
                       </th>
@@ -299,14 +459,24 @@ export default function ProjectBrowser({ rows }: { rows: BrowserRow[] }) {
           </div>
         </div>
 
-        <CommandWindow rows={rows} shown={shown} selected={selected} filters={available.map(([k]) => k)} onOpen={pick} onFilter={onFilter} onSort={setSort} onOpenRelated={openRelated} />
+        <CommandWindow
+          rows={rows}
+          shown={shown}
+          selected={selected}
+          filters={available.map(([k]) => k)}
+          activity={hasActivity ? activity : undefined}
+          activityOn={activityOn}
+          onOpen={pick}
+          onFilter={onFilter}
+          onSort={setSort}
+          onOpenRelated={openRelated}
+          onActivity={openActivity}
+        />
       </div>
 
       <div className="mw-status">
-        <span>{selected.file}</span>
-        <span role="status">
-          {shown.length} of {rows.length} projects
-        </span>
+        <span>{file}</span>
+        <span role="status">{activityOn && activity ? `${activity.total} items · refreshed every 15 min` : `${shown.length} of ${rows.length} projects`}</span>
       </div>
     </section>
   );

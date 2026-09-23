@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
       // Substack post covers, from the RSS feed (see app/lib/posts.ts).
       { protocol: "https", hostname: "substackcdn.com" },
       { protocol: "https", hostname: "substack-post-media.s3.amazonaws.com" },
+      // GitHub's social card for a repo, shown in the projects page's activity.mlx (app/lib/activity.ts).
+      { protocol: "https", hostname: "opengraph.githubassets.com" },
     ],
   },
   async headers() {

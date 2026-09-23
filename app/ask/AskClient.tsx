@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Send } from "lucide-react";
 import { TextLink } from "../components/ui";
 import { json, type AskResponse, type ProgressResponse, type StatusResponse } from "../lib/api-types";
-import SystemPanel from "./SystemPanel";
+import SystemPanel, { ago } from "./SystemPanel";
 import { StyleSwitch } from "../lib/stylePref";
 import "./notebook.css";
 
@@ -28,17 +28,17 @@ function progressLabel(p: Progress): string {
   // `ahead` is the queue length, which counts this job too — so only claim a
   // number when there is genuinely someone else in line.
   if (p.state === "queued" && p.ahead > 1) {
-    return `waiting — ${p.ahead - 1} question${p.ahead - 1 === 1 ? "" : "s"} ahead of yours`;
+    return `waiting, ${p.ahead - 1} question${p.ahead - 1 === 1 ? "" : "s"} ahead of yours`;
   }
   if (p.state === "queued") return "waiting for the desktop to pick it up…";
   if (p.state === "working") {
     if (p.seconds < 4) return "the desktop picked it up";
-    if (p.seconds < 15) return `writing an answer — ${p.seconds}s`;
-    return `still writing — ${p.seconds}s. New questions are composed a word at a time on a CPU.`;
+    if (p.seconds < 15) return `writing an answer, ${p.seconds}s so far`;
+    return `still writing (${p.seconds}s). A new question gets worked out one word at a time on the CPU, so this can take a bit.`;
   }
-  if (p.state === "done") return "finishing up…";
+  if (p.state === "done") return "almost done…";
   if (p.state === "offline") return "the desktop isn't answering right now";
-  return `working — ${p.seconds}s`;
+  return `working, ${p.seconds}s`;
 }
 
 type Cell = { n: number | null; q: string | null; out: { kind: "bot" | "sys"; text: string } | null };
@@ -72,6 +72,7 @@ const TOPICS: { label: string; q: string }[] = [
 const MAX = 500;
 // The node's heartbeat expires after ~30s, so the pill re-checks on that cadence.
 const STATUS_REFRESH_MS = 30000;
+const THINKING = "thinking. It's a real computer in my house, so give it a few seconds";
 const PROGRESS_POLL_MS = 2000;
 
 const bubble = {
@@ -83,6 +84,8 @@ const bubble = {
 
 export default function AskClient({ variant = "plain" }: { variant?: "plain" | "notebook" }) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  // When the status was last read: the "from 3 hours ago" in the system panel is measured against it.
+  const [checkedAt, setCheckedAt] = useState(0);
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -102,7 +105,10 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
       if (document.hidden) return;
       fetch("/api/concierge/status", { cache: "no-store", signal: ctrl.signal })
         .then(json<StatusResponse>)
-        .then((s) => setStatus(s))
+        .then((s) => {
+          setStatus(s);
+          setCheckedAt(nowMs());
+        })
         .catch(() => {});
     };
     load();
@@ -176,25 +182,25 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
         // The passphrase was typed instead of a question: unlock the fast lane
         // and keep the passphrase itself out of the transcript.
         setPriority(q);
-        setLines((l) => [...l.slice(0, -1), { from: "sys", text: "Priority access on — your questions now jump the queue and skip limits." }]);
+        setLines((l) => [...l.slice(0, -1), { from: "sys", text: "Priority is on, so your questions skip the line and the limits." }]);
       } else if (data.answer) {
         setLines((l) => [...l, { from: "bot", text: data.answer as string }]);
       } else if (data.limited) {
-        setLines((l) => [...l, { from: "sys", text: "That's a lot of questions in one minute — give it a moment before the next one." }]);
+        setLines((l) => [...l, { from: "sys", text: "That's a lot of questions in a minute, give it a moment before the next one." }]);
       } else if (data.busy) {
-        setLines((l) => [...l, { from: "sys", text: "The queue is full right now. Try again in a minute." }]);
+        setLines((l) => [...l, { from: "sys", text: "The queue is full right now, try again in a minute." }]);
       } else {
         setLines((l) => [
           ...l,
           {
             from: "sys",
-            text: "The desktop that runs this is asleep right now — it keeps its own hours. Try Projects or Contact in the meantime.",
+            text: "The desktop that runs this is off right now. It keeps its own hours. Projects and Contact still work in the meantime.",
           },
         ]);
       }
     } catch (err) {
       if ((err as { name?: string })?.name === "AbortError") return;
-      setLines((l) => [...l, { from: "sys", text: "That didn't go through. Give it another try." }]);
+      setLines((l) => [...l, { from: "sys", text: "That didn't go through, try it again." }]);
     }
     clearInterval(poll);
     inflight.current = null;
@@ -209,7 +215,11 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
       ? { dot: "var(--text-faint)", label: "Connecting…", pulse: true }
       : online
       ? { dot: "var(--status-complete)", label: "Online", pulse: true }
-      : { dot: "var(--status-wip)", label: "Offline", pulse: false };
+      : {
+          dot: "var(--status-wip)",
+          label: status.lastSeen ? `Offline · last seen ${ago(status.lastSeen.at, checkedAt)}` : "Offline",
+          pulse: false,
+        };
 
   const empty = lines.length === 0;
   const asleep = status !== null && !online;
@@ -219,11 +229,11 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
     const kernel = busy ? "Busy" : status === null ? "Connecting…" : online ? "Idle" : "Offline";
     return (
       <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", paddingTop: 59 }}>
-        <h1 className="sr-only">Ask</h1>
+        <h1 className="sr-only">askAI</h1>
         <div className="md-above">
           <section className="nb" aria-label="Ask notebook">
             <div className="nb-bar">
-              <span>ask.ipynb</span>
+              <span>askAI.ipynb</span>
               <span className="nb-kernel">
                 <span aria-hidden className={pill.pulse ? "nb-dot md-pulse" : "nb-dot"} style={{ background: busy ? "var(--status-ongoing)" : pill.dot }} />
                 {status?.model ? `${status.model} · ` : ""}
@@ -243,10 +253,12 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                 {/* The heading and the starters are the page, not transcript, so
                     they stay outside the live region. */}
                 <div className="nb-cell nb-md">
-                  <h2>Ask about Bennett</h2>
+                  <h2>askAI</h2>
                   <p>
-                    A small language model on my own desktop answers for me — no cloud, no API key. Run a starter cell or write your own below.
-                    {asleep ? " The desktop is asleep right now: a question will wait up to 45 seconds for it to wake, then give up." : ""}
+                    Questions here go to a small language model running on an old desktop in my house. There&apos;s no data center or paid AI service behind it,
+                    just that one computer, so it&apos;s slower than you&apos;re used to and it only answers while the computer is on. Run a starter cell or
+                    type your own below.
+                    {asleep ? " It's off right now, so a question will wait up to 45 seconds for it to wake up and then give up." : ""}
                   </p>
                 </div>
 
@@ -286,7 +298,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                         {running && (
                           <div className="nb-row">
                             <span aria-hidden className="nb-prompt nb-outp" />
-                            <div className="nb-out nb-progress">{progress ? progressLabel(progress) : "thinking — real machine at home, give it a few seconds"}</div>
+                            <div className="nb-out nb-progress">{progress ? progressLabel(progress) : THINKING}</div>
                           </div>
                         )}
                       </div>
@@ -335,7 +347,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                 )}
               </div>
 
-              <SystemPanel status={status} />
+              <SystemPanel status={status} now={checkedAt} />
             </div>
           </section>
         </div>
@@ -345,6 +357,10 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+      <p className="md-lede" style={{ fontSize: "var(--text-md)" }}>
+        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take 10 to 20 seconds and
+        it only works while that computer is on.
+      </p>
       {/* chat panel — arrives with the page; the bands are the one entrance */}
       <div
         style={{
@@ -369,7 +385,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
           }}
         >
           <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-3)" }}>
-            <span className="md-label">Concierge</span>
+            <span className="md-label">askAI</span>
             {priority && (
               <span
                 className="md-label md-fade-in"
@@ -413,11 +429,11 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
             <div style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-5)", textAlign: "center" }}>
               {asleep && (
                 <p style={{ margin: 0, maxWidth: 420, fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-                  The desktop is asleep right now. A question will wait up to 45 seconds for it to wake, then
-                  give up — Projects and Contact still work.
+                  The desktop is off right now. A question will wait up to 45 seconds for it to wake up and then give up. Projects and Contact still
+                  work.
                 </p>
               )}
-              <span className="md-label">Pick a topic — or just ask</span>
+              <span className="md-label">Pick a topic or just ask</span>
               <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-2)", maxWidth: 460 }}>
                 {TOPICS.map((t) => (
                   <button key={t.label} type="button" onClick={() => ask(t.q)} disabled={busy} className="md-btn md-btn-secondary md-btn-sm">
@@ -486,7 +502,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                 ))}
               </span>
               <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                {progress ? progressLabel(progress) : "thinking — real machine at home, give it a few seconds"}
+                {progress ? progressLabel(progress) : THINKING}
               </span>
             </div>
           )}
@@ -530,7 +546,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
       </div>
 
       {/* what's actually running, for anyone curious enough to look */}
-      <SystemPanel status={status} />
+      <SystemPanel status={status} now={checkedAt} />
 
       {/* footer: escape hatches + counter */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>

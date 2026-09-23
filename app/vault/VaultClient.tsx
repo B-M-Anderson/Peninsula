@@ -84,7 +84,7 @@ export default function VaultClient() {
           />
         </label>
         <p className="mt-4 text-xs" style={{ color: "var(--text-faint)" }}>
-          hint: the cat guards this. ask the concierge about her.
+          hint: the cat guards this. ask askAI about her.
         </p>
       </form>
     );

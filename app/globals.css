@@ -111,7 +111,7 @@
   /* textures */
   --texture-grain-opacity: 0.13;
   --dapple-color: rgba(255, 253, 249, 0.30);
-  --dapple-height: 20%;
+  --dapple-height: 112px;
 
   --max-width: 1180px;
   /* one horizontal gutter for every page: 20px on a phone, 48px from ~960px up */
@@ -305,32 +305,39 @@ select {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23g)'/></svg>");
 }
 
-/* Dappling: one shallow strip at the foot, densest in the bottom 5-10%.
-   Seven layers of mixed circles and ovals — the irregularity is hand-tuned. */
+/* Dappling: one fixed-height strip at the very foot of the page, full window
+   width, densest at the bottom edge and fading upward. The strip is reserved
+   as the element's bottom padding (the !important outranks a page's inline
+   padding shorthand), so no text can ever sit on the dots — the page's own
+   content ends where the strip begins.
+   The dots are a random field drawn fresh for every page load and served as
+   an image (/dapple.svg, app/lib/dapple.ts), used as a mask over the theme's
+   --dapple-color and intersected with the upward fade. No tiles, no pattern,
+   and nothing added to the page's HTML. */
 .md-dapple {
   position: relative;
+  padding-bottom: var(--dapple-height) !important;
 }
 .md-dapple::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
   bottom: 0;
+  width: 100vw;
+  margin-left: -50vw;
   height: var(--dapple-height);
   pointer-events: none;
   z-index: 2;
-  background-image:
-    radial-gradient(ellipse 5.4px 4.1px at 22% 62%, var(--dapple-color) 99%, transparent 100%),
-    radial-gradient(circle at 68% 27%, var(--dapple-color) 3.4px, transparent 4px),
-    radial-gradient(ellipse 3.5px 5.2px at 45% 84%, var(--dapple-color) 99%, transparent 100%),
-    radial-gradient(circle at 87% 71%, var(--dapple-color) 4.6px, transparent 5.3px),
-    radial-gradient(ellipse 4.7px 3.2px at 9% 33%, var(--dapple-color) 99%, transparent 100%),
-    radial-gradient(ellipse 4.2px 3.1px at 33% 88%, var(--dapple-color) 99%, transparent 100%),
-    radial-gradient(circle at 76% 91%, var(--dapple-color) 3.6px, transparent 4.2px);
-  background-size: 118px 96px, 83px 71px, 149px 121px, 101px 89px, 67px 61px, 54px 46px, 71px 39px;
-  background-position: 0 0, 29px 13px, 17px 47px, 41px 9px, 11px 31px, 23px 5px, 47px 3px;
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
-  mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
+  background: var(--dapple-color);
+  --dapple-fade: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
+  -webkit-mask-image: url("/dapple.svg"), var(--dapple-fade);
+  mask-image: url("/dapple.svg"), var(--dapple-fade);
+  -webkit-mask-size: 1800px 100%, 100% 100%;
+  mask-size: 1800px 100%, 100% 100%;
+  -webkit-mask-repeat: repeat-x, no-repeat;
+  mask-repeat: repeat-x, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 /* Content of a dappled/grained surface sits above the overlays. */
@@ -340,14 +347,18 @@ select {
 }
 
 /* Homepage content split — the "Recent posts" rail sits beside the main column
-   on anything wider than a phone/small tablet, and stacks inline directly under
-   Projects below that.
+   on anything wider than a phone/small tablet, and stacks above Projects below
+   that (see the max-width rule under this one).
 
-   Grid, not a flex row, for one reason: source order is
-   projects -> rail -> skills -> penrose, which is the order we want when it
-   collapses to a single column (fresh posts right under the work, rather than
-   buried beneath the cat photos). On wide screens the grid re-places the rail
-   into column 2, row 1.
+   Grid, not a flex row: the source order is projects -> rail -> skills ->
+   penrose, and the grid places the rail in column 2 on wide screens and moves
+   it to the top when stacked, without touching the DOM.
+
+   On wide screens the rail spans every row of the main column, and the last of
+   those rows is 1fr. A grid item that spans a flexible track is left out of
+   sizing the auto tracks, so a rail taller than Projects no longer stretches
+   row 1 and opens a gap above Skills; its extra height lands in the last row,
+   below Penrose, where it is just the bottom of the page.
 
    The rail is deliberately not sticky — it reads fine top-aligned.
 
@@ -371,6 +382,8 @@ select {
 @media (min-width: 900px) {
   .md-content-split {
     grid-template-columns: minmax(0, 1fr) clamp(236px, 27%, 312px);
+    /* projects, skills, penrose: keep the count in step with app/page.tsx */
+    grid-template-rows: auto auto 1fr;
     column-gap: var(--space-9);
   }
 
@@ -380,7 +393,7 @@ select {
 
   .md-rail {
     grid-column: 2;
-    grid-row: 1;
+    grid-row: 1 / -1;
     align-self: start;
   }
 }
@@ -1280,6 +1293,123 @@ html.light .mw,
   font-size: var(--text-2xs);
   color: var(--text-strong);
 }
+/* Editor tabs: one per open document. The one in front joins the page; the
+   rest sit back on the chrome. Each closes from its x (shown on hover and on
+   the front tab), a middle-click, or Delete from the keyboard. */
+.mw-tabbar {
+  position: relative;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mw-tabbar::-webkit-scrollbar {
+  display: none;
+}
+.mw-tabbar[data-more-right="true"] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+.mw-tabbar[data-more-left="true"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 32px);
+  mask-image: linear-gradient(to right, transparent, #000 32px);
+}
+.mw-tabbar[data-more-left="true"][data-more-right="true"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+}
+.mw-tabbar .mw-doctab {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  transition: background-color 0.15s, color 0.15s;
+}
+.mw-doctab[data-on="false"] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+.mw-doctab[data-on="false"]:hover {
+  background: var(--mw-blue-wash);
+  color: var(--text-strong);
+}
+.mw-doctab[data-on="true"] {
+  box-shadow: inset 0 2px 0 var(--mw-blue);
+}
+.mw-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  padding: 5px 4px 5px 12px;
+  overflow: hidden;
+  background: none;
+  border: 0;
+  font: inherit;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: inherit;
+  cursor: pointer;
+}
+.mw-tab-btn:only-child {
+  padding-right: 12px;
+}
+.mw-tab-btn:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--text-accent);
+  outline-offset: -2px;
+}
+.mw-tab-close {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin: 0 5px 0 1px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+.mw-doctab[data-on="true"] .mw-tab-close,
+.mw-doctab:hover .mw-tab-close {
+  opacity: 1;
+}
+.mw-tab-close:hover {
+  background: var(--mw-blue-wash);
+  color: var(--text-strong);
+}
+@media (hover: none) {
+  .mw-tab-close {
+    opacity: 1;
+  }
+}
+@media (pointer: coarse) {
+  .mw-tab-btn {
+    min-height: 40px;
+  }
+  .mw-tab-close {
+    width: 28px;
+    height: 28px;
+  }
+}
+/* A tab arriving slides in rather than appearing. */
+@keyframes mw-tab-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.mw-tabbar .mw-doctab {
+  animation: mw-tab-in 0.22s var(--ease-out) both;
+}
+.mw-tabdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mw-green);
+}
 .mw-editor-scroll {
   padding: var(--space-6) var(--space-6) var(--space-7);
 }
@@ -1391,6 +1521,9 @@ html.light .mw,
 }
 .mw-vicon[data-k="str"] {
   color: var(--mw-purple);
+}
+.mw-vicon[data-k="struct"] {
+  color: var(--mw-green);
 }
 .mw-val {
   color: var(--text-muted);
@@ -1600,6 +1733,434 @@ html.light .mw,
 .mw-datatip[data-flip="left"] { --tx: calc(-100% - 12px); }
 .mw-datatip[data-drop="up"] { --ty: -10px; }
 .mw-datatip[data-drop="down"] { --ty: calc(100% + 10px); }
+
+/* Command Window: the startup line naming the newest post or commit. */
+.mw-banner {
+  margin-bottom: 4px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.mw-muted {
+  color: var(--text-muted);
+}
+
+/* activity.mlx: recent posts and commits as a live-script page. Each item is
+   marked with its source's logo (SourceLogo.tsx), drawn in the text colour and
+   always beside the source's name, never on its own. */
+.mw-comment {
+  margin: calc(var(--space-5) * -0.5) 0 var(--space-5);
+  padding-left: calc(var(--space-5) + 3px);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--mw-green);
+}
+.mw-act-logo {
+  /* Preflight makes every svg a block; in running text the mark stays inline. */
+  display: inline-block;
+  vertical-align: -2px;
+  color: var(--text-muted);
+}
+
+.mw-act-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-act-grid > li {
+  display: flex;
+  animation: mw-card-in 0.42s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+@keyframes mw-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.mw-act-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  background: var(--mw-chrome);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+}
+.mw-act-card:hover {
+  border-color: var(--mw-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+}
+.mw-act-card:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+}
+.mw-act-thumb {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.mw-act-thumb-img {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  transition: transform 0.4s var(--ease-out);
+}
+/* A Short is portrait: its own 9:16 in the middle, a blurred copy filling the frame behind it. */
+.mw-act-thumb[data-portrait] .mw-act-thumb-img {
+  aspect-ratio: 9 / 16;
+}
+.mw-act-blur {
+  filter: blur(14px) brightness(0.6);
+  transform: scale(1.25);
+}
+.mw-act-card:hover .mw-act-thumb-img {
+  transform: scale(1.04);
+}
+.mw-act-play {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(27, 16, 7, 0.72);
+  color: #fffdf9;
+}
+.mw-act-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  background: var(--mw-pane);
+}
+.mw-act-title,
+.mw-act-card .mw-act-detail {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.mw-act-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-strong);
+}
+.mw-act-detail {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.mw-act-detail code {
+  margin-right: 6px;
+  font-family: var(--font-mono);
+  color: var(--mw-keyword);
+}
+.mw-act-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.mw-act-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-2xs);
+}
+.mw-act-table caption {
+  padding-bottom: 6px;
+  text-align: left;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+.mw-act-table th {
+  padding: 3px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--mw-chrome);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.mw-act-table td {
+  padding: 6px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.mw-act-table tbody tr {
+  transition: background-color 0.15s;
+}
+.mw-act-table tbody tr:hover {
+  background: var(--mw-blue-wash);
+}
+.mw-act-td-when {
+  width: 1%;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+.mw-act-td-src {
+  width: 1%;
+  white-space: nowrap;
+  color: var(--text-body);
+}
+.mw-act-td-src .mw-act-logo,
+.mw-act-kind .mw-act-logo {
+  margin-right: 6px;
+}
+.mw-act-kind {
+  display: none;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.mw-act-link {
+  font-weight: 500;
+  color: var(--text-strong);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.mw-act-link:hover {
+  color: var(--mw-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mw-act-table .mw-act-detail {
+  display: block;
+  margin-top: 1px;
+}
+.mw-act-open {
+  display: inline-block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mw-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mw-act-open:hover {
+  color: var(--text-strong);
+}
+.mw-act-channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-act-channels .md-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Phones: the source moves under the item's title so the table keeps two columns. */
+@media (max-width: 719px) {
+  .mw-act-table th:nth-child(2),
+  .mw-act-td-src {
+    display: none;
+  }
+  .mw-act-kind {
+    display: block;
+  }
+  .mw-act-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+/* Classic /projects (and phones): the same activity below the project list, in
+   the site's card style (ActivityList.tsx). */
+.md-act {
+  margin-top: var(--space-11);
+  /* /projects#activity lands here in this look; clear the fixed navbar. */
+  scroll-margin-top: 96px;
+}
+.md-act-latest {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-5);
+  margin: 0 0 var(--space-9);
+  padding: 0;
+  list-style: none;
+}
+.md-act-latest > li,
+.md-act-latest .md-card-link {
+  display: flex;
+}
+.md-act-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.md-act-thumb {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+}
+.md-act-thumb-img {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+}
+.md-act-thumb[data-portrait] .md-act-thumb-img {
+  aspect-ratio: 9 / 16;
+}
+.md-act-thumb-img {
+  transition: transform 0.4s var(--ease-out);
+}
+.md-card-link:hover .md-act-thumb-img {
+  transform: scale(1.05);
+}
+.md-act-blur {
+  filter: blur(14px) brightness(0.6);
+  transform: scale(1.25);
+}
+.md-act-play {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(27, 16, 7, 0.72);
+  color: #fffdf9;
+}
+.md-act-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-3);
+}
+.md-act-when {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-label);
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+.md-act-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  color: var(--text-strong);
+}
+.md-act-detail {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--text-muted);
+}
+.md-act-sub {
+  margin: 0 0 var(--space-4);
+  font-weight: 400;
+}
+.md-act-list {
+  margin: 0 0 var(--space-7);
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border-subtle);
+}
+.md-act-list > li {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.md-act-list .md-act-when {
+  padding-top: 3px;
+}
+.md-act-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.md-act-link {
+  font-weight: 500;
+  color: var(--text-strong);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.md-act-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.md-act-line {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.md-act-logo {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: -2px;
+  color: var(--text-muted);
+}
+.md-act-line code {
+  margin-right: 6px;
+  font-family: var(--font-mono);
+}
+.md-act-project {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: var(--text-xs);
+}
+.md-act-channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-7);
+}
+@media (max-width: 479px) {
+  .md-act-list > li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .md-act-list .md-act-when {
+    padding-top: 0;
+  }
+}
 
 /* A project's page arrives instead of blinking in (the Workspace bars above
    grow to their new value the same way). */

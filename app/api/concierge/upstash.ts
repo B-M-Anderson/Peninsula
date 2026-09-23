@@ -10,6 +10,8 @@ export const relayConfigured = (): boolean => Boolean(REST_URL && REST_TOKEN);
 export const KEYS = {
   jobs: "concierge:jobs",
   heartbeat: "concierge:heartbeat",
+  /** The last live heartbeat's numbers, with no expiry: what /ask shows while the desktop is off. */
+  lastSeen: "concierge:lastseen",
   answer: (id: string) => `concierge:answer:${id}`,
   progress: (id: string) => `concierge:progress:${id}`,
   rate: (ip: string) => `concierge:rate:${ip}`,

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { TextLink, statusLabel } from "../components/ui";
 import { complete, runCommand, type CmdRow } from "./matlabCommands";
-import type { BrowserRow } from "./ProjectBrowser";
+import type { ActivityPanel, BrowserRow } from "./ProjectBrowser";
 
 type Line = { id: number; kind: "in" | "out" | "err"; text: string };
 
@@ -31,22 +31,31 @@ export default function CommandWindow({
   shown,
   selected,
   filters,
+  activity,
+  activityOn,
   onOpen,
   onFilter,
   onSort,
   onOpenRelated,
+  onActivity,
 }: {
   rows: BrowserRow[];
   shown: BrowserRow[];
   selected: BrowserRow;
   /** Filter keys that have at least one project, so `show` can't pick an empty one. */
   filters: string[];
+  /** Recent activity; undefined when no feed could be read. */
+  activity?: ActivityPanel;
+  /** activity.mlx is the document in front. */
+  activityOn: boolean;
   onOpen: (id: string) => void;
   onFilter: (filter: string) => void;
   onSort: (sort: string) => void;
   onOpenRelated: (id: string) => void;
+  onActivity: () => void;
 }) {
   const router = useRouter();
+  const newest = activity?.feed[0];
   const [lines, setLines] = useState<Line[]>([]);
   const [text, setText] = useState("");
   const ans = useRef<number | null>(null);
@@ -67,7 +76,15 @@ export default function CommandWindow({
     if (input.trim() && past.current[past.current.length - 1] !== input) past.current.push(input);
     at.current = past.current.length;
 
-    const res = runCommand(input, { rows: rows.map(toCmd), shown: shown.map(toCmd), selected: toCmd(selected), filters, ans: ans.current });
+    const res = runCommand(input, {
+      rows: rows.map(toCmd),
+      shown: shown.map(toCmd),
+      selected: toCmd(selected),
+      filters,
+      ans: ans.current,
+      feed: activity?.feed ?? [],
+      channels: activity?.channels ?? [],
+    });
     if (res.ans !== undefined) ans.current = res.ans;
     const kind = res.error ? "err" : "out";
     const made: Line[] = [{ kind: "in", text: input }, ...res.out.map((t) => ({ kind, text: t }))].map((l) => ({ ...l, id: nextId.current++ }) as Line);
@@ -76,6 +93,7 @@ export default function CommandWindow({
     const a = res.action;
     if (!a) return;
     if (a.type === "open") onOpen(a.id);
+    else if (a.type === "activity") onActivity();
     else if (a.type === "filter") onFilter(a.filter);
     else if (a.type === "sort") onSort(a.sort);
     else if (a.type === "web") window.open(a.url, "_blank", "noopener,noreferrer");
@@ -113,15 +131,41 @@ export default function CommandWindow({
           if (!(e.target as HTMLElement).closest("a, button, input") && !window.getSelection()?.toString()) inputRef.current?.focus({ preventScroll: true });
         }}
       >
+        {newest && !activityOn ? (
+          <div className="mw-line mw-banner">
+            <span className="mw-key">new</span>
+            <span>
+              <TextLink href={newest.url} arrow>
+                {newest.title}
+              </TextLink>{" "}
+              <span className="mw-muted">
+                {newest.kind}, {newest.when}.
+              </span>{" "}
+              <button type="button" className="md-link" onClick={onActivity}>
+                See all activity
+              </button>
+            </span>
+          </div>
+        ) : null}
         <div className="mw-line">
           <span aria-hidden className="mw-prompt">
             &gt;&gt;
           </span>
           <span>
-            <span className="mw-kw">open</span>(<span className="mw-str">&quot;{selected.file}&quot;</span>)
+            <span className="mw-kw">open</span>(<span className="mw-str">&quot;{activityOn ? "activity.mlx" : selected.file}&quot;</span>)
           </span>
         </div>
-        {selected.githubUrl ? (
+        {activityOn && activity
+          ? activity.channels.map((c) => (
+              <div key={c.key} className="mw-line mw-out">
+                <span className="mw-key">{c.key}</span>
+                <TextLink href={c.url} arrow>
+                  {c.name}
+                </TextLink>
+              </div>
+            ))
+          : null}
+        {activityOn ? null : selected.githubUrl ? (
           <div className="mw-line mw-out">
             <span className="mw-key">source</span>
             <TextLink href={selected.githubUrl} arrow>
@@ -129,7 +173,7 @@ export default function CommandWindow({
             </TextLink>
           </div>
         ) : null}
-        {selected.videoUrl ? (
+        {!activityOn && selected.videoUrl ? (
           <div className="mw-line mw-out">
             <span className="mw-key">video</span>
             <TextLink href={selected.videoUrl} arrow>
@@ -137,7 +181,7 @@ export default function CommandWindow({
             </TextLink>
           </div>
         ) : null}
-        {selected.related.length > 0 ? (
+        {!activityOn && selected.related.length > 0 ? (
           <div className="mw-line mw-out">
             <span className="mw-key">see also</span>
             <span className="mw-related">

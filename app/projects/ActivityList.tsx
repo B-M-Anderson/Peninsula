@@ -1,15 +1,9 @@
 import Image from "next/image";
-import { ArrowUpRight, FileText, GitCommitHorizontal, MessageSquare, Play, Youtube } from "lucide-react";
+import { ArrowUpRight, Play } from "lucide-react";
 import { Badge, Card, Dotted, SectionHeading, TextLink } from "../components/ui";
+import SourceLogo from "../components/SourceLogo";
 import { PER_SOURCE, timelineOf, type ActivitySource } from "../lib/activity";
 import type { Channel, DocItem } from "./ActivityDoc";
-
-const icon: Record<ActivitySource, React.ReactNode> = {
-  youtube: <Youtube size={11} />,
-  substack: <FileText size={11} />,
-  x: <MessageSquare size={11} />,
-  github: <GitCommitHorizontal size={11} />,
-};
 
 /**
  * Recent activity for the classic projects page (and so for phones, which get
@@ -17,13 +11,13 @@ const icon: Record<ActivitySource, React.ReactNode> = {
  * view — the newest item from each channel as cards, then a timeline — in the
  * site's own card style, below the projects. Server-rendered; no client code.
  */
-export default function ActivityList({ items, channels }: { items: DocItem[]; channels: Channel[] }) {
+export default function ActivityList({ items, channels, id }: { items: DocItem[]; channels: Channel[]; /** Element id, so /projects#activity lands here in this look too. */ id?: string }) {
   const seen = new Set<ActivitySource>();
   const latest = items.filter((i) => (seen.has(i.source) ? false : (seen.add(i.source), true)));
   const timeline = timelineOf(items);
 
   return (
-    <section aria-labelledby="activity-heading" className="md-act">
+    <section id={id} aria-labelledby="activity-heading" className="md-act">
       <SectionHeading kicker={<Dotted items={channels.map((c) => c.name)} />} id="activity-heading">
         Recent activity
       </SectionHeading>
@@ -47,7 +41,7 @@ export default function ActivityList({ items, channels }: { items: DocItem[]; ch
                   </div>
                 ) : null}
                 <div className="md-act-meta">
-                  <Badge icon={icon[i.source]}>{i.kind}</Badge>
+                  <Badge icon={<SourceLogo source={i.source} size={11} />}>{i.kind}</Badge>
                   <span className="md-act-when">{i.when}</span>
                 </div>
                 <h3 className="md-act-title">
@@ -73,7 +67,7 @@ export default function ActivityList({ items, channels }: { items: DocItem[]; ch
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
               <span className="md-act-line">
-                <span aria-hidden className="mw-act-dot" data-s={i.source} />
+                <SourceLogo source={i.source} className="md-act-logo" />
                 {i.kind}
                 {i.detail ? (
                   <>

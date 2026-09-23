@@ -222,7 +222,7 @@ Its most useful feature is **pairs**: two clips joined into one item, composited
 My personal website, built from scratch with **Next.js, TypeScript and Tailwind CSS** and hosted on **Vercel** with a custom domain.
 
 It started in November 2025 as a project list and a resume. It's been redesigned twice since then, the second time into the brown and tan look it has now, and a lot got added along the way:
-- **askAI**, where a small language model on an old desktop in my house answers questions about me. It has its own entry below.
+- **askAI**, where a small language model on an old desktop in my house answers questions about me. It has its own entry in this list.
 - A **Recent posts** feed that pulls in my YouTube and Substack uploads by itself every 15 minutes.
 - Software-themed versions of three pages, each with a plain view that phones get by default. Projects is a MATLAB desktop with a working Command Window, askAI is a Jupyter notebook and Contact is a plasmid map.
 - An **activity.mlx** tab in the MATLAB view with my latest videos, posts and GitHub commits (the plain view has the same thing under the project list), plus editor tabs that open and close like the real program.

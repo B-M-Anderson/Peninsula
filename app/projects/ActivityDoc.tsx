@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { ArrowUpRight, Play } from "lucide-react";
+import SourceLogo from "../components/SourceLogo";
 import { PER_SOURCE, timelineOf, type ActivityItem, type ActivitySource } from "../lib/activity";
 
 export type DocItem = ActivityItem & { project?: { id: string; file: string } };
@@ -61,7 +62,7 @@ export default function ActivityDoc({ items, channels }: { items: DocItem[]; cha
             <li key={i.url} style={{ "--i": n } as CSSProperties}>
               <a className="mw-act-card" href={i.url} target="_blank" rel="noopener noreferrer">
                 <span className="mw-figbar">
-                  <span aria-hidden className="mw-act-dot" data-s={i.source} />
+                  <SourceLogo source={i.source} className="mw-act-logo" />
                   Figure {n + 1}: {i.kind}
                 </span>
                 <Thumb item={i} />
@@ -100,12 +101,12 @@ export default function ActivityDoc({ items, channels }: { items: DocItem[]; cha
               <tr key={`${i.at}-${i.url}`}>
                 <td className="mw-act-td-when">{i.when}</td>
                 <td className="mw-act-td-src">
-                  <span aria-hidden className="mw-act-dot" data-s={i.source} />
+                  <SourceLogo source={i.source} className="mw-act-logo" />
                   {i.kind}
                 </td>
                 <td>
                   <span className="mw-act-kind">
-                    <span aria-hidden className="mw-act-dot" data-s={i.source} />
+                    <SourceLogo source={i.source} className="mw-act-logo" />
                     {i.kind}
                   </span>
                   <a className="mw-act-link" href={i.url} target="_blank" rel="noopener noreferrer">
@@ -134,7 +135,7 @@ export default function ActivityDoc({ items, channels }: { items: DocItem[]; cha
             {channels.map((c) => (
               <li key={c.key}>
                 <a className="md-link" href={c.url} target="_blank" rel="noopener noreferrer">
-                  <span aria-hidden className="mw-act-dot" data-s={c.key} />
+                  <SourceLogo source={c.key} className="mw-act-logo" />
                   {c.name}
                   <span className="sr-only"> (opens in a new tab)</span>
                 </a>

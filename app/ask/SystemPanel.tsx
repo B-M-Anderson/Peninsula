@@ -115,7 +115,7 @@ export default function SystemPanel({ status, now }: { status: StatusResponse | 
               <>
                 {online ? "Running " : "Last ran "}
                 <span style={{ ...mono, color: "var(--text-body)" }}>{model}</span>
-                {cpuShort ? ` on a ${cpuShort}` : ""}, an old desktop in my house. No GPU and no data center.
+                {cpuShort ? ` on the ${cpuShort}` : ""}, an old desktop in my house. No GPU and no data center.
               </>
             ) : (
               "What happens to your question, and the computer that answers it."
@@ -155,9 +155,9 @@ export default function SystemPanel({ status, now }: { status: StatusResponse | 
               <span style={{ ...mono, color: online ? "var(--text-faint)" : "var(--text-muted)" }}>
                 {online
                   ? `Live numbers, checked ${stamp(seen.at)}`
-                  : `The desktop is off, so these are the last numbers it sent, from ${ago(seen.at, now)} (${stamp(seen.at)}).`}
+                  : `The desktop is off. These are the last numbers the site saw from it, ${ago(seen.at, now)} (${stamp(seen.at)}).`}
               </span>
-            ) : status && !online ? (
+            ) : status && !online && status.provisioned ? (
               <span style={{ ...mono, color: "var(--text-muted)" }}>The desktop is off and hasn&apos;t reported any numbers yet.</span>
             ) : null}
 

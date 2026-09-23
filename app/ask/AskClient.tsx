@@ -194,7 +194,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
           ...l,
           {
             from: "sys",
-            text: "The desktop that runs this is off right now, it keeps its own hours. Projects and Contact still work in the meantime.",
+            text: "The desktop that runs this is off right now. It keeps its own hours. Projects and Contact still work in the meantime.",
           },
         ]);
       }
@@ -217,7 +217,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
       ? { dot: "var(--status-complete)", label: "Online", pulse: true }
       : {
           dot: "var(--status-wip)",
-          label: status.lastSeen ? `Offline · last on ${ago(status.lastSeen.at, checkedAt)}` : "Offline",
+          label: status.lastSeen ? `Offline · last seen ${ago(status.lastSeen.at, checkedAt)}` : "Offline",
           pulse: false,
         };
 
@@ -358,8 +358,8 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
       <p className="md-lede" style={{ fontSize: "var(--text-md)" }}>
-        This runs on an old desktop in my house. There&apos;s no data center or AI company behind it, just a small open model on that one computer&apos;s CPU,
-        so answers take 10 to 20 seconds and it&apos;s only around while the computer is on.
+        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take 10 to 20 seconds and
+        it only works while that computer is on.
       </p>
       {/* chat panel — arrives with the page; the bands are the one entrance */}
       <div
@@ -429,7 +429,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
             <div style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-5)", textAlign: "center" }}>
               {asleep && (
                 <p style={{ margin: 0, maxWidth: 420, fontSize: "var(--text-sm)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
-                  The desktop is off right now. A question will wait up to 45 seconds for it to wake up and then give up, Projects and Contact still
+                  The desktop is off right now. A question will wait up to 45 seconds for it to wake up and then give up. Projects and Contact still
                   work.
                 </p>
               )}

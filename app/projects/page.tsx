@@ -171,11 +171,14 @@ async function activityData(): Promise<{ panel: ActivityPanel; items: DocItem[] 
     .map((s) => ({ name: s, value: `1×${count(s)} struct`, struct: true }));
   vars.push({ name: "latest", value: `"${items[0].at.slice(0, 10)}"` });
   vars.push({ name: "refreshMin", value: "15" });
+  // The ribbon's count and the status bar's total both describe the timeline the
+  // document actually shows (newest PER_SOURCE per channel), so they agree.
+  const timeline = timelineOf(items);
   const panel: ActivityPanel = {
     doc: <ActivityDoc items={docItems} channels={channels} />,
     vars,
-    total: timelineOf(items).length,
-    recent: items.filter((i) => ageDays(i.at, now) < 30).length,
+    total: timeline.length,
+    recent: timeline.filter((i) => ageDays(i.at, now) < 30).length,
     fresh: ageDays(items[0].at, now) < 7,
     feed: items.map((i) => ({ kind: i.kind, title: i.title, detail: i.detail, when: i.when, url: i.url, sha: i.sha })),
     // `web github` already means the open project's repo, so only the other channels are offered by name.
@@ -187,8 +190,10 @@ async function activityData(): Promise<{ panel: ActivityPanel; items: DocItem[] 
 export default async function ProjectsPage() {
   const [activity, serverDefault] = await Promise.all([activityData(), serverStyleDefault()]);
   const rows = publishedProjects.map(browserRow);
-  // A project named "activity" would collide with activity.mlx's #activity link.
-  const panel = rows.some((r) => r.id === ACTIVITY_ID) ? undefined : activity?.panel;
+  // A project named "activity" would collide with activity.mlx's #activity link
+  // (and with the classic section's id).
+  const activityIdFree = !rows.some((r) => r.id === ACTIVITY_ID);
+  const panel = activityIdFree ? activity?.panel : undefined;
   const matlab = (
     // No title frame: the browser is the page. The h1 stays for screen readers,
     // and the padding clears the fixed navbar.
@@ -203,7 +208,7 @@ export default async function ProjectsPage() {
   const classic = (
     <PageFrame title="Projects" subtitle={<Dotted items={ledger()} />}>
       <ProjectsList rows={publishedProjects.map(classicRow)} />
-      {activity ? <ActivityList items={activity.items} channels={channels} /> : null}
+      {activity ? <ActivityList id={activityIdFree ? ACTIVITY_ID : undefined} items={activity.items} channels={channels} /> : null}
     </PageFrame>
   );
   return <StyleView page="projects" themed={matlab} plain={classic} serverDefault={serverDefault} />;

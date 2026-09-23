@@ -192,15 +192,17 @@ export default function ProjectBrowser({ rows, activity }: { rows: BrowserRow[];
   const openTab = (id: string) => (id === ACTIVITY_ID ? openActivity() : select(id));
 
   /** Close a tab; closing the one in front brings up its neighbour. The last tab stays open. */
-  const closeTab = (id: string, refocus = false) => {
+  const closeTab = (id: string) => {
     if (tabs.length < 2) return;
     const i = tabs.indexOf(id);
     const rest = tabs.filter((t) => t !== id);
     setTabs(rest);
-    if (id !== docShown) return;
-    const next = rest[Math.min(i, rest.length - 1)];
-    select(next);
-    if (refocus) requestAnimationFrame(() => document.getElementById(`mw-tab-${next}`)?.focus());
+    const next = id === docShown ? rest[Math.min(i, rest.length - 1)] : (docShown ?? rest[0]);
+    if (id === docShown) select(next);
+    // The closed tab's buttons (its × included) leave the page with it, so focus
+    // would drop to the body: land on the tab in front instead.
+    const hadFocus = document.getElementById(`mw-tab-${id}`)?.parentElement?.contains(document.activeElement);
+    if (hadFocus) requestAnimationFrame(() => document.getElementById(`mw-tab-${next}`)?.focus({ preventScroll: true }));
   };
 
   const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -209,7 +211,7 @@ export default function ProjectBrowser({ rows, activity }: { rows: BrowserRow[];
     if (i < 0) return;
     if (e.key === "Delete") {
       e.preventDefault();
-      closeTab(tabs[i], true);
+      closeTab(tabs[i]);
       return;
     }
     const to = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? btns.length - 1 : null;

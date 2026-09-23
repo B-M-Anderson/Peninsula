@@ -1732,22 +1732,9 @@ html.light .mw,
   color: var(--text-muted);
 }
 
-/* activity.mlx: recent posts and commits as a live-script page. Each channel
-   keeps one colour throughout (card, table, channel list), always beside its
-   name, never on its own. */
-:root {
-  --src-youtube: #ff7b72;
-  --src-substack: #f2a33a;
-  --src-x: #d3a6ee;
-  --src-github: #7cc4ee;
-}
-html.light,
-.md-light {
-  --src-youtube: #c62828;
-  --src-substack: #b35c00;
-  --src-x: #8a2bb0;
-  --src-github: #0b6aa8;
-}
+/* activity.mlx: recent posts and commits as a live-script page. Each item is
+   marked with its source's logo (SourceLogo.tsx), drawn in the text colour and
+   always beside the source's name, never on its own. */
 .mw-comment {
   margin: calc(var(--space-5) * -0.5) 0 var(--space-5);
   padding-left: calc(var(--space-5) + 3px);
@@ -1755,18 +1742,12 @@ html.light,
   font-size: var(--text-2xs);
   color: var(--mw-green);
 }
-.mw-act-dot {
+.mw-act-logo {
+  /* Preflight makes every svg a block; in running text the mark stays inline. */
   display: inline-block;
-  flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--text-muted);
+  vertical-align: -2px;
+  color: var(--text-muted);
 }
-.mw-act-dot[data-s="youtube"] { background: var(--src-youtube); }
-.mw-act-dot[data-s="substack"] { background: var(--src-substack); }
-.mw-act-dot[data-s="x"] { background: var(--src-x); }
-.mw-act-dot[data-s="github"] { background: var(--src-github); }
 
 .mw-act-grid {
   display: grid;
@@ -1930,10 +1911,9 @@ html.light,
   white-space: nowrap;
   color: var(--text-body);
 }
-.mw-act-td-src .mw-act-dot,
-.mw-act-kind .mw-act-dot {
+.mw-act-td-src .mw-act-logo,
+.mw-act-kind .mw-act-logo {
   margin-right: 6px;
-  vertical-align: 1px;
 }
 .mw-act-kind {
   display: none;
@@ -1999,6 +1979,8 @@ html.light,
    the site's card style (ActivityList.tsx). */
 .md-act {
   margin-top: var(--space-11);
+  /* /projects#activity lands here in this look; clear the fixed navbar. */
+  scroll-margin-top: 96px;
 }
 .md-act-latest {
   display: grid;
@@ -2138,9 +2120,11 @@ html.light,
   font-size: var(--text-xs);
   color: var(--text-muted);
 }
-.md-act-line .mw-act-dot {
+.md-act-logo {
+  display: inline-block;
   margin-right: 6px;
-  vertical-align: 1px;
+  vertical-align: -2px;
+  color: var(--text-muted);
 }
 .md-act-line code {
   margin-right: 6px;

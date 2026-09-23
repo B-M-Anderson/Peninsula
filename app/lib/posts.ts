@@ -36,7 +36,7 @@ function isoDate(raw: string | null): string | null {
 async function fetchFeed(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": `bennettanderson.com/1.0 (+${SITE_URL})` },
+      headers: { "User-Agent": `bennett-anderson.com/1.0 (+${SITE_URL})` },
       next: { revalidate: REVALIDATE_SECONDS },
     });
     return res.ok ? await res.text() : null;

@@ -66,7 +66,7 @@ async function gh<T>(path: string): Promise<T | null> {
       headers: {
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": `bennettanderson.com/1.0 (+${SITE_URL})`,
+        "User-Agent": `bennett-anderson.com/1.0 (+${SITE_URL})`,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       next: { revalidate: REVALIDATE_SECONDS },

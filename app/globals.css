@@ -310,10 +310,10 @@ select {
    as the element's bottom padding (the !important outranks a page's inline
    padding shorthand), so no text can ever sit on the dots — the page's own
    content ends where the strip begins.
-   The dots themselves are a random field made on the server every time a page
-   is rendered (app/lib/dapple.ts, set as --dapple-dots by the root layout):
-   used as a mask over the theme's --dapple-color, intersected with the upward
-   fade. No tiles, so no pattern. */
+   The dots are a random field drawn fresh for every page load and served as
+   an image (/dapple.svg, app/lib/dapple.ts), used as a mask over the theme's
+   --dapple-color and intersected with the upward fade. No tiles, no pattern,
+   and nothing added to the page's HTML. */
 .md-dapple {
   position: relative;
   padding-bottom: var(--dapple-height) !important;
@@ -330,8 +330,8 @@ select {
   z-index: 2;
   background: var(--dapple-color);
   --dapple-fade: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
-  -webkit-mask-image: var(--dapple-dots), var(--dapple-fade);
-  mask-image: var(--dapple-dots), var(--dapple-fade);
+  -webkit-mask-image: url("/dapple.svg"), var(--dapple-fade);
+  mask-image: url("/dapple.svg"), var(--dapple-fade);
   -webkit-mask-size: 1800px 100%, 100% 100%;
   mask-size: 1800px 100%, 100% 100%;
   -webkit-mask-repeat: repeat-x, no-repeat;
@@ -1304,6 +1304,18 @@ html.light .mw,
 }
 .mw-tabbar::-webkit-scrollbar {
   display: none;
+}
+.mw-tabbar[data-more-right="true"] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+.mw-tabbar[data-more-left="true"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 32px);
+  mask-image: linear-gradient(to right, transparent, #000 32px);
+}
+.mw-tabbar[data-more-left="true"][data-more-right="true"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
 }
 .mw-tabbar .mw-doctab {
   display: inline-flex;

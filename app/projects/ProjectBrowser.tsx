@@ -157,6 +157,24 @@ export default function ProjectBrowser({ rows, activity }: { rows: BrowserRow[];
     else if (tab.offsetLeft + tab.offsetWidth > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = tab.offsetLeft + tab.offsetWidth - bar.clientWidth;
   }, [docShown]);
 
+  // The strip's scrollbar is hidden, so fade whichever edge has tabs out of view.
+  useEffect(() => {
+    const bar = tabbarRef.current;
+    if (!bar) return;
+    const mark = () => {
+      bar.dataset.moreLeft = String(bar.scrollLeft > 1);
+      bar.dataset.moreRight = String(bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 1);
+    };
+    mark();
+    bar.addEventListener("scroll", mark, { passive: true });
+    const ro = new ResizeObserver(mark);
+    ro.observe(bar);
+    return () => {
+      bar.removeEventListener("scroll", mark);
+      ro.disconnect();
+    };
+  }, [tabs, docShown]);
+
   useEffect(() => {
     if (!hashId || chosen) return;
     bring((isNarrow() ? editorRef : windowRef).current, false);

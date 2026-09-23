@@ -7,11 +7,22 @@ import type { LastSeen, StatusResponse } from "../../../lib/api-types";
 // Upstash relay. No relay env set -> honestly reports "not yet provisioned".
 // Heartbeat present -> online; missing/expired (TTL ~30s) -> node asleep/offline.
 //
-// Every live reading is also copied to KEYS.lastSeen with no expiry, so while
-// the desktop is off the page can still show its numbers, marked with when
-// they were read, instead of a panel of blanks.
+// Live readings are also copied to KEYS.lastSeen with no expiry, so while the
+// desktop is off the page can still show its numbers, marked with when they
+// were read, instead of a panel of blanks. One MGET reads both keys; the copy
+// is rewritten at most once a minute, so a poll usually costs one command.
 
 export const revalidate = 0;
+
+const LAST_SEEN_EVERY_MS = 60_000;
+
+const parseLastSeen = (raw: unknown): LastSeen | null => {
+  try {
+    return raw ? (JSON.parse(String(raw)) as LastSeen) : null;
+  } catch {
+    return null;
+  }
+};
 
 const offline = (note: string, lastSeen: LastSeen | null): StatusResponse => ({
   online: false,
@@ -26,8 +37,7 @@ const offline = (note: string, lastSeen: LastSeen | null): StatusResponse => ({
 /** The stored last reading, or null. Never throws: a relay hiccup just means no numbers. */
 async function readLastSeen(): Promise<LastSeen | null> {
   try {
-    const raw = await redis(["GET", KEYS.lastSeen], 3000);
-    return raw ? (JSON.parse(String(raw)) as LastSeen) : null;
+    return parseLastSeen(await redis(["GET", KEYS.lastSeen], 3000));
   } catch {
     return null;
   }
@@ -47,11 +57,12 @@ export async function GET() {
 
   try {
     const t0 = Date.now();
-    const raw = await redis(["GET", KEYS.heartbeat], 4000);
+    const [raw, storedRaw] = (await redis(["MGET", KEYS.heartbeat, KEYS.lastSeen], 4000)) as [unknown, unknown];
     const latencyMs = Date.now() - t0;
+    const stored = parseLastSeen(storedRaw);
 
     if (!raw) {
-      return NextResponse.json(offline("desktop node unreachable (powered down or asleep)", await readLastSeen()) satisfies StatusResponse);
+      return NextResponse.json(offline("desktop node unreachable (powered down or asleep)", stored) satisfies StatusResponse);
     }
 
     const beat = JSON.parse(String(raw)) as {
@@ -72,7 +83,9 @@ export async function GET() {
       at: Date.now(),
     };
     // Best effort: a failed write only means the offline view shows an older reading.
-    await redis(["SET", KEYS.lastSeen, JSON.stringify(lastSeen)], 3000).catch(() => {});
+    if (!stored || lastSeen.at - stored.at >= LAST_SEEN_EVERY_MS) {
+      await redis(["SET", KEYS.lastSeen, JSON.stringify(lastSeen)], 3000).catch(() => {});
+    }
     return NextResponse.json({
       online: true,
       provisioned: true,

@@ -147,7 +147,7 @@ export default function SystemPanel({ status, now }: { status: StatusResponse | 
             >
               <Stat k="Model" v={model ?? "—"} note={model ? "3 billion parameters, 4-bit quantized" : undefined} />
               <Stat k="Machine" v={cpuShort ?? "desktop"} note={[cores, ram].filter(Boolean).join(" · ") || undefined} />
-              <Stat k="Graphics" v={m?.gpu || "None"} note={m?.gpu ? "the model runs on the GPU" : "so every word gets worked out on the CPU"} />
+              <Stat k="Graphics" v={m ? m.gpu || "None" : "—"} note={!m ? undefined : m.gpu ? "the model runs on the GPU" : "so every word gets worked out on the CPU"} />
               <Stat k="Answer library" v={cache?.entries != null ? String(cache.entries) : "—"} note="answers it writes ahead of time while nobody's asking" />
             </div>
 

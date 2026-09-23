@@ -7,7 +7,6 @@ import SkipLink from "./components/SkipLink";
 import VaultGate from "./components/VaultGate";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, X_HANDLE } from "./data/site";
-import { dappleField } from "./lib/dapple";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -48,8 +47,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="min-h-screen">
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
-        {/* A fresh random dot field for the page-foot dappling, every render (app/lib/dapple.ts). */}
-        <style dangerouslySetInnerHTML={{ __html: `:root{--dapple-dots:${dappleField()}}` }} />
         <VaultGate>
           <SkipLink />
           <Navbar />

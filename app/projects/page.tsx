@@ -192,7 +192,8 @@ export default async function ProjectsPage() {
   const matlab = (
     // No title frame: the browser is the page. The h1 stays for screen readers,
     // and the padding clears the fixed navbar.
-    <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", paddingTop: 59 }}>
+    // No foot dapple here: the desktop runs edge to edge and ends at its status bar.
+    <main id="main" tabIndex={-1} style={{ position: "relative", paddingTop: 59 }}>
       <h1 className="sr-only">Projects</h1>
       <div className="md-above">
         <ProjectBrowser rows={rows} activity={panel} />

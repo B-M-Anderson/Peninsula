@@ -9,8 +9,10 @@ import type { LastSeen, StatusResponse } from "../../../lib/api-types";
 //
 // Live readings are also copied to KEYS.lastSeen with no expiry, so while the
 // desktop is off the page can still show its numbers, marked with when they
-// were read, instead of a panel of blanks. One MGET reads both keys; the copy
-// is rewritten at most once a minute, so a poll usually costs one command.
+// were read, instead of a panel of blanks. Both keys are read with plain GETs
+// in parallel (MGET is not in the relay token's allowed commands, and a denied
+// command lands in the catch below as "unreachable"); the copy is rewritten
+// at most once a minute.
 
 export const revalidate = 0;
 
@@ -57,9 +59,8 @@ export async function GET() {
 
   try {
     const t0 = Date.now();
-    const [raw, storedRaw] = (await redis(["MGET", KEYS.heartbeat, KEYS.lastSeen], 4000)) as [unknown, unknown];
+    const [raw, stored] = await Promise.all([redis(["GET", KEYS.heartbeat], 4000), readLastSeen()]);
     const latencyMs = Date.now() - t0;
-    const stored = parseLastSeen(storedRaw);
 
     if (!raw) {
       return NextResponse.json(offline("desktop node unreachable (powered down or asleep)", stored) satisfies StatusResponse);

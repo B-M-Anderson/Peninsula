@@ -19,8 +19,6 @@
     --tan-400: #BE9E70;
     --cream-50: #FAF4E9;
     --brown-a16: rgba(42, 25, 13, 0.16);
-    --dapple-color: rgba(42, 25, 13, 0.20);
-    --dapple-height: 20%;
   }
   @page { size: 8.5in 11in; margin: 0; }
   html, body { margin: 0; padding: 0; background: #eceae6; }
@@ -34,34 +32,11 @@
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
-  /* Dappling: one shallow strip at the foot, densest in the bottom 5-10%. */
-  .md-dapple::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: var(--dapple-height);
-    pointer-events: none;
-    z-index: 2;
-    background-image:
-      radial-gradient(ellipse 5.4px 4.1px at 22% 62%, var(--dapple-color) 99%, transparent 100%),
-      radial-gradient(circle at 68% 27%, var(--dapple-color) 3.4px, transparent 4px),
-      radial-gradient(ellipse 3.5px 5.2px at 45% 84%, var(--dapple-color) 99%, transparent 100%),
-      radial-gradient(circle at 87% 71%, var(--dapple-color) 4.6px, transparent 5.3px),
-      radial-gradient(ellipse 4.7px 3.2px at 9% 33%, var(--dapple-color) 99%, transparent 100%),
-      radial-gradient(ellipse 4.2px 3.1px at 33% 88%, var(--dapple-color) 99%, transparent 100%),
-      radial-gradient(circle at 76% 91%, var(--dapple-color) 3.6px, transparent 4.2px);
-    background-size: 118px 96px, 83px 71px, 149px 121px, 101px 89px, 67px 61px, 54px 46px, 71px 39px;
-    background-position: 0 0, 29px 13px, 17px 47px, 41px 9px, 11px 31px, 23px 5px, 47px 3px;
-    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
-    mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,.9) 10%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.16) 72%, transparent 100%);
-  }
   h1, h2, h3, p, ul { margin: 0; }
 </style>
 </head>
 <body>
-<section class="page md-light md-dapple" style="background: var(--cream-50); color: var(--brown-800); font-family: var(--font-body); overflow: hidden; border-radius: 0;">
+<section class="page md-light" style="background: var(--cream-50); color: var(--brown-800); font-family: var(--font-body); overflow: hidden; border-radius: 0;">
 
     <div style="position: relative; z-index: 3; display: flex; flex-direction: column; height: 100%;">
 

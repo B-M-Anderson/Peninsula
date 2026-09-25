@@ -10,9 +10,8 @@ import type { LastSeen, StatusResponse } from "../../../lib/api-types";
 // Live readings are also copied to KEYS.lastSeen with no expiry, so while the
 // desktop is off the page can still show its numbers, marked with when they
 // were read, instead of a panel of blanks. Both keys are read with plain GETs
-// in parallel (MGET is not in the relay token's allowed commands, and a denied
-// command lands in the catch below as "unreachable"); the copy is rewritten
-// at most once a minute.
+// in parallel, the same commands the rest of the relay code uses; the copy is
+// rewritten at most once a minute.
 
 export const revalidate = 0;
 

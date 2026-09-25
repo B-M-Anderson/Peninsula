@@ -1,6 +1,6 @@
-# bennettanderson.com
+# bennett-anderson.com
 
-Personal portfolio of Bennett M. Anderson — biomedical engineering student at Iowa State University. Live at [www.bennettanderson.com](https://www.bennettanderson.com), deployed on Vercel from `main`.
+Personal portfolio of Bennett M. Anderson — biomedical engineering student at Iowa State University. Live at [www.bennett-anderson.com](https://www.bennett-anderson.com), deployed on Vercel from `main`.
 
 ## Stack
 

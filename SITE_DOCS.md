@@ -1,4 +1,4 @@
-# Site Documentation — bennettanderson.com (Peninsula)
+# Site Documentation — bennett-anderson.com (Peninsula)
 
 Reference for the personal portfolio site as it is today. Operating rules and the short version live in [CLAUDE.md](CLAUDE.md).
 
@@ -105,7 +105,7 @@ Environment variables: see CLAUDE.md.
 
 ## 8. SEO & sharing
 
-- `metadataBase` = `https://www.bennettanderson.com`; per-page titles via the root template; canonical on `/projects`, `/ask`, `/contact`.
+- `metadataBase` = `https://www.bennett-anderson.com`; per-page titles via the root template; canonical on `/projects`, `/ask`, `/contact`.
 - Open Graph + Twitter (`summary_large_image`) with the generated share card.
 - `/vault`, `/darkroom` are `noindex, nofollow` and left out of `app/sitemap.ts`; `app/robots.ts` disallows `/api/`.
 - Person JSON-LD on the homepage; `rel="me"` on profile links.

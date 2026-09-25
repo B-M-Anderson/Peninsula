@@ -1,6 +1,6 @@
 // Central site configuration — edit values here, everything reads from this file.
 
-export const SITE_URL = "https://www.bennettanderson.com";
+export const SITE_URL = "https://www.bennett-anderson.com";
 export const SITE_NAME = "Bennett M. Anderson";
 export const SITE_TAGLINE = "Biomedical engineering · Iowa State University";
 // Default <meta name="description"> and social-card text.
@@ -57,7 +57,7 @@ export const RESUME_PATH = "/ResumeBennettAnderson.pdf";
 export const RESUME_META = { pages: 1, updated: "August 2026" };
 export const CONTACT_EMAIL = "bennetta32.30@gmail.com";
 /** mailto: with a subject, so a blank compose window never lands in front of someone. */
-export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Hello from bennettanderson.com")}`;
+export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Hello from bennett-anderson.com")}`;
 export const CONTACT_PHONE = "(815) 821-9604";
 // Darkroom upload ceiling. Vercel functions reject request bodies over 4.5 MB
 // before a route ever runs, so the advertised limit has to sit under that; the

@@ -1,6 +1,6 @@
 # CLAUDE.md — Operating guide for this repo
 
-Personal portfolio site (Next.js 16 + TypeScript + Tailwind v4), deployed on Vercel with a custom domain (`www.bennettanderson.com`). Full reference docs: [SITE_DOCS.md](SITE_DOCS.md).
+Personal portfolio site (Next.js 16 + TypeScript + Tailwind v4), deployed on Vercel with a custom domain (`www.bennett-anderson.com`; note the hyphen, `bennettanderson.com` is someone else's site). Full reference docs: [SITE_DOCS.md](SITE_DOCS.md).
 
 ## Current design (MarcDesign01) — key facts
 

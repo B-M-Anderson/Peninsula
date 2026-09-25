@@ -69,7 +69,7 @@ export default function OpenGraphImage() {
             textTransform: "uppercase",
           }}
         >
-          bennettanderson.com
+          bennett-anderson.com
         </div>
       </div>
     ),

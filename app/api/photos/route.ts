@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { list, put } from "@vercel/blob";
-import { redis, relayConfigured } from "../concierge/upstash";
+import { bumpWindow, readWindow, redis, relayConfigured } from "../concierge/upstash";
 import { DARKROOM_MAX_UPLOAD_BYTES as MAX_UPLOAD_BYTES } from "../../data/site";
 import { sameSecret } from "../../lib/secret";
 import type { PhotosResponse, UploadResponse } from "../../lib/api-types";
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   const failKey = `darkroom:fail:${ip}`;
   if (relayConfigured()) {
     try {
-      const fails = Number((await redis(["GET", failKey], 2000)) ?? 0);
+      const fails = await readWindow(failKey, 2000);
       if (fails >= FAIL_LIMIT) {
         return NextResponse.json({ error: "too many attempts — try again later" }, { status: 429 });
       }
@@ -86,12 +86,10 @@ export async function POST(req: Request) {
   const provided = req.headers.get("x-darkroom-code") ?? "";
   if (!sameSecret(provided, expected)) {
     if (relayConfigured()) {
-      // Awaited, and the window is created together with its expiry (SET NX EX)
-      // so a lost follow-up command can never leave a counter with no TTL —
-      // that would lock the address out until someone cleared the key by hand.
+      // Awaited, so a serverless freeze cannot drop the count. The window always
+      // carries an expiry, so an address can never stay locked out.
       try {
-        await redis(["SET", failKey, 0, "EX", FAIL_WINDOW_S, "NX"], 2000);
-        await redis(["INCR", failKey], 2000);
+        await bumpWindow(failKey, FAIL_WINDOW_S, 2000);
       } catch {
         /* relay hiccup: the compare above is still the gate */
       }

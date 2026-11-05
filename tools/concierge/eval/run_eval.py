@@ -85,6 +85,7 @@ def main():
     if a.core:
         cases = [c for c in cases if c.get("core")]
     gate_failed = []
+    poller.warmup()    # as the live poller does, so a cold start is not scored as an answer
     path = os.path.join(a.out, f"{'gate' if a.gate else 'results'}-{poller.MODEL.replace(':', '_').replace('/', '_')}.jsonl")
     with open(path, "w") as f:
         for case in cases:
@@ -103,7 +104,7 @@ def main():
                    "pass": all(checks.values()) if checks else False}
             f.write(json.dumps(rec) + "\n")
             f.flush()
-            if not rec["pass"] and case["cat"] in ("status", "overview", "tier", "private", "rail"):
+            if not rec["pass"] and case["cat"] in ("status", "overview", "tier", "private", "rail", "uncovered"):
                 gate_failed.append(case["id"])
             print(f"{'PASS' if rec['pass'] else 'FAIL'} {case['id']:11} {ms:6}ms {rail:11} {sc:3} "
                   f"{[k for k, v in checks.items() if not v]}", flush=True)

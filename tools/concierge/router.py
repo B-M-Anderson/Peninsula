@@ -1,8 +1,8 @@
 """router: pick the profile sections that answer a question, with no LLM call.
 
 Score = cosine(query, section) blended with keyword hits. `asked` sections are
-eligible only on their own score, are never pulled in through `related` from an
-`open` section, and never join an overview-style question.
+eligible only when the question names their topic, are never pulled in through
+`related` from an `open` section, and never join an overview-style question.
 
 The index holds private text. Log section ids and scores, never bodies.
 """
@@ -23,8 +23,8 @@ KEYWORD_CAP = 3           # hits counted, so a long keyword list cannot run away
 # Measured on nomic-embed-text against this profile: world questions top out near
 # 0.53, and the shared word "Bennett" lifts every section to about 0.55-0.70.
 TOP_THRESHOLD = 0.59      # a section must reach this to answer at all
-SECOND_MARGIN = 0.10      # a second section must be within this of the first
-RELATED_THRESHOLD = 0.57  # a `related` section needs this on its own score
+SECOND_MARGIN = 0.05      # a second section must be within this of the first
+RELATED_THRESHOLD = 0.63  # a `related` section needs this on its own score
 ASKED_THRESHOLD = 0.62    # the cosine floor for `asked`; see asked_eligible() for the rest
 MAX_SECTIONS = 2
 
@@ -42,7 +42,8 @@ OPINION = re.compile(
     r"positions|feel about|feels about|support|supports|oppose|opposes|agree|agrees|take on)\b", re.I)
 # Keywords that are also everyday words. "right now" must not count as politics.
 AMBIGUOUS = {"right", "left", "rights", "food", "water", "meaning", "truth", "knowledge", "government",
-             "belief", "beliefs", "sports", "distrust", "budget"}
+             "sports", "distrust", "budget"}
+ABOUT_HIM = re.compile(r"\b(?:he|his|him|bennett(?:'?s)?)\b", re.I)
 
 Route = namedtuple("Route", "ids notes scores max_sentences")
 
@@ -154,19 +155,18 @@ class KnowledgeBase:
                 picks.append(self.by_id["status-and-goals"])
             return picks, scores
 
-        opinion = bool(OPINION.search(question))
-        best_asked = next((s for _, s in scored if s["tier"] == "asked"), None)
+        # In an opinion question "food" and "water" mean the topic. Elsewhere they,
+        # and "right" in "right now", mean nothing about his views.
+        skip = () if OPINION.search(question) else AMBIGUOUS
 
         def asked_topic(s):
-            return keyword_hits(question, s["keywords"], skip=AMBIGUOUS) > 0
+            return keyword_hits(question, s["keywords"], skip=skip) > 0
 
         def eligible(sc, s):
             if s["tier"] != "asked":
                 return sc >= TOP_THRESHOLD
-            # A question must be about the topic, or ask for an opinion. An opinion
-            # with no topic match reaches only the single closest views section, so
-            # the "has not addressed that" answer has something related to cite.
-            return sc >= ASKED_THRESHOLD and (asked_topic(s) or (opinion and s is best_asked))
+            # A score alone is mostly the shared word "Bennett", so views need the topic.
+            return sc >= ASKED_THRESHOLD and asked_topic(s)
 
         ranked = [(sc, s) for sc, s in scored if eligible(sc, s)]
         if not ranked:
@@ -192,6 +192,12 @@ class KnowledgeBase:
                 picks.append(r)
                 break
         return picks, scores
+
+    def is_uncovered_opinion(self, question):
+        """Asking his view on something no section mentions. Nothing here can answer
+        it, and any section the embedding picked would only be a non sequitur."""
+        return bool(OPINION.search(question) and ABOUT_HIM.search(question)
+                    and not any(keyword_hits(question, s["keywords"]) for s in self.sections))
 
     def render(self, picks):
         card = core_card(self.by_id["overview"]) if "overview" in self.by_id else ""

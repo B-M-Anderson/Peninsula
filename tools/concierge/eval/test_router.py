@@ -15,11 +15,13 @@ import router    # noqa: E402
 ASKED = {s["id"] for s in poller.KB.sections if s["tier"] == "asked"}
 RAILS = (("leak", poller.LEAK), ("impersonate", poller.IMPERSONATE),
          ("commitment", poller.COMMITMENT), ("private", poller.PRIVATE))
+
 fails = 0
 
 
 def rail(q):
-    return next((n for n, p in RAILS if p.search(q)), None)
+    hit = next((n for n, p in RAILS if p.search(q)), None)
+    return hit or ("uncovered" if poller.KB.is_uncovered_opinion(q) else None)
 
 
 # The questions state expected answers, so they live in the private KB repo.

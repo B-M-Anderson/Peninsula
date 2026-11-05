@@ -17,7 +17,7 @@ If you are on the laptop instead, first check whether you can reach the node ove
 
 ## What Bennett decided
 
-- **Knowledge base**: a new, larger, sectioned profile (`profile.md`, delivered to Bennett separately, deliberately not in this repo). It lives on the node only. Sections carry `tier`, `owner`, `summary`, `keywords`, `related`, `updated`, `source`; the format is documented in a comment at the top of the file.
+- **Knowledge base**: a new, larger, sectioned profile (`profile.md`), kept in the **private** repo `B-M-Anderson/concierge-kb`, deliberately not in this public repo. The node works from a clone of it. Sections carry `tier`, `owner`, `summary`, `keywords`, `related`, `updated`, `source`; the format is documented in a comment at the top of the file.
 - **Retrieve, don't stuff**: answers are slower in exchange for handling a much bigger profile. Pick the relevant sections per question and send only those.
 - **Remove the warm-cache system entirely**: the idle worker, question discovery, best-of-N precompute, and cache lookups/stores in `answer_for`. Bennett wants no preloaded answers; every refresh would wipe them anyway. Keep `score()` as a post-generation register check and keep the activity log.
 - **Tiers**: `open` sections can answer any relevant question. `asked` sections (healthcare, politics, religion/philosophy) are used only when the question is directly about that topic or a clearly adjacent one (e.g. healthcare questions may pull in his spending views). Never in a general "tell me about Bennett" answer.
@@ -34,8 +34,8 @@ Use a task list. Before you change anything, back up `~/.local/share/concierge/`
 
 ### 1. Move the KB off the public repo
 
-- Create `~/concierge-kb/` on the node as a **local-only** git repo (no remote, never pushed anywhere) holding `profile.md`, `inbox.md` (empty template: dated notes Bennett can append, like "2026-12-01: accepted a job at X"), `backups/`, and `build/`.
-- Ask Bennett where he saved `profile.md`. If it isn't on the node, copy it there (scp from the laptop, or he downloads it on the desktop).
+- Clone the private repo `https://github.com/B-M-Anderson/concierge-kb` to `~/concierge-kb` on the node. It already holds `profile.md`, `inbox.md` (dated notes Bennett can append, like "2026-12-01: accepted a job at X"), `backups/`, and a README. `build/` is gitignored. If the node has no GitHub auth, set it up (`gh auth login`, or a deploy key with write access scoped to this one repo) and ask Bennett to approve it in the browser.
+- Confirm the repo is still private (`gh repo view B-M-Anderson/concierge-kb --json visibility`). Never copy `profile.md` or anything built from it into Peninsula or any other repo.
 - `poller.py` reads the KB from `CONCIERGE_KB` (default `~/concierge-kb/build/index.json`). Make sure the service's sandboxing (`ProtectHome`, `ReadWritePaths`) allows reading it.
 - On a branch: replace `app/data/ABOUT_BENNETT.md` with a short stub saying the grounding data now lives on the node, and update `NODE_README.md`. The old content stays in git history; mention that to Bennett. Docs-only, so no approval is needed before the PR, but don't merge without his OK.
 
@@ -76,7 +76,7 @@ Use a task list. Before you change anything, back up `~/.local/share/concierge/`
   1. **Gather** (deterministic, no LLM): `git pull` the repo checkout. Fetch the Substack RSS (`https://bennettmanderson.substack.com/feed`) and the YouTube channel feed (channel `UCY7H6pvaCxxdUModczjw_ew`). Read project entries from `app/data/projects.ts`. Extract the resume text from `public/ResumeBennettAnderson.pdf`. Read `inbox.md`.
   2. **Merge**: run headless Claude Code (`claude -p` with a fixed prompt file, tools limited to reading the gathered files and writing in `~/concierge-kb/`) to write `profile.next.md` and `changes.md`. Rules for that run: update only `owner: auto` sections from sources. Change `owner: bennett` sections only when an inbox note explicitly says so. Never add a fact that isn't in a source or note. Never move content between tiers. Bump `updated:`. Move processed inbox notes to `inbox-archive.md`. Verify early that `claude -p` authenticates non-interactively on the node. If it can't, fall back to updating only the deterministic parts (project statuses, recent posts) and say so in the notification.
   3. **Validate**: `build_kb.py --check profile.next.md`. On failure, keep the live KB and notify Bennett of the failure.
-  4. **Swap**: copy the live `profile.md` to `backups/profile-YYYYMMDD.md` (keep the last 12), commit both in the local KB repo, atomically move `profile.next.md` into place, rebuild the index, and reload the poller.
+  4. **Swap**: copy the live `profile.md` to `backups/profile-YYYYMMDD.md` (keep the last 12), commit and push to the private `concierge-kb` repo, atomically move `profile.next.md` into place, rebuild the index, and reload the poller.
   5. **Smoke test**: run the eval's core questions. If status, private-topic, or tier checks fail, roll back automatically and notify him.
   6. **Notify**: send `changes.md` plus the smoke-test result. Ask Bennett which channel he wants: a Discord webhook (he runs Hermes on Discord) or email through a Gmail app password. Secrets go in an env file with chmod 600, never in git.
 - Add a one-command rollback (`tools/concierge/kb-rollback.sh` or a `just` recipe) and document it in `NODE_README.md`.

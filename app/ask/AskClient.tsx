@@ -41,6 +41,18 @@ function progressLabel(p: Progress): string {
   return `working, ${p.seconds}s`;
 }
 
+/** Under every answer, in both looks. The disclaimer belongs to the page, not to the model. */
+function AnswerNote() {
+  return (
+    <p style={{ margin: 0, fontSize: "var(--text-2xs)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
+      Small local model. It makes mistakes and can state things that aren&apos;t true.{" "}
+      <TextLink href="/projects#local-llm-site-concierge" arrow>
+        How this works
+      </TextLink>
+    </p>
+  );
+}
+
 type Cell = { n: number | null; q: string | null; out: { kind: "bot" | "sys"; text: string } | null };
 
 /** The transcript as notebook cells: each question with the output that answered it. */
@@ -295,6 +307,12 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                             <div className={c.out.kind === "sys" ? "nb-out nb-notice" : "nb-out"}>{c.out.text}</div>
                           </div>
                         )}
+                        {c.out?.kind === "bot" && (
+                          <div className="nb-row">
+                            <span aria-hidden className="nb-prompt nb-outp" />
+                            <AnswerNote />
+                          </div>
+                        )}
                         {running && (
                           <div className="nb-row">
                             <span aria-hidden className="nb-prompt nb-outp" />
@@ -456,14 +474,14 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                 );
               }
               const you = line.from === "you";
-              return (
+              const message = (
                 <div
                   key={i}
                   className="md-fade-in"
                   style={{
                     ...bubble,
                     alignSelf: you ? "flex-end" : "flex-start",
-                    maxWidth: "86%",
+                    maxWidth: you ? "86%" : "100%",
                     borderBottomRightRadius: you ? 4 : 14,
                     borderBottomLeftRadius: you ? 14 : 4,
                     background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
@@ -473,6 +491,13 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                   }}
                 >
                   {line.text}
+                </div>
+              );
+              if (you) return message;
+              return (
+                <div key={i} style={{ alignSelf: "flex-start", maxWidth: "86%", display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                  {message}
+                  <AnswerNote />
                 </div>
               );
             })

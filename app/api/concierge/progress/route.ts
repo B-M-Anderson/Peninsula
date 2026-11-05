@@ -20,6 +20,12 @@ export async function GET(req: Request) {
   }
 
   try {
+    const answer = await redis(["GET", KEYS.answer(id)], 4000);
+    if (answer) {
+      // consume the answer so it doesn't linger in the relay
+      redis(["DEL", KEYS.answer(id)], 3000).catch(() => {});
+      return NextResponse.json({ state: "done", answer: String(answer), ahead: 0 } satisfies ProgressResponse);
+    }
     const raw = await redis(["GET", KEYS.progress(id)], 4000);
     if (!raw) {
       // No state yet: the node has not picked it up, so it is still in line —

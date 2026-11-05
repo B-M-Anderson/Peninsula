@@ -375,10 +375,6 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-      <p className="md-lede" style={{ fontSize: "var(--text-md)" }}>
-        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take 10 to 20 seconds and
-        it only works while that computer is on.
-      </p>
       {/* chat panel — arrives with the page; the bands are the one entrance */}
       <div
         style={{
@@ -397,7 +393,8 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: "var(--space-4)",
+            flexWrap: "wrap",
+            gap: "var(--space-2) var(--space-4)",
             padding: "var(--space-4) var(--space-5)",
             borderBottom: "1px solid var(--border-subtle)",
           }}
@@ -425,6 +422,9 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
               style={{ width: 7, height: 7, borderRadius: "50%", background: pill.dot, flex: "0 0 auto" }}
             />
             <span style={{ fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>{pill.label}</span>
+            <StyleSwitch page="ask" to="themed">
+              Notebook view
+            </StyleSwitch>
           </span>
         </div>
 
@@ -570,9 +570,10 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
         </form>
       </div>
 
-      {/* what's actually running, for anyone curious enough to look */}
-      <SystemPanel status={status} now={checkedAt} />
-
+      <p className="md-lede" style={{ fontSize: "var(--text-sm)", margin: 0 }}>
+        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take 10 to 20 seconds and
+        it only works while that computer is on.
+      </p>
       {/* footer: escape hatches + counter */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
         <span style={{ display: "inline-flex", gap: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
@@ -585,11 +586,11 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
               {input.length}/{MAX}
             </span>
           )}
-          <StyleSwitch page="ask" to="themed">
-            Notebook view
-          </StyleSwitch>
         </span>
       </div>
+      {/* what's actually running, for anyone curious enough to look */}
+      <SystemPanel status={status} now={checkedAt} />
+
     </div>
   );
 }

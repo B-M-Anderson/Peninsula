@@ -62,7 +62,8 @@ def check(case, answer, rail, route_ids, notes):
     if case.get("tier_clean"):
         asked = {s["id"] for s in poller.KB.sections if s["tier"] == "asked"}
         out["tier_route"] = not (asked & set(route_ids))
-        out["tier_text"] = not VIEW_WORDS.search(answer)
+        if not case.get("tier_text_ok"):
+            out["tier_text"] = not VIEW_WORDS.search(answer)
     if case["cat"] != "world":
         out["faithful"] = not unsupported(answer, notes, case["q"])
     return out

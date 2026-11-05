@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh the concierge knowledge base from current content
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/Peninsula/tools/concierge/refresh.sh
+Nice=10
+TimeoutStartSec=1h

@@ -461,7 +461,28 @@ def answer_for(question, history=None):
     except Exception as e:                                    # noqa: BLE001
         LAST_RAIL = "error"
         log.warning("model or router error, failing closed: %s", e)
+        if isinstance(e, TimeoutError) or "timed out" in str(e):
+            unload_model()
         return None  # honest offline; the route shows the offline message
+
+
+def unload_model():
+    """Recover from a runner that cannot serve our requests.
+
+    Ollama fixes shift and num_ctx when it starts a runner. If anything else loads
+    this model with different settings, our requests wait for a runner that never
+    comes, because keep_alive -1 means the old one is never unloaded. Unloading it
+    lets the next question start a runner with our settings. On 2026-11-05 a
+    token-count request did exactly this and every answer failed for 35 minutes.
+    """
+    try:
+        req = urllib.request.Request(f"{OLLAMA_URL}/api/generate",
+                                     data=json.dumps({"model": MODEL, "keep_alive": 0}).encode(),
+                                     headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=30).read()
+        log.warning("unloaded %s after a timeout, so the next question starts a fresh runner", MODEL)
+    except Exception as e:                                    # noqa: BLE001
+        log.warning("could not unload %s: %s", MODEL, e)
 
 # ---- Upstash REST helpers ---------------------------------------------------
 

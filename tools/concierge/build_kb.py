@@ -27,6 +27,7 @@ import urllib.request
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434").rstrip("/")
 EMBED_MODEL = os.environ.get("CONCIERGE_EMBED_MODEL", "nomic-embed-text")
 TOKEN_MODEL = os.environ.get("CONCIERGE_MODEL", "llama3.2:3b")
+NUM_CTX = int(os.environ.get("CONCIERGE_NUM_CTX", "4096"))
 DEFAULT_PROFILE = os.path.expanduser("~/concierge-kb/profile.md")
 
 REQUIRED = ("tier", "owner", "summary", "keywords", "related", "updated", "source")
@@ -87,8 +88,13 @@ def count_tokens(text):
             f"{OLLAMA_URL}/api/generate",
             # keep_alive -1 matters: a request without it resets the resident model
             # to Ollama's 5-minute default, and the next visitor pays the cold start.
+            # shift and num_ctx must match the poller's requests exactly. Ollama sets
+            # both when it starts the runner, so a request that differs needs a new
+            # runner, and one pinned with keep_alive -1 never unloads to make room:
+            # every poller request then waits until it times out.
             data=json.dumps({"model": TOKEN_MODEL, "prompt": text, "raw": True, "stream": False,
-                             "keep_alive": -1, "options": {"num_predict": 1}}).encode(),
+                             "keep_alive": -1, "shift": False,
+                             "options": {"num_predict": 1, "num_ctx": NUM_CTX}}).encode(),
             headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=60) as r:
             n = json.loads(r.read()).get("prompt_eval_count")

@@ -11,6 +11,9 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 KB="${CONCIERGE_KB_DIR:-$HOME/concierge-kb}"
 WORK="$KB/build/refresh"
+# The smoke test and the poller read this; pointing it at $KB keeps a test run on a
+# scratch copy away from the live index.
+export CONCIERGE_KB="$KB/build/index.json"
 TODAY="$(date +%F)"
 STAMP="$(date +%Y%m%d)"
 CLAUDE="${CLAUDE_BIN:-$HOME/.local/bin/claude}"
@@ -39,9 +42,12 @@ curl -fsSL -m 30 -A concierge-refresh "$YOUTUBE" -o "$WORK/sources/youtube.xml" 
 
 # ---- 2. merge (headless Claude Code, no shell, writes only in the work dir) --
 PROMPT="$(sed -e "s|\$WORK|$WORK|g" -e "s|\$TODAY|$TODAY|g" "$HERE/refresh_prompt.md")"
-if ! (cd "$WORK" && "$CLAUDE" -p "$PROMPT" --tools "Read,Write" \
-        --allowedTools "Read($WORK/**)" "Edit($WORK/**)" --permission-mode dontAsk \
-        --add-dir "$WORK" >"$WORK/merge.log" 2>&1) \
+# Permission rules take an absolute path as //path. Write is limited to the work dir
+# and there is no shell, so the sources can only ever be data to this run.
+RULE="/${WORK}/**"
+if ! (cd "$WORK" && "$CLAUDE" -p "$PROMPT" --tools "Read,Write,Glob" \
+        --allowedTools "Read($RULE)" "Edit($RULE)" "Glob($RULE)" --permission-mode dontAsk \
+        --add-dir "$WORK" </dev/null >"$WORK/merge.log" 2>&1) \
    || [ ! -s "$WORK/profile.next.md" ]; then
   notify "SKIPPED: headless Claude Code could not run the merge (see $WORK/merge.log). The live KB was not changed, so the profile is one cycle staler."
   exit 0

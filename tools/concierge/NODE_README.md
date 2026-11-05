@@ -54,6 +54,17 @@ a dated line to `~/concierge-kb/inbox.md`.
 
 Any model or router error returns no answer, so the site shows its offline message.
 
+## One rule for anything that talks to Ollama
+
+Any request for the chat model must send the same `shift` and `num_ctx` as the
+poller (`shift: false`, `num_ctx` from `CONCIERGE_NUM_CTX`). Ollama fixes both when
+it starts a runner, so a request with different values needs a new runner. With
+`keep_alive -1` the old one is never unloaded, so every poller request waits until it
+times out. That took the concierge down for 35 minutes on 2026-11-05. A plain `curl`
+to `/api/chat` does it too. The poller now unloads the model after a timeout, so the
+next question recovers, but avoid it. To recover by hand:
+`curl -s localhost:11434/api/generate -d '{"model":"llama3.2:3b","keep_alive":0}'`.
+
 ## Records of visitor questions
 
 `~/.local/share/concierge/served.jsonl` keeps every real question and answer and is

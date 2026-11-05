@@ -71,6 +71,7 @@ export async function GET() {
       ts?: number;
       machine?: { cpu?: string; cores?: number; ramGb?: number; gpu?: string | null };
       kb?: { updated?: string | null; sections?: number };
+      extended?: "thinking" | "careful" | false;
     };
     const lastSeen: LastSeen = {
       model: beat.model ?? "unknown",
@@ -93,6 +94,7 @@ export async function GET() {
       latencyMs,
       machine: lastSeen.machine,
       kb: lastSeen.kb,
+      extended: beat.extended ?? false,
       lastSeen,
     } satisfies StatusResponse);
   } catch {

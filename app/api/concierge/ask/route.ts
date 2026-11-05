@@ -20,6 +20,9 @@ const MAX_HISTORY_CHARS = 400;
 // free tier has a daily command budget. Priority sessions are exempt from the
 // per-address limit (that is what the passphrase buys) but not the queue cap.
 const RATE_LIMIT_PER_MIN = 6;
+// An extended answer holds the one model slot for minutes, so it gets its own,
+// much tighter budget per address.
+const EXTENDED_PER_HOUR = 4;
 const QUEUE_CAP = 25;
 
 type Turn = { q: string; a: string };
@@ -53,8 +56,10 @@ export async function POST(req: Request) {
   let question = "";
   let history: Turn[] = [];
   let clientId = "";
+  let extended = false;
   try {
     const body = await req.json();
+    extended = body.extended === true;
     question = String(body.question ?? "").slice(0, MAX_QUESTION_LENGTH);
     history = cleanHistory(body.history);
     // The page may name its own job so it can poll that job's progress while this
@@ -85,7 +90,8 @@ export async function POST(req: Request) {
   const priority = Boolean(code && provided && sameSecret(provided, code));
 
   try {
-    const depth = Number(await redis(["LLEN", KEYS.jobs], 3000));
+    const [main, ext] = await Promise.all([redis(["LLEN", KEYS.jobs], 3000), redis(["LLEN", KEYS.extendedJobs], 3000)]);
+    const depth = Number(main) + Number(ext);
     if (depth >= QUEUE_CAP) {
       return NextResponse.json({ online: true, busy: true, answer: null } satisfies AskResponse, { status: 503 });
     }
@@ -100,6 +106,9 @@ export async function POST(req: Request) {
       if (n > RATE_LIMIT_PER_MIN) {
         return NextResponse.json({ online: true, limited: true, answer: null } satisfies AskResponse, { status: 429 });
       }
+      if (extended && (await bumpWindow(KEYS.extendedRate(ip), 3600)) > EXTENDED_PER_HOUR) {
+        return NextResponse.json({ online: true, limited: true, extendedLimited: true, answer: null } satisfies AskResponse, { status: 429 });
+      }
     } catch {
       /* relay hiccup: don't block a real visitor over the counter */
     }
@@ -112,12 +121,13 @@ export async function POST(req: Request) {
     question,
     ts: Date.now(),
     priority,
+    ...(extended ? { extended: true } : {}),
     ...(history.length ? { history } : {}),
     ...(secret ? { secret } : {}),
   });
 
   try {
-    await redis([priority ? "RPUSH" : "LPUSH", KEYS.jobs, job], 5000);
+    await redis([priority ? "RPUSH" : "LPUSH", extended ? KEYS.extendedJobs : KEYS.jobs, job], 5000);
   } catch {
     return offline();
   }

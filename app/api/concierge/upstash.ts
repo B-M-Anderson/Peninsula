@@ -9,6 +9,9 @@ export const relayConfigured = (): boolean => Boolean(REST_URL && REST_TOKEN);
 
 export const KEYS = {
   jobs: "concierge:jobs",
+  /** Extended answers queue here; the node takes this list only when the main one is empty. */
+  extendedJobs: "concierge:jobs:extended",
+  extendedRate: (ip: string) => `concierge:extrate:${ip}`,
   heartbeat: "concierge:heartbeat",
   /** The last live heartbeat's numbers, with no expiry: what /ask shows while the desktop is off. */
   lastSeen: "concierge:lastseen",

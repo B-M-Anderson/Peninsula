@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Play, Send } from "lucide-react";
 import { TextLink } from "../components/ui";
 import { json, type AskResponse, type ProgressResponse, type StatusResponse } from "../lib/api-types";
 import SystemPanel, { ago } from "./SystemPanel";
 import { StyleSwitch } from "../lib/stylePref";
+import { storageGet, storageSet } from "../lib/storage";
 import "./notebook.css";
 
 type Line = { from: "you" | "bot" | "sys"; text: string };
 
-type Progress = { state: string; ahead: number; seconds: number };
+type Progress = { state: string; ahead: number; seconds: number; extended?: boolean };
 
 // Module scope on purpose: these are impure, and the React Compiler lint rightly
 // rejects calling them anywhere it considers render.
@@ -25,6 +26,43 @@ function nowMs(): number {
 }
 
 /** Plain-language account of where a question currently is. */
+// The visitor's Extended thinking choice. localStorage when it works, memory when it
+// is blocked, and a store rather than state so it never has to be seeded in an effect.
+const EXTENDED_KEY = "ask-extended";
+const extendedListeners = new Set<() => void>();
+let extendedMemory: boolean | null = null;
+function readExtended(): boolean {
+  return extendedMemory ?? storageGet("local", EXTENDED_KEY) === "1";
+}
+function writeExtended(on: boolean) {
+  extendedMemory = on;
+  storageSet("local", EXTENDED_KEY, on ? "1" : "0");
+  extendedListeners.forEach((f) => f());
+}
+function subscribeExtended(cb: () => void) {
+  extendedListeners.add(cb);
+  return () => {
+    extendedListeners.delete(cb);
+  };
+}
+const noExtended = () => false;
+
+function ExtendedToggle({ on, busy }: { on: boolean; busy: boolean }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+      <label style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-2)", fontSize: "var(--text-sm)", color: "var(--text-body)", cursor: busy ? "default" : "pointer", minHeight: 32 }}>
+        <input type="checkbox" role="switch" aria-checked={on} checked={on} disabled={busy} onChange={(e) => writeExtended(e.target.checked)} style={{ width: 18, height: 18, accentColor: "var(--text-accent)" }} />
+        Extended thinking
+      </label>
+      {on && (
+        <p style={{ margin: 0, fontSize: "var(--text-2xs)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
+          The model reasons before answering. On this machine that can take a few minutes.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function progressLabel(p: Progress): string {
   // `ahead` is the queue length, which counts this job too — so only claim a
   // number when there is genuinely someone else in line.
@@ -32,6 +70,10 @@ function progressLabel(p: Progress): string {
     return `waiting, ${p.ahead - 1} question${p.ahead - 1 === 1 ? "" : "s"} ahead of yours`;
   }
   if (p.state === "queued") return "waiting for the desktop to pick it up…";
+  if (p.state === "working" && p.extended) {
+    const m = Math.floor(p.seconds / 60);
+    return `thinking it through, ${m ? `${m}m ` : ""}${p.seconds % 60}s so far. Extended answers can take a few minutes.`;
+  }
   if (p.state === "working") {
     if (p.seconds < 4) return "the desktop picked it up";
     if (p.seconds < 15) return `writing an answer, ${p.seconds}s so far`;
@@ -92,6 +134,7 @@ const PROGRESS_POLL_MS = 2000;
 // looks off, so nobody watches a spinner for a machine that isn't there.
 const ANSWER_WAIT_ONLINE_MS = 150_000;
 const ANSWER_WAIT_OFFLINE_MS = 45_000;
+const ANSWER_WAIT_EXTENDED_MS = 300_000;
 
 const bubble = {
   padding: "10px 14px",
@@ -111,6 +154,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
   // The fast-lane passphrase, once the server has recognised it. It never
   // ships in the page; it is whatever was typed, kept for this visit only.
   const [priority, setPriority] = useState<string | null>(null);
+  const extendedOn = useSyncExternalStore(subscribeExtended, readExtended, noExtended);
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const inflight = useRef<{ abort: AbortController; poll: ReturnType<typeof setInterval> } | null>(null);
@@ -166,7 +210,8 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
     const jobId = newJobId();
     const startedAt = nowMs();
     const abort = new AbortController();
-    const waitMs = status?.online === true ? ANSWER_WAIT_ONLINE_MS : ANSWER_WAIT_OFFLINE_MS;
+    const extended = extendedOn && status?.online === true && Boolean(status?.extended);
+    const waitMs = extended ? ANSWER_WAIT_EXTENDED_MS : status?.online === true ? ANSWER_WAIT_ONLINE_MS : ANSWER_WAIT_OFFLINE_MS;
     // Settles with the answer, or null if the node failed or the wait ran out.
     let settle: (answer: string | null) => void = () => {};
     const answered = new Promise<string | null>((resolve) => {
@@ -177,9 +222,9 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
       const seconds = Math.round((Date.now() - startedAt) / 1000);
       if (seconds * 1000 >= waitMs) settle(null);
       try {
-        const r = await fetch(`/api/concierge/progress?id=${jobId}`, { cache: "no-store", signal: abort.signal });
+        const r = await fetch(`/api/concierge/progress?id=${jobId}${extended ? "&x=1" : ""}`, { cache: "no-store", signal: abort.signal });
         const p = await json<ProgressResponse>(r);
-        setProgress({ state: p.state ?? "queued", ahead: p.ahead ?? 0, seconds });
+        setProgress({ state: p.state ?? "queued", ahead: p.ahead ?? 0, seconds, extended });
         if (p.answer) settle(p.answer);
         else if (p.state === "failed") settle(null);
       } catch {
@@ -202,7 +247,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
           "Content-Type": "application/json",
           ...(priority ? { "x-concierge-priority": priority } : {}),
         },
-        body: JSON.stringify({ question: q.slice(0, MAX), history: history.slice(-2), id: jobId }),
+        body: JSON.stringify({ question: q.slice(0, MAX), history: history.slice(-2), id: jobId, ...(extended ? { extended: true } : {}) }),
         signal: abort.signal,
       });
       const data = await json<AskResponse>(res).catch((): AskResponse => ({ online: false, answer: null }));
@@ -215,6 +260,8 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
         setLines((l) => [...l.slice(0, -1), { from: "sys", text: "Priority is on, so your questions skip the line and the limits." }]);
       } else if (answer) {
         setLines((l) => [...l, { from: "bot", text: answer }]);
+      } else if (data.extendedLimited) {
+        setLines((l) => [...l, { from: "sys", text: "Extended thinking is limited to a few questions an hour. Turn it off to keep asking normally." }]);
       } else if (data.limited) {
         setLines((l) => [...l, { from: "sys", text: "That's a lot of questions in a minute, give it a moment before the next one." }]);
       } else if (data.busy) {
@@ -370,6 +417,13 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                   <span>Run</span>
                 </button>
               </form>
+
+              {status?.online === true && status.extended ? (
+                <div className="nb-cell" style={{ paddingTop: 0 }}>
+                  <span aria-hidden className="nb-prompt" />
+                  <ExtendedToggle on={extendedOn} busy={busy} />
+                </div>
+              ) : null}
 
               <div className="nb-foot">
                 <span className="nb-links">
@@ -586,10 +640,15 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
             <span>Ask</span>
           </button>
         </form>
+        {status?.online === true && status.extended ? (
+          <div style={{ padding: "0 var(--space-5) var(--space-4)" }}>
+            <ExtendedToggle on={extendedOn} busy={busy} />
+          </div>
+        ) : null}
       </div>
 
       <p className="md-lede" style={{ fontSize: "var(--text-sm)", margin: 0 }}>
-        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take 10 to 30 seconds and
+        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take about a minute and
         it only works while that computer is on.
       </p>
       {/* footer: escape hatches + counter */}

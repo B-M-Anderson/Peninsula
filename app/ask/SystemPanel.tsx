@@ -180,7 +180,7 @@ export default function SystemPanel({ status, now }: { status: StatusResponse | 
                   what="Prompt-injection attempts, impersonation, private topics and anything that would commit me to work get a fixed reply, and the model never sees them."
                 />
                 <Hop n={4} where="The model reads the relevant notes" what="A small router picks the one or two sections of my profile that fit your question, and the model only sees those. If something isn't in them, it's supposed to say it doesn't know." />
-                <Hop n={5} where="Back to you" what="Usually 10 to 30 seconds. Every answer is written fresh." last />
+                <Hop n={5} where="Back to you" what="Usually under a minute, or a few minutes with Extended thinking on. Every answer is written fresh." last />
               </ol>
             </div>
 

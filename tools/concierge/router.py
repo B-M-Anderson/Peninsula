@@ -39,10 +39,12 @@ WORD = re.compile(r"[a-z0-9']+")
 # asked about views, however similar its embedding looks.
 OPINION = re.compile(
     r"\b(think|thinks|opinion|opinions|view|views|believe|believes|belief|beliefs|stance|position|"
-    r"positions|feel about|feels about|support|supports|oppose|opposes|agree|agrees|take on)\b", re.I)
+    r"positions|feel about|feels about|support|supports|oppose|opposes|agree|agrees|take on|takes|stance on|"
+    r"say about|think of)\b", re.I)
 # Keywords that are also everyday words. "right now" must not count as politics.
 AMBIGUOUS = {"right", "left", "rights", "food", "water", "meaning", "truth", "knowledge", "government",
              "sports", "distrust", "budget"}
+GENERIC_SECTIONS = {"overview", "contact-and-boundaries"}
 ABOUT_HIM = re.compile(r"\b(?:he|his|him|bennett(?:'?s)?)\b", re.I)
 
 Route = namedtuple("Route", "ids notes scores max_sentences")
@@ -64,10 +66,19 @@ def cosine(a, b):
     return dot / (na * nb) if na and nb else 0.0
 
 
+STEM = 7     # words of 8+ letters compare on their first 7: philosophy ~ philosophical
+
+
 def _fold(text):
-    """Lowercase, tokenize, and drop a plural s, so 'papers' matches 'paper'."""
-    return [w[:-1] if len(w) > 3 and w.endswith("s") and not w.endswith("ss") else w
-            for w in WORD.findall(text.lower())]
+    """Lowercase, tokenize, drop a plural s, and stem long words, so 'papers' matches
+    'paper' and 'philosophical' matches 'philosophy'. Short words match exactly:
+    stemming 'health' would let 'healthy' reach the health-care views."""
+    out = []
+    for w in WORD.findall(text.lower()):
+        if len(w) > 3 and w.endswith("s") and not w.endswith("ss"):
+            w = w[:-1]
+        out.append(w[:STEM] if len(w) > STEM else w)
+    return out
 
 
 def keyword_hits(question, keywords, skip=()):
@@ -196,8 +207,11 @@ class KnowledgeBase:
     def is_uncovered_opinion(self, question):
         """Asking his view on something no section mentions. Nothing here can answer
         it, and any section the embedding picked would only be a non sequitur."""
+        # overview and contact carry generic phrases ("tell me about", "background")
+        # that every question about him can contain, so they cannot vouch for a topic.
         return bool(OPINION.search(question) and ABOUT_HIM.search(question)
-                    and not any(keyword_hits(question, s["keywords"]) for s in self.sections))
+                    and not any(keyword_hits(question, s["keywords"]) for s in self.sections
+                                if s["id"] not in GENERIC_SECTIONS))
 
     def render(self, picks):
         card = core_card(self.by_id["overview"]) if "overview" in self.by_id else ""

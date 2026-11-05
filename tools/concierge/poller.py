@@ -252,6 +252,7 @@ PRIVATE = re.compile(
     r"\b(?:does|has|is|was|did)\s+(?:he|bennett)\s+(?:\w+\s+){0,3}?"
     r"(?:health\s+(?:problems?|issues?|conditions?)|sick|ill|diagnosed|disabled|disabilit\w+|"
     r"on\s+medications?|in\s+therapy|depressed|depression|anxiety|adhd|autis\w+)\b|"
+    r"\b(?:is|was)\s+(?:he|bennett)\s+(?:healthy|unhealthy|okay|ok|alright|well)\b(?!\s+(?:known|read|versed))|"
     # relationships
     r"\b(?:his|bennett'?s)\s+(?:girlfriend|boyfriend|wife|husband|spouse|partner|fianc\w+|ex|dating|"
     r"love\s+life|sex\s+life|sexuality|relationships?)\b|"

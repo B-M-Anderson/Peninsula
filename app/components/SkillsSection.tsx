@@ -37,7 +37,6 @@ const categories = [
       { name: "SnapGene", strong: true },
       { name: "PyMOL", strong: false },
       { name: "CRISPR Gene Editing Concepts", strong: false },
-      { name: "gRNA Design", strong: false },
       { name: "Sequence Alignment", strong: false },
       { name: "Bioinformatics Basics", strong: true },
     ],

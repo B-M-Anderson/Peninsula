@@ -12,8 +12,8 @@ export const HERO_FACTS = ["Senior, graduating May 2027", "Minor in pharmacology
 
 // The two lines a recruiter or collaborator wants first.
 export const CURRENTLY = {
-  now: "Finishing senior year at Iowa State — reading papers, building small projects and learning new tools after wrapping an undergraduate research role in E. coli genetics.",
-  lookingFor: "Graduate school in pharmaceutical development, and open to industry. No location preference.",
+  now: "Finishing senior year at Iowa State and looking for my first industry role, while building small projects and writing, after wrapping an undergraduate research role in E. coli genetics.",
+  lookingFor: "A full-time industry role from May 2027 in R&D, computational modeling and simulation, or pharmacology and gene editing. Graduate school later, after time in industry. Open to most of the US.",
 };
 
 // The homepage introduction.

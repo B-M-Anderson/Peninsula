@@ -449,6 +449,22 @@ def set_progress(jid, state, **extra):
     except Exception as e:
         log.debug("progress write failed (non-fatal): %s", e)
 
+def heartbeat_loop():
+    """Publish the heartbeat on a fixed cadence, forever, whatever else happens.
+
+    Sleeps in short slices rather than one long one so a transient relay error
+    costs one beat instead of a whole interval, and never raises: a failed beat
+    must not take the thread down, or the site goes dark permanently.
+    """
+    while True:
+        try:
+            write_heartbeat()
+        except Exception as e:                                # noqa: BLE001
+            log.warning("heartbeat failed (will retry): %s", e)
+        for _ in range(HEARTBEAT_EVERY):
+            time.sleep(1)
+
+
 def write_heartbeat():
     n, hits = CACHE.stats()
     payload = json.dumps({
@@ -939,17 +955,27 @@ def main():
         write_heartbeat()
     except Exception as e:                                    # noqa: BLE001
         log.warning("could not publish the startup heartbeat: %s", e)
+    # The heartbeat gets its own thread, because it is the ONLY thing that
+    # decides whether the site says the concierge is up.
+    #
+    # It used to be written from the main loop, in between 50s blocking BRPOPs.
+    # That works right up until the box is busy: while the idle worker rebuilds
+    # the library, llama-server pegs all four cores (load 4.3 on a 4-core i5),
+    # the loop's turnaround stretches past the beat's 120s TTL, and the site
+    # reports the node unreachable while it is sitting there perfectly healthy.
+    # That is the worst possible failure -- visitors turned away from a working
+    # machine because a bookkeeping write was starved.
+    #
+    # A thread that does nothing but sleep and POST is scheduled even under full
+    # load, and it makes uptime independent of both job throughput and whatever
+    # the idle worker is doing.
+    threading.Thread(target=heartbeat_loop, name="heartbeat", daemon=True).start()
     warmup()
     n, hits = CACHE.stats()
     log.info("warm cache: %d entries (fingerprint %s), %d lifetime hits", n, FINGERPRINT, hits)
     threading.Thread(target=IDLE.run, name="idle-worker", daemon=True).start()
-    last_beat = 0.0
     while True:
         try:
-            now = time.time()
-            if now - last_beat >= HEARTBEAT_EVERY:
-                write_heartbeat()
-                last_beat = now
             # blocking pop keeps latency low without hammering the REST API
             res = redis("BRPOP", QUEUE_KEY, BRPOP_TIMEOUT, timeout=BRPOP_TIMEOUT + 10)
             if res:

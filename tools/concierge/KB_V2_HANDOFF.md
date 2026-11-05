@@ -81,9 +81,22 @@ Use a task list. Before you change anything, back up `~/.local/share/concierge/`
   6. **Notify**: send `changes.md` plus the smoke-test result. Ask Bennett which channel he wants: a Discord webhook (he runs Hermes on Discord) or email through a Gmail app password. Secrets go in an env file with chmod 600, never in git.
 - Add a one-command rollback (`tools/concierge/kb-rollback.sh` or a `just` recipe) and document it in `NODE_README.md`.
 
+### 7. "Extended thinking" switch for visitors (after step 4; branch → preview → approval)
+
+Bennett wants visitors to be able to opt into a slower, more careful answer, with the longer wait disclosed up front.
+
+- **UI**: a switch in the ask box in both `AskClient` looks, off by default, labelled "Extended thinking". When it's on, show a muted line right under it: "The model reasons before answering. On this machine that can take a few minutes." Remember the choice per visitor with the existing localStorage pattern (try/catch, memory fallback). Everything must be legible in both themes using the semantic tokens. While an extended answer is pending, show an elapsed-time counter and the queue position from `/api/concierge/progress`, so the wait is visible and honest.
+- **No 45 s ceiling for this mode**: extended answers will blow past `ANSWER_WAIT_MS`. For extended jobs, have `/api/concierge/ask` enqueue and return the job id immediately. The client then polls `/progress` until the answer lands, or until a 5-minute client cap passes, after which it shows the offline/timeout message. If you already made `/ask` async in step 4, reuse that path. Raise the answer and progress TTLs for extended jobs (both are 120 s/180 s today) to something like 600 s.
+- **Payload**: add `extended: boolean` to the job JSON. The node re-validates it like every other client field, and it is never trusted to change rails or tiers.
+- **Node behavior**: if the chosen model supports thinking (e.g. `qwen3.5:4b`), send `"think": true` for extended jobs and `"think": false` otherwise. Give thinking its own budget (raise `num_predict`; consider `num_ctx` 8192 for this mode if RAM allows) and enforce a wall-clock cap of about 180 s. On timeout, abort and fall back to a normal non-thinking answer with a short note that extended mode timed out. If the chosen model has no thinking mode, extended mode becomes "careful mode": up to 3 retrieved sections in place of 2, best-of-3 generation picked by `score()` plus a faithfulness check against the section text. The UI copy stays the same.
+- **Never show or store the reasoning trace.** Discard the `thinking` field. The trace can quote retrieved profile text and setup rules, which the visitor must never see. Strip any `<think>` blocks that leak into `content`.
+- **Protect other visitors**: there is one model slot, so a 2–3 minute extended job holds up everyone queued behind it. Allow at most one extended job in flight. Normal jobs jump ahead of queued extended ones (put them in a separate Redis list the poller checks second). Limit extended asks to a few per IP per hour.
+- **Status panel**: have the heartbeat report whether extended mode is available (`extended: "thinking" | "careful" | false`). The switch only renders when it's available, and is hidden while the node is offline.
+- **Eval**: run the step 4 eval set in extended mode too, and report whether it actually improves faithfulness and rail behavior, plus the p50/p90 wait. If extended mode is no better than normal mode on this hardware, tell Bennett before shipping the switch.
+
 ## Before you finish
 
 - Run the eval on the final config and include the numbers.
 - Ask the live site the stale question again ("What kind of work is Bennett looking for right now?") and confirm the answer now says job search.
-- Tell Bennett what you changed, what's waiting on his approval (with preview URLs), the model you picked and why, where the backups are, and how to roll back.
+- Tell Bennett what you changed, what's waiting on his approval (with preview URLs), the model you picked and why, how extended mode performed, where the backups are, and how to roll back.
 - Don't delete anything beyond the old cache file (after backing it up) without asking him.

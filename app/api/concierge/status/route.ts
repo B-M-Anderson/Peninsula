@@ -70,16 +70,14 @@ export async function GET() {
       runtime?: string;
       ts?: number;
       machine?: { cpu?: string; cores?: number; ramGb?: number; gpu?: string | null };
-      cache?: { entries?: number; hits?: number };
-      idle?: { precomputed?: number; improved?: number };
+      kb?: { updated?: string | null; sections?: number };
     };
     const lastSeen: LastSeen = {
       model: beat.model ?? "unknown",
       // Optional — an older node that predates these fields simply omits them,
       // and the page hides what it doesn't have rather than showing blanks.
       machine: beat.machine ?? null,
-      cache: beat.cache ?? null,
-      idle: beat.idle ?? null,
+      kb: beat.kb ?? null,
       at: Date.now(),
     };
     // Best effort: a failed write only means the offline view shows an older reading.
@@ -94,8 +92,7 @@ export async function GET() {
       host: CONCIERGE.host,
       latencyMs,
       machine: lastSeen.machine,
-      cache: lastSeen.cache,
-      idle: lastSeen.idle,
+      kb: lastSeen.kb,
       lastSeen,
     } satisfies StatusResponse);
   } catch {

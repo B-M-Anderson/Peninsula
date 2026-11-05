@@ -10,8 +10,7 @@ export type Machine = { cpu?: string; cores?: number; ramGb?: number; gpu?: stri
 export type LastSeen = {
   model: string | null;
   machine?: Machine | null;
-  cache?: { entries?: number; hits?: number } | null;
-  idle?: { precomputed?: number; improved?: number } | null;
+  kb?: { updated?: string | null; sections?: number } | null;
   /** When these numbers were read from a live heartbeat (epoch ms). */
   at: number;
 };
@@ -25,8 +24,7 @@ export type StatusResponse = {
   note?: string;
   latencyMs?: number;
   machine?: Machine | null;
-  cache?: { entries?: number; hits?: number } | null;
-  idle?: { precomputed?: number; improved?: number } | null;
+  kb?: { updated?: string | null; sections?: number } | null;
   /** Online: when these numbers were read (now). Offline: the last live reading, or null if there has never been one. */
   lastSeen?: LastSeen | null;
 };
@@ -36,6 +34,9 @@ export type AskResponse = {
   online: boolean;
   canned?: boolean;
   answer: string | null;
+  /** The job is in the queue; poll /progress with this id for its answer. */
+  queued?: true;
+  id?: string;
   limited?: true;
   busy?: true;
   unlocked?: true;
@@ -46,6 +47,8 @@ export type ProgressResponse = {
   ahead?: number;
   via?: string | null;
   ms?: number | null;
+  /** Present once, when the answer has landed. */
+  answer?: string | null;
 };
 
 export type Photo = { url: string; pathname: string; uploadedAt: string };

@@ -73,7 +73,7 @@ export default function SystemPanel({ status, now }: { status: StatusResponse | 
   const seen = status?.lastSeen ?? null;
   const model = status?.model ?? seen?.model ?? null;
   const m = status?.machine ?? seen?.machine;
-  const cache = status?.cache ?? seen?.cache;
+  const kb = status?.kb ?? seen?.kb;
   const cores = m?.cores ? `${m.cores} cores` : null;
   const ram = m?.ramGb ? `${m.ramGb} GB RAM` : null;
   const cpuShort = m?.cpu?.replace(/\(R\)|\(TM\)|CPU|@.*/g, "").trim();
@@ -145,10 +145,10 @@ export default function SystemPanel({ status, now }: { status: StatusResponse | 
                 gap: "var(--space-4)",
               }}
             >
-              <Stat k="Model" v={model ?? "—"} note={model ? "3 billion parameters, 4-bit quantized" : undefined} />
+              <Stat k="Model" v={model ?? "—"} note={model ? "a small open model, 4-bit quantized" : undefined} />
               <Stat k="Machine" v={cpuShort ?? "desktop"} note={[cores, ram].filter(Boolean).join(" · ") || undefined} />
               <Stat k="Graphics" v={m ? m.gpu || "None" : "—"} note={!m ? undefined : m.gpu ? "the model runs on the GPU" : "so every word gets worked out on the CPU"} />
-              <Stat k="Answer library" v={cache?.entries != null ? String(cache.entries) : "—"} note="answers it writes ahead of time while nobody's asking" />
+              <Stat k="Profile updated" v={kb?.updated ?? "—"} note="refreshed from my projects and posts twice a month" />
             </div>
 
             {seen ? (
@@ -177,23 +177,21 @@ export default function SystemPanel({ status, now }: { status: StatusResponse | 
                 <Hop
                   n={3}
                   where="Safety rails"
-                  what="Prompt-injection attempts, impersonation and anything that would commit me to work get a fixed reply, and the model never sees them."
+                  what="Prompt-injection attempts, impersonation, private topics and anything that would commit me to work get a fixed reply, and the model never sees them."
                 />
-                <Hop n={4} where="The model reads a profile" what="It gets one document about me. If something isn't in there, it's supposed to say it doesn't know." />
-                <Hop n={5} where="Back to you" what="Usually 10 to 20 seconds, or right away if someone asked the same thing before." last />
+                <Hop n={4} where="The model reads the relevant notes" what="A small router picks the one or two sections of my profile that fit your question, and the model only sees those. If something isn't in them, it's supposed to say it doesn't know." />
+                <Hop n={5} where="Back to you" what="Usually 10 to 30 seconds. Every answer is written fresh." last />
               </ol>
             </div>
 
             <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>
-              The wait is real. It&apos;s a small model on four CPU cores in my house, with no rented GPU anywhere in the chain. When nobody&apos;s asking it works
-              ahead, writing answers to the questions people tend to ask, so those come back as soon as you hit enter. Ask it something new and you&apos;re
-              waiting on that old desktop to actually think it through.
+              The wait is real. It&apos;s a small model on four CPU cores in my house, with no rented GPU anywhere in the chain. Every answer is written fresh
+              for your question, so you&apos;re waiting on that old desktop to actually think it through.
             </p>
 
             {online && status?.latencyMs != null && (
               <span style={{ ...mono, color: "var(--text-faint)" }}>
                 last heartbeat from the desktop · {status.latencyMs}ms round trip
-                {cache?.hits ? ` · ${cache.hits} answers served from cache` : ""}
               </span>
             )}
           </div>

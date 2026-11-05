@@ -5,11 +5,9 @@ import { sameSecret } from "../../../lib/secret";
 import type { AskResponse } from "../../../lib/api-types";
 
 // Concierge ask endpoint. Every question is enqueued to the desktop node via the
-// Upstash relay; we poll for the answer and return it. On timeout or any error we
-// FAIL CLOSED (answer:null -> UI shows the honest offline message). No canned
-// intercepts — the model answers everything, so real questions aren't hijacked.
-
-export const maxDuration = 60; // must exceed ANSWER_WAIT_MS (Vercel Hobby allows up to 60s)
+// relay and the job id is returned at once; /progress delivers the answer. On any
+// error we FAIL CLOSED (answer:null -> UI shows the honest offline message). No canned
+// intercepts here — real questions aren't hijacked before they reach the node.
 
 const MAX_QUESTION_LENGTH = 500;
 // Follow-ups ("where?", "tell me more") are meaningless without the turns before
@@ -39,15 +37,6 @@ function cleanHistory(raw: unknown): Turn[] {
     })
     .filter((t) => t.q.trim() && t.a.trim());
 }
-const ANSWER_WAIT_MS = 45000; // warm answers ~9-25s; generous ceiling before failing closed
-// Cached answers land within a second or two, so poll briskly at first, then
-// settle down — the browser's own progress poll covers the long waits.
-const POLL_FAST_MS = 500;
-const POLL_FAST_FOR_MS = 3000;
-const POLL_SLOW_MS = 1200;
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 const offline = () => NextResponse.json({ online: false, canned: false, answer: null } satisfies AskResponse);
 
 /** The fast-lane passphrase, or null when the fast lane is switched off. */
@@ -133,26 +122,8 @@ export async function POST(req: Request) {
     return offline();
   }
 
-  const started = Date.now();
-  const deadline = started + ANSWER_WAIT_MS;
-  while (Date.now() < deadline) {
-    await sleep(Date.now() - started < POLL_FAST_FOR_MS ? POLL_FAST_MS : POLL_SLOW_MS);
-    try {
-      const ans = await redis(["GET", KEYS.answer(id)], 4000);
-      if (ans) {
-        // consume the answer so it doesn't linger in the relay
-        redis(["DEL", KEYS.answer(id)], 3000).catch(() => {});
-        return NextResponse.json({
-          online: true,
-          canned: false,
-          answer: String(ans),
-        } satisfies AskResponse);
-      }
-    } catch {
-      // transient relay hiccup — keep polling until the deadline
-    }
-  }
-
-  // timed out waiting for the node -> fail closed
-  return offline();
+  // Hand back straight away: the page polls /progress until the answer lands. Holding
+  // this request open would cap every answer at the function's own time limit, and a
+  // careful answer from this CPU can take longer than that.
+  return NextResponse.json({ online: true, canned: false, answer: null, queued: true, id } satisfies AskResponse);
 }

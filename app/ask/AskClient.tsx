@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Play, Send } from "lucide-react";
 import { TextLink } from "../components/ui";
 import { json, type AskResponse, type ProgressResponse, type StatusResponse } from "../lib/api-types";
@@ -41,6 +42,19 @@ function progressLabel(p: Progress): string {
   return `working, ${p.seconds}s`;
 }
 
+/** Under every answer, in both looks. The disclaimer belongs to the page, not to the model. */
+function AnswerNote() {
+  return (
+    <p style={{ margin: 0, fontSize: "var(--text-2xs)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
+      Small local model. It makes mistakes and can state things that aren&apos;t true.{" "}
+      <Link href="/projects#local-llm-site-concierge" className="md-link" style={{ fontSize: "inherit" }}>
+        How this works
+        <span aria-hidden>→</span>
+      </Link>
+    </p>
+  );
+}
+
 type Cell = { n: number | null; q: string | null; out: { kind: "bot" | "sys"; text: string } | null };
 
 /** The transcript as notebook cells: each question with the output that answered it. */
@@ -74,6 +88,10 @@ const MAX = 500;
 const STATUS_REFRESH_MS = 30000;
 const THINKING = "thinking. It's a real computer in my house, so give it a few seconds";
 const PROGRESS_POLL_MS = 2000;
+// How long the page waits for an answer before giving up. Short when the desktop
+// looks off, so nobody watches a spinner for a machine that isn't there.
+const ANSWER_WAIT_ONLINE_MS = 150_000;
+const ANSWER_WAIT_OFFLINE_MS = 45_000;
 
 const bubble = {
   padding: "10px 14px",
@@ -148,12 +166,22 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
     const jobId = newJobId();
     const startedAt = nowMs();
     const abort = new AbortController();
+    const waitMs = status?.online === true ? ANSWER_WAIT_ONLINE_MS : ANSWER_WAIT_OFFLINE_MS;
+    // Settles with the answer, or null if the node failed or the wait ran out.
+    let settle: (answer: string | null) => void = () => {};
+    const answered = new Promise<string | null>((resolve) => {
+      settle = resolve;
+    });
+    abort.signal.addEventListener("abort", () => settle(null));
     const poll = setInterval(async () => {
       const seconds = Math.round((Date.now() - startedAt) / 1000);
+      if (seconds * 1000 >= waitMs) settle(null);
       try {
         const r = await fetch(`/api/concierge/progress?id=${jobId}`, { cache: "no-store", signal: abort.signal });
         const p = await json<ProgressResponse>(r);
         setProgress({ state: p.state ?? "queued", ahead: p.ahead ?? 0, seconds });
+        if (p.answer) settle(p.answer);
+        else if (p.state === "failed") settle(null);
       } catch {
         setProgress((prev) => (prev ? { ...prev, seconds } : prev));
       }
@@ -178,13 +206,15 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
         signal: abort.signal,
       });
       const data = await json<AskResponse>(res).catch((): AskResponse => ({ online: false, answer: null }));
+      const answer = data.queued ? await answered : data.answer;
+      if (abort.signal.aborted) return;
       if (data.unlocked) {
         // The passphrase was typed instead of a question: unlock the fast lane
         // and keep the passphrase itself out of the transcript.
         setPriority(q);
         setLines((l) => [...l.slice(0, -1), { from: "sys", text: "Priority is on, so your questions skip the line and the limits." }]);
-      } else if (data.answer) {
-        setLines((l) => [...l, { from: "bot", text: data.answer as string }]);
+      } else if (answer) {
+        setLines((l) => [...l, { from: "bot", text: answer }]);
       } else if (data.limited) {
         setLines((l) => [...l, { from: "sys", text: "That's a lot of questions in a minute, give it a moment before the next one." }]);
       } else if (data.busy) {
@@ -295,6 +325,12 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                             <div className={c.out.kind === "sys" ? "nb-out nb-notice" : "nb-out"}>{c.out.text}</div>
                           </div>
                         )}
+                        {c.out?.kind === "bot" && (
+                          <div className="nb-row">
+                            <span aria-hidden className="nb-prompt nb-outp" />
+                            <AnswerNote />
+                          </div>
+                        )}
                         {running && (
                           <div className="nb-row">
                             <span aria-hidden className="nb-prompt nb-outp" />
@@ -357,10 +393,6 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-      <p className="md-lede" style={{ fontSize: "var(--text-md)" }}>
-        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take 10 to 20 seconds and
-        it only works while that computer is on.
-      </p>
       {/* chat panel — arrives with the page; the bands are the one entrance */}
       <div
         style={{
@@ -379,7 +411,8 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: "var(--space-4)",
+            flexWrap: "wrap",
+            gap: "var(--space-2) var(--space-4)",
             padding: "var(--space-4) var(--space-5)",
             borderBottom: "1px solid var(--border-subtle)",
           }}
@@ -407,6 +440,9 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
               style={{ width: 7, height: 7, borderRadius: "50%", background: pill.dot, flex: "0 0 auto" }}
             />
             <span style={{ fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>{pill.label}</span>
+            <StyleSwitch page="ask" to="themed">
+              Notebook view
+            </StyleSwitch>
           </span>
         </div>
 
@@ -456,14 +492,14 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                 );
               }
               const you = line.from === "you";
-              return (
+              const message = (
                 <div
                   key={i}
                   className="md-fade-in"
                   style={{
                     ...bubble,
                     alignSelf: you ? "flex-end" : "flex-start",
-                    maxWidth: "86%",
+                    maxWidth: you ? "86%" : "100%",
                     borderBottomRightRadius: you ? 4 : 14,
                     borderBottomLeftRadius: you ? 14 : 4,
                     background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
@@ -473,6 +509,13 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                   }}
                 >
                   {line.text}
+                </div>
+              );
+              if (you) return message;
+              return (
+                <div key={i} style={{ alignSelf: "flex-start", maxWidth: "86%", display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                  {message}
+                  <AnswerNote />
                 </div>
               );
             })
@@ -545,9 +588,10 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
         </form>
       </div>
 
-      {/* what's actually running, for anyone curious enough to look */}
-      <SystemPanel status={status} now={checkedAt} />
-
+      <p className="md-lede" style={{ fontSize: "var(--text-sm)", margin: 0 }}>
+        There&apos;s no data center or AI company behind this, just a small open model on one old computer&apos;s CPU, so answers take 10 to 30 seconds and
+        it only works while that computer is on.
+      </p>
       {/* footer: escape hatches + counter */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
         <span style={{ display: "inline-flex", gap: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
@@ -560,11 +604,11 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
               {input.length}/{MAX}
             </span>
           )}
-          <StyleSwitch page="ask" to="themed">
-            Notebook view
-          </StyleSwitch>
         </span>
       </div>
+      {/* what's actually running, for anyone curious enough to look */}
+      <SystemPanel status={status} now={checkedAt} />
+
     </div>
   );
 }

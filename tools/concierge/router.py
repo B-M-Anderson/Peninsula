@@ -156,7 +156,7 @@ class KnowledgeBase:
         scored.sort(key=lambda p: p[0], reverse=True)
         return scored
 
-    def select(self, question, vector):
+    def select(self, question, vector, max_sections=MAX_SECTIONS):
         """Return (sections, {id: score}). Pure given a vector, so it is testable."""
         scored = self.score_all(question, vector)
         scores = {s["id"]: round(sc, 3) for sc, s in scored}
@@ -185,13 +185,13 @@ class KnowledgeBase:
         top_score, top = ranked[0]
         picks = [top]
         for sc, s in ranked[1:]:
-            if len(picks) >= MAX_SECTIONS:
+            if len(picks) >= max_sections:
                 break
             # Filling a slot from `asked` needs the topic itself, since a score alone
             # is mostly the shared word "Bennett".
             if top_score - sc <= SECOND_MARGIN and (s["tier"] != "asked" or asked_topic(s)):
                 picks.append(s)
-        if len(picks) < MAX_SECTIONS:
+        if len(picks) < max_sections:
             for rid in top.get("related", []):
                 r = self.by_id.get(rid)
                 if not r or r in picks or scores[rid] < RELATED_THRESHOLD:
@@ -221,7 +221,7 @@ class KnowledgeBase:
             parts.append(f"[{label}]\n{p['body']}")
         return "\n\n".join(parts)
 
-    def route(self, question, context=""):
+    def route(self, question, context="", max_sections=None):
         """`context` is the previous question, for follow-ups like "where?". It is
         sanitized by clean_history() first, and adds nothing a visitor could not
         have asked directly."""
@@ -229,7 +229,7 @@ class KnowledgeBase:
         if not self.ok:
             raise RuntimeError(f"KB unavailable: {self.error}")
         query = f"{context} {question}".strip() if len(question.split()) < 6 else question
-        picks, scores = self.select(query, embed_query(query))
+        picks, scores = self.select(query, embed_query(query), max_sections or MAX_SECTIONS)
         if not picks:
             # General or world question. Still give pronouns something to resolve to.
             return Route([], core_card(self.by_id["overview"]), scores, 4)

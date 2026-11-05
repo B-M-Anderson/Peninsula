@@ -15,7 +15,8 @@ import urllib.request
 from email.message import EmailMessage
 
 ENV = os.path.expanduser("~/.config/concierge/notify.env")
-LOG = os.path.expanduser("~/concierge-kb/build/refresh-log.md")
+LOG = os.path.join(os.environ.get("CONCIERGE_KB_DIR") or os.path.expanduser("~/concierge-kb"),
+                   "build", "refresh-log.md")
 DISCORD_LIMIT = 1900
 
 

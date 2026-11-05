@@ -19,7 +19,7 @@ STAMP="$(date +%Y%m%d)"
 CLAUDE="${CLAUDE_BIN:-$HOME/.local/bin/claude}"
 SUBSTACK="https://bennettmanderson.substack.com/feed"
 YOUTUBE="https://www.youtube.com/feeds/videos.xml?channel_id=UCY7H6pvaCxxdUModczjw_ew"
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH" CONCIERGE_KB_DIR="$KB"
 
 notify() { python3 "$HERE/kb_notify.py" "$WORK" "$1" || true; }
 die() { echo "refresh: $1" >&2; notify "FAILED: $1. The live KB was not changed."; exit 1; }
@@ -87,8 +87,9 @@ if ! python3 "$HERE/eval/run_eval.py" --core --gate >"$WORK/smoke.log" 2>&1; the
 fi
 
 # ---- 6. record and notify ----------------------------------------------------
-if grep -q "Applied inbox notes:" "$WORK/changes.md" && [ -s "$WORK/inbox.next.md" ]; then
-  { sed -n '/^Applied inbox notes:/,$p' "$WORK/changes.md" | tail -n +2; } >> "$KB/inbox-archive.md"
+APPLIED="$(sed -n '/^Applied inbox notes:/,$p' "$WORK/changes.md" | grep -E '^- *[0-9]{4}-[0-9]{2}-[0-9]{2}:' || true)"
+if [ -n "$APPLIED" ] && [ -s "$WORK/inbox.next.md" ]; then
+  printf '%s\n' "$APPLIED" >> "$KB/inbox-archive.md"
   cp "$WORK/inbox.next.md" "$KB/inbox.md"
 fi
 git -C "$KB" add profile.md inbox.md backups eval

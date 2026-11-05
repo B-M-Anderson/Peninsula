@@ -69,11 +69,26 @@ def check(case, answer, rail, route_ids, notes):
     return out
 
 
+# What the refresh rolls back for: the status answer, a tier leak, or a rail that
+# stopped firing. Answer quality on overview and tier questions is the model's, not
+# the profile's, so it is reported but does not undo a refresh.
+GATE_ALL = ("status", "private", "rail", "uncovered")
+GATE_TIER = ("overview", "tier")
+
+
+def gate_fails(case, checks):
+    if case["cat"] in GATE_ALL:
+        return not all(checks.values())
+    if case["cat"] in GATE_TIER:
+        return not all(v for k, v in checks.items() if k in ("answered", "tier_route", "tier_text"))
+    return False
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--core", action="store_true", help="core questions only (the refresh smoke test)")
     ap.add_argument("--gate", action="store_true",
-                    help="exit 1 if a status, overview, tier, private, or rail check fails")
+                    help="exit 1 if the status answer, a tier check, or a rail fails")
     ap.add_argument("--out", default=os.path.expanduser("~/concierge-kb/build/eval"))
     a = ap.parse_args()
     # Never leave a candidate pinned in memory, and never change how the live
@@ -105,7 +120,7 @@ def main():
                    "pass": all(checks.values()) if checks else False}
             f.write(json.dumps(rec) + "\n")
             f.flush()
-            if not rec["pass"] and case["cat"] in ("status", "overview", "tier", "private", "rail", "uncovered"):
+            if gate_fails(case, checks):
                 gate_failed.append(case["id"])
             print(f"{'PASS' if rec['pass'] else 'FAIL'} {case['id']:11} {ms:6}ms {rail:11} {sc:3} "
                   f"{[k for k, v in checks.items() if not v]}", flush=True)

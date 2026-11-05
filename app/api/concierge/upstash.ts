@@ -44,3 +44,35 @@ export async function redis(
     clearTimeout(timer);
   }
 }
+
+// ---- Fixed-window counters ----------------------------------------------------
+//
+// Built on GET and SET ... EX only. The self-hosted relay implements a short list of
+// commands: it refuses INCR and ignores SET's NX flag, so the usual "SET NX EX, then
+// INCR" pattern fails every time, and callers that swallow relay errors then have no
+// limit at all. The value carries its own window end, so bumping never extends it.
+//
+// GET-then-SET is not atomic, so simultaneous requests can undercount slightly. These
+// counters stop floods and guessing, and a small undercount changes neither.
+
+function parseWindow(raw: unknown): { count: number; resetAt: number } {
+  const [count, resetAt] = String(raw ?? "").split(":").map(Number);
+  return { count: count || 0, resetAt: resetAt || 0 };
+}
+
+/** How many times `key` has been bumped in its current window. Throws on a relay error. */
+export async function readWindow(key: string, timeoutMs = 3000): Promise<number> {
+  const { count, resetAt } = parseWindow(await redis(["GET", key], timeoutMs));
+  return resetAt > Date.now() / 1000 ? count : 0;
+}
+
+/** Add one to `key`, starting a new window if needed, and return the new count. Throws on a relay error. */
+export async function bumpWindow(key: string, windowSeconds: number, timeoutMs = 3000): Promise<number> {
+  const now = Math.floor(Date.now() / 1000);
+  const current = parseWindow(await redis(["GET", key], timeoutMs));
+  const live = current.resetAt > now;
+  const count = (live ? current.count : 0) + 1;
+  const resetAt = live ? current.resetAt : now + windowSeconds;
+  await redis(["SET", key, `${count}:${resetAt}`, "EX", Math.max(1, resetAt - now)], timeoutMs);
+  return count;
+}

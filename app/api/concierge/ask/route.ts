@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { redis, relayConfigured, KEYS } from "../upstash";
+import { bumpWindow, redis, relayConfigured, KEYS } from "../upstash";
 import { sameSecret } from "../../../lib/secret";
 import type { AskResponse } from "../../../lib/api-types";
 
@@ -107,10 +107,7 @@ export async function POST(req: Request) {
   if (!priority) {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
     try {
-      // The window is created with its expiry in one command (SET NX EX) so a
-      // missed EXPIRE can never leave a counter that only ever climbs.
-      await redis(["SET", KEYS.rate(ip), 0, "EX", 60, "NX"], 3000);
-      const n = Number(await redis(["INCR", KEYS.rate(ip)], 3000));
+      const n = await bumpWindow(KEYS.rate(ip), 60);
       if (n > RATE_LIMIT_PER_MIN) {
         return NextResponse.json({ online: true, limited: true, answer: null } satisfies AskResponse, { status: 429 });
       }

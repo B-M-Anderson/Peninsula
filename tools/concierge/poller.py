@@ -415,8 +415,8 @@ def _safe_candidate(out):
 
 
 def answer_for(question, history=None):
-    global LAST_RAIL, LAST_ROUTE, LAST_SCORE, ROUTES_SERVED
-    LAST_ROUTE, LAST_SCORE = [], None
+    global LAST_RAIL, LAST_ROUTE, LAST_SCORE, LAST_PROMPT_TOKENS, ROUTES_SERVED
+    LAST_ROUTE, LAST_SCORE, LAST_PROMPT_TOKENS = [], None, 0
     q = (question or "").strip()
     if not q or len(q) > MAX_QUESTION or LEAK.search(q):
         LAST_RAIL = "leak"
@@ -592,6 +592,8 @@ def handle(raw):
     dt = int((time.time() - t0) * 1000)
     if ans is None:
         log.info("job %s -> offline fallback (%dms)", jid, dt)
+        # Lets the waiting page say so now instead of running out its whole wait.
+        set_progress(jid, "failed")
         warmcache.log_activity("failed", question=oneline(question, 400),
                                rail=LAST_RAIL, ms=dt, jid=str(jid),
                                synthetic=synthetic)

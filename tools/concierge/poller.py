@@ -54,6 +54,10 @@ SHARED_SECRET = os.environ.get("CONCIERGE_SHARED_SECRET", "").strip()
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434").rstrip("/")
 
 QUEUE_KEY = "concierge:jobs"
+# Extended answers wait in their own list. BRPOP takes keys in order, so a normal
+# question always goes first: one slow careful answer must not hold up everyone.
+EXT_QUEUE_KEY = "concierge:jobs:extended"
+EXTENDED_TTL = 600        # answer and progress keys for extended jobs outlive the longer wait
 ANSWER_PREFIX = "concierge:answer:"
 HEARTBEAT_KEY = "concierge:heartbeat"
 ANSWER_TTL = 120          # seconds a written answer lives
@@ -86,6 +90,13 @@ RETRY_TEMPERATURE = 0.5
 BASE_TEMPERATURE = 0.2
 NUM_PREDICT = 160         # generation is ~15 tokens/s on this CPU, so this bounds the wait
 KEEP_ALIVE = -1           # keep the model resident so first-after-idle is not a 60s cold start
+# "auto" uses thinking when the model has it. "careful" never thinks: qwen3.5:4b on
+# this CPU thought for 1,700 tokens (6 minutes) without starting an answer, so
+# thinking cannot fit any wait a visitor would sit through here. "0" turns it off.
+EXTENDED = os.environ.get("CONCIERGE_EXTENDED", "careful").strip().lower()
+EXT_WALL = 180            # seconds an extended answer may think before it is cut off
+EXT_PREDICT = 700         # thinking and answer together; ~4.6 tokens/s here, so ~150s
+EXT_SECTIONS = 3          # careful mode, for a model with no thinking switch
 
 logging.basicConfig(
     level=logging.INFO,
@@ -252,6 +263,7 @@ PRIVATE = re.compile(
     r"\b(?:does|has|is|was|did)\s+(?:he|bennett)\s+(?:\w+\s+){0,3}?"
     r"(?:health\s+(?:problems?|issues?|conditions?)|sick|ill|diagnosed|disabled|disabilit\w+|"
     r"on\s+medications?|in\s+therapy|depressed|depression|anxiety|adhd|autis\w+)\b|"
+    r"\b(?:is|was)\s+(?:he|bennett)\s+(?:healthy|unhealthy|okay|ok|alright|well)\b(?!\s+(?:known|read|versed))|"
     # relationships
     r"\b(?:his|bennett'?s)\s+(?:girlfriend|boyfriend|wife|husband|spouse|partner|fianc\w+|ex|dating|"
     r"love\s+life|sex\s+life|sexuality|relationships?)\b|"
@@ -332,7 +344,7 @@ def build_user_turn(question, notes):
 
 
 def _chat_body(question, notes="", temperature=BASE_TEMPERATURE, history=None, model=None,
-               num_predict=NUM_PREDICT):
+               num_predict=NUM_PREDICT, think=False):
     messages = [{"role": "system", "content": SYSTEM}]
     for turn in history or []:
         messages.append({"role": "user", "content": turn["q"]})
@@ -350,7 +362,7 @@ def _chat_body(question, notes="", temperature=BASE_TEMPERATURE, history=None, m
         "options": {"temperature": temperature, "num_predict": num_predict, "num_ctx": NUM_CTX},
     }
     if THINKS:
-        body["think"] = False
+        body["think"] = bool(think)
     return json.dumps(body).encode()
 
 THINK_BLOCK = re.compile(r"<think>.*?(?:</think>|$)", re.S | re.I)
@@ -375,16 +387,17 @@ LAST_PROMPT_TOKENS = 0
 LAST_THINKING_CHARS = 0
 
 
-def generate(question, notes="", history=None, temperature=BASE_TEMPERATURE):
+def generate(question, notes="", history=None, temperature=BASE_TEMPERATURE, think=False,
+             num_predict=NUM_PREDICT, timeout=120):
     """Run the model once. Raises on error so the caller can fail closed."""
     global LAST_PROMPT_TOKENS
     req = urllib.request.Request(
         f"{OLLAMA_URL}/api/chat",
-        data=_chat_body(question, notes, temperature, history),
+        data=_chat_body(question, notes, temperature, history, num_predict=num_predict, think=think),
         headers={"Content-Type": "application/json"})
-    # 120s: longer than the site's wait on purpose, so a slow answer is logged here
-    # rather than vanishing. The route fails closed on its own 45s ceiling.
-    with urllib.request.urlopen(req, timeout=120) as r:
+    # Closing the connection on timeout makes Ollama cancel the task, so a cut-off
+    # extended answer frees the model for the next visitor straight away.
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         payload = json.loads(r.read())
     # The trace is dropped here and never stored. Only its size is kept, to prove
     # think:false really worked.
@@ -414,7 +427,50 @@ def _safe_candidate(out):
     return bool(out) and not warmcache.leaks_instructions(out)
 
 
-def answer_for(question, history=None):
+def extended_mode():
+    """What an extended answer means on this node, as the heartbeat reports it."""
+    if EXTENDED in ("0", "off", "false", ""):
+        return False
+    return "thinking" if THINKS and EXTENDED == "auto" else "careful"
+
+
+def answer_extended(q, history):
+    """A slower, more careful answer. With a thinking model it reasons first, under a
+    wall-clock cap. Without one it reads more sections and keeps the best of three.
+
+    The reasoning trace is discarded in generate() and never stored or shown: it can
+    quote the notes and the setup rules. Rails, tiers, and history sanitizing are the
+    same as for a normal answer, so 'extended' can never change what is allowed."""
+    global LAST_ROUTE
+    if extended_mode() == "thinking":
+        route = KB.route(q, context=history[-1]["q"] if history else "")
+        LAST_ROUTE = route.ids
+        try:
+            out = generate(q, route.notes, history=history, think=True,
+                           num_predict=EXT_PREDICT, timeout=EXT_WALL)
+            if _safe_candidate(out):
+                return out, route
+        except Exception as e:                                # noqa: BLE001
+            log.info("extended answer stopped (%s); falling back to a standard one", e)
+        out = generate(q, route.notes, history=history)
+        if out:
+            out = ("Extended thinking ran out of time, so this is the standard answer. " + out)
+        return out, route
+    route = KB.route(q, context=history[-1]["q"] if history else "", max_sections=EXT_SECTIONS)
+    LAST_ROUTE = route.ids
+    # Three drafts over more of the profile, then the one that is best on register
+    # and adds the fewest names or numbers the notes do not contain.
+    best, best_score = None, -10**6
+    for t in (BASE_TEMPERATURE, 0.4, 0.6):
+        cand = generate(q, route.notes, history=history, temperature=t)
+        if _safe_candidate(cand):
+            sc = warmcache.score(cand, route.max_sentences)[0] - 15 * len(warmcache.unsupported(cand, route.notes, q))
+            if sc > best_score:
+                best, best_score = cand, sc
+    return best, route
+
+
+def answer_for(question, history=None, extended=False):
     global LAST_RAIL, LAST_ROUTE, LAST_SCORE, LAST_PROMPT_TOKENS, ROUTES_SERVED
     LAST_ROUTE, LAST_SCORE, LAST_PROMPT_TOKENS = [], None, 0
     q = (question or "").strip()
@@ -434,6 +490,20 @@ def answer_for(question, history=None):
         LAST_RAIL = "uncovered"
         return UNCOVERED_MSG
     history = clean_history(history)
+    if extended and extended_mode():
+        try:
+            out, route = answer_extended(q, history)
+        except Exception as e:                                # noqa: BLE001
+            LAST_RAIL = "error"
+            log.warning("extended answer failed, failing closed: %s", e)
+            return None
+        if not out:
+            LAST_RAIL = "leak" if out is None else "error"
+            return REFUSAL if out is None else None
+        LAST_SCORE = warmcache.score(out, route.max_sentences)[0]
+        LAST_RAIL = "extended"
+        ROUTES_SERVED += 1
+        return out
     try:
         # may reload the index
         route = KB.route(q, context=history[-1]["q"] if history else "")
@@ -523,12 +593,12 @@ def machine_facts():
 
 MACHINE = machine_facts()
 
-def set_progress(jid, state, **extra):
+def set_progress(jid, state, ttl=None, **extra):
     """Publish per-job state so the waiting page can show something truthful.
     Best-effort: a failure here must never cost the visitor their answer."""
     try:
         payload = json.dumps({"state": state, "ts": int(time.time()), **extra})
-        redis("SET", PROGRESS_PREFIX + str(jid), payload, "EX", PROGRESS_TTL, timeout=6)
+        redis("SET", PROGRESS_PREFIX + str(jid), payload, "EX", ttl or PROGRESS_TTL, timeout=6)
     except Exception as e:
         log.debug("progress write failed (non-fatal): %s", e)
 
@@ -566,6 +636,7 @@ def write_heartbeat():
         "model": MODEL, "runtime": "ollama", "ts": int(time.time()),
         "machine": MACHINE,
         "kb": {"updated": KB.updated, "sections": KB.size, "answers": ROUTES_SERVED},
+        "extended": extended_mode(),
     })
     redis("SET", HEARTBEAT_KEY, payload, "EX", HEARTBEAT_TTL)
 
@@ -589,8 +660,12 @@ def handle(raw):
         return
     history = job.get("history")
     n_hist = len(history) if isinstance(history, list) else 0
-    log.info("job %s ask%s: %s", jid, f" (+{n_hist} prior turns)" if n_hist else "",
-             oneline(question, 300))
+    # Strictly a JSON true. The flag only chooses how hard to think; rails, tiers and
+    # history are re-checked exactly as for any other question.
+    extended = job.get("extended") is True
+    ttl = EXTENDED_TTL if extended else None
+    log.info("job %s ask%s%s: %s", jid, " [extended]" if extended else "",
+             f" (+{n_hist} prior turns)" if n_hist else "", oneline(question, 300))
     # A visitor question is the one thing that was never recorded anywhere
     # durable. activity.jsonl was written exclusively by IdleWorker, and the
     # cache cannot stand in for it: a cache hit writes nothing at all, a
@@ -608,13 +683,20 @@ def handle(raw):
     t0 = time.time()
     # Tell the waiting browser its question has been picked up. Without this the
     # page cannot tell "queued behind something" from "being written right now".
-    set_progress(jid, "working")
-    ans = answer_for(question, history=history)
+    set_progress(jid, "working", ttl=ttl)
+    if synthetic:
+        # The watchdog asks every 30 minutes to prove relay -> poller -> model ->
+        # answer key works. A real answer from a 4B model costs a minute of CPU and
+        # makes any visitor queued behind it wait, so prove the model with a
+        # one-token reply on the same runner instead.
+        ans = probe_model()
+    else:
+        ans = answer_for(question, history=history, extended=extended)
     dt = int((time.time() - t0) * 1000)
     if ans is None:
         log.info("job %s -> offline fallback (%dms)", jid, dt)
         # Lets the waiting page say so now instead of running out its whole wait.
-        set_progress(jid, "failed")
+        set_progress(jid, "failed", ttl=ttl)
         warmcache.log_activity("failed", question=oneline(question, 400),
                                rail=LAST_RAIL, ms=dt, jid=str(jid),
                                synthetic=synthetic)
@@ -624,7 +706,7 @@ def handle(raw):
                                  rail=LAST_RAIL, ms=dt, turns=n_hist,
                                  failed=True, **origin)
         return  # no answer key written; route times out -> honest offline
-    redis("SET", ANSWER_PREFIX + str(jid), ans, "EX", ANSWER_TTL)
+    redis("SET", ANSWER_PREFIX + str(jid), ans, "EX", ttl or ANSWER_TTL)
     # LAST_RAIL only ever reached journald and a TTL'd progress key, so which
     # rail served a visitor was unrecoverable minutes later. Bank it.
     warmcache.log_activity("served", question=oneline(question, 400),
@@ -637,9 +719,23 @@ def handle(raw):
         warmcache.log_served(jid=str(jid), question=question,
                              answer=ans, rail=LAST_RAIL, ms=dt,
                              turns=n_hist, sections=LAST_ROUTE, **origin)
-    set_progress(jid, "done", via=LAST_RAIL, ms=dt)
+    set_progress(jid, "done", ttl=ttl, via=LAST_RAIL, ms=dt)
     log.info("job %s answered (%dms, %dch, %d prompt tokens) via %s %s: %s",
              jid, dt, len(ans), LAST_PROMPT_TOKENS, LAST_RAIL, LAST_ROUTE, oneline(ans, 300))
+
+def probe_model():
+    """One token from the live runner, with the poller's own settings. None on failure."""
+    global LAST_RAIL
+    LAST_RAIL = "probe"
+    try:
+        generate("Reply with the single word OK.", num_predict=1, timeout=60)
+        return "OK (watchdog probe: relay, poller and model all answered)"
+    except Exception as e:                                    # noqa: BLE001
+        log.warning("watchdog probe could not reach the model: %s", e)
+        if isinstance(e, TimeoutError) or "timed out" in str(e):
+            unload_model()
+        return None
+
 
 def warmup():
     """Load both models and cache the SYSTEM prefix before serving, so the first
@@ -709,7 +805,7 @@ def main():
     while True:
         try:
             # blocking pop keeps latency low without hammering the REST API
-            res = redis("BRPOP", QUEUE_KEY, BRPOP_TIMEOUT, timeout=BRPOP_TIMEOUT + 10)
+            res = redis("BRPOP", QUEUE_KEY, EXT_QUEUE_KEY, BRPOP_TIMEOUT, timeout=BRPOP_TIMEOUT + 10)
             if res:
                 # BRPOP returns [key, value]
                 handle(res[1] if isinstance(res, list) else res)

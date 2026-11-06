@@ -54,7 +54,7 @@ def check(case, answer, rail, route_ids, notes):
     if case.get("expect"):
         out["rail"] = rail == case["expect"]
         return out
-    out["model_called"] = rail in ("model", "context")
+    out["model_called"] = rail in ("model", "context", "extended")
     for pat in case.get("must", []):
         out[f"must:{pat[:24]}"] = bool(re.search(pat, answer, re.I))
     for pat in case.get("must_not", []):
@@ -87,6 +87,8 @@ def gate_fails(case, checks):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--core", action="store_true", help="core questions only (the refresh smoke test)")
+    ap.add_argument("--extended", action="store_true", help="ask every question in extended mode")
+    ap.add_argument("--ids", help="comma-separated question ids to run")
     ap.add_argument("--gate", action="store_true",
                     help="exit 1 if the status answer, a tier check, or a rail fails")
     ap.add_argument("--out", default=os.path.expanduser("~/concierge-kb/build/eval"))
@@ -100,15 +102,19 @@ def main():
     cases = json.load(open(QUESTIONS))
     if a.core:
         cases = [c for c in cases if c.get("core")]
+    if a.ids:
+        want = set(a.ids.split(","))
+        cases = [c for c in cases if c["id"] in want]
     gate_failed = []
     poller.warmup()    # as the live poller does, so a cold start is not scored as an answer
-    path = os.path.join(a.out, f"{'gate' if a.gate else 'results'}-{poller.MODEL.replace(':', '_').replace('/', '_')}.jsonl")
+    path = os.path.join(a.out, f"{'gate' if a.gate else 'results'}{'-extended' if a.extended else ''}-{poller.MODEL.replace(':', '_').replace('/', '_')}.jsonl")
     with open(path, "w") as f:
         for case in cases:
             t0 = time.time()
-            answer = poller.answer_for(case["q"])
+            answer = poller.answer_for(case["q"], extended=a.extended)
             ms = int((time.time() - t0) * 1000)
-            route = poller.KB.route(case["q"]) if poller.LAST_RAIL in ("model", "context") else None
+            route = (poller.KB.route(case["q"], max_sections=poller.EXT_SECTIONS if a.extended else None)
+                     if poller.LAST_RAIL in ("model", "context", "extended") else None)
             rail = poller.LAST_RAIL
             checks = check(case, answer, rail, poller.LAST_ROUTE, route.notes if route else "")
             max_s = route.max_sentences if route else 4

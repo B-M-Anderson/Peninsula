@@ -2265,6 +2265,24 @@ html.light .mw,
   }
 }
 
+/* The way back to the plain look, pointed out once per visit (useSwitchHint). Under
+   reduced motion the global rule below stops the pulse, and the outline stays as a
+   still highlight for the same few seconds. */
+.md-switch-wrap {
+  display: inline-flex;
+}
+.md-switch-hint > .md-btn,
+.md-switch-hint.mw-tool {
+  outline: 2px solid var(--border-accent);
+  outline-offset: 2px;
+  color: var(--text-strong);
+  animation: md-switch-hint 1.5s ease-in-out 3;
+}
+@keyframes md-switch-hint {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 6px var(--border-accent); }
+}
+
 /* subtle pulse for status dots — the one animation carried over */
 @keyframes md-pulse {
   0%, 100% { opacity: 1; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "../components/ui";
 import { storageGet, storageSet } from "./storage";
 
@@ -72,11 +72,37 @@ export function StyleView({ page, themed, plain, serverDefault }: { page: string
 }
 
 /** The button that flips a page to the other look. */
+/**
+ * Draws the eye to the way back to the plain look, once per visit to a page, when the
+ * fun look was chosen automatically. Someone who picked a look already knows the
+ * switch exists. The class is added and removed on the element directly, so there is
+ * no state to set during an effect.
+ */
+export function useSwitchHint<T extends HTMLElement>(page: string, active = true) {
+  const ref = useRef<T | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !active || saved(page) !== null) return;
+    const key = `style-hint-${page}`;
+    if (storageGet("session", key)) return;
+    storageSet("session", key, "1");    // blocked storage: it shows on each visit instead
+    el.classList.add("md-switch-hint");
+    const t = setTimeout(() => el.classList.remove("md-switch-hint"), HINT_MS);
+    return () => clearTimeout(t);
+  }, [page, active]);
+  return ref;
+}
+
+const HINT_MS = 4800;
+
 export function StyleSwitch({ page, to, children }: { page: string; to: StyleChoice; children: ReactNode }) {
   const [, set] = useStyleChoice(page);
+  const hint = useSwitchHint<HTMLSpanElement>(page, to === "plain");
   return (
-    <Button size="sm" variant="ghost" onClick={() => set(to)}>
-      {children}
-    </Button>
+    <span ref={hint} className="md-switch-wrap">
+      <Button size="sm" variant="ghost" onClick={() => set(to)}>
+        {children}
+      </Button>
+    </span>
   );
 }

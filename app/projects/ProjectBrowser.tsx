@@ -8,7 +8,7 @@ import { statusColor, statusLabel } from "../components/ui";
 import CommandWindow from "./CommandWindow";
 import type { CmdChannel, CmdFeedItem } from "./matlabCommands";
 import PlotFigure from "./PlotFigure";
-import { useStyleChoice } from "../lib/stylePref";
+import { useStyleChoice, useSwitchHint } from "../lib/stylePref";
 import type { ProjectStatus } from "../data/projects";
 
 /* The projects page as a MATLAB-style desktop: ribbon (filter + sort), Current
@@ -96,6 +96,7 @@ const bring = (el: HTMLElement | null, smooth = true) => el?.scrollIntoView({ bl
 export default function ProjectBrowser({ rows, activity }: { rows: BrowserRow[]; activity?: ActivityPanel }) {
   const hash = useSyncExternalStore(subscribeHash, readHash, noHash);
   const [, setView] = useStyleChoice("projects");
+  const classicHint = useSwitchHint<HTMLButtonElement>("projects");
   // A click records the visitor's pick with the hash it was made under; a later
   // real hash change (back/forward, a pasted link) outranks it.
   const [choice, setChoice] = useState<{ hash: string; id: string } | undefined>(undefined);
@@ -314,7 +315,7 @@ export default function ProjectBrowser({ rows, activity }: { rows: BrowserRow[];
         ) : null}
         <div className="mw-group">
           <div role="group" aria-label="View" className="mw-btns">
-            <button type="button" className="mw-tool" onClick={() => setView("plain")}>
+            <button ref={classicHint} type="button" className="mw-tool" onClick={() => setView("plain")}>
               <LayoutList size={20} strokeWidth={1.6} />
               <span>Classic view</span>
             </button>

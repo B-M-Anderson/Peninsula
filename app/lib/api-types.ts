@@ -25,6 +25,8 @@ export type StatusResponse = {
   latencyMs?: number;
   machine?: Machine | null;
   kb?: { updated?: string | null; sections?: number } | null;
+  /** What an extended answer means on the node right now, or false when it is off. */
+  extended?: "thinking" | "careful" | false | null;
   /** Online: when these numbers were read (now). Offline: the last live reading, or null if there has never been one. */
   lastSeen?: LastSeen | null;
 };
@@ -38,6 +40,8 @@ export type AskResponse = {
   queued?: true;
   id?: string;
   limited?: true;
+  /** The extended-answer budget for this address is spent; a normal question still works. */
+  extendedLimited?: true;
   busy?: true;
   unlocked?: true;
 };

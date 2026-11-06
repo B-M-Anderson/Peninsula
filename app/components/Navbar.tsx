@@ -12,7 +12,7 @@ import { storageGet, storageSet } from "../lib/storage";
 const links = [
   { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
-  { href: "/ask", label: "askAI" },
+  { href: "/ask", label: "askB.AI" },
   { href: "/contact", label: "Contact" },
 ];
 

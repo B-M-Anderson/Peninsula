@@ -79,7 +79,7 @@ Finished and in use playing Wii, watching The Matrix, and eventually for use in 
 
   {
     title: "Local-LLM Site Concierge",
-    description: `The **askAI** page on this site, answered by a small language model running on an old desktop in my house. No cloud inference, no API key, no data centre.
+    description: `The **askB.AI** page on this site, answered by a small language model running on an old desktop in my house. No cloud inference, no API key, no data centre.
 
 **The plumbing is the hard part, not the model.** My desktop sits behind NAT with nothing open to the internet, and I wasn't willing to forward a port to run a toy. So the connection only ever runs outward: the Vercel route pushes a job onto an Upstash Redis queue, the desktop long-polls that queue over HTTPS, runs the question against a local Ollama model, and writes the answer back under the job's id. Nothing ever reaches in. The desktop also publishes a heartbeat with a short TTL — if it goes stale the site knows the node is down and says so, in plain language, with links, instead of hanging.
 
@@ -224,9 +224,9 @@ Its most useful feature is **pairs**: two clips joined into one item, composited
 My personal website, built from scratch with **Next.js, TypeScript and Tailwind CSS** and hosted on **Vercel** with a custom domain.
 
 It started in November 2025 as a project list and a resume. It's been redesigned twice since then, the second time into the brown and tan look it has now, and a lot got added along the way:
-- **askAI**, where a small language model on an old desktop in my house answers questions about me. It has its own entry in this list.
+- **askB.AI**, where a small language model on an old desktop in my house answers questions about me. It has its own entry in this list.
 - A **Recent posts** feed that pulls in my YouTube and Substack uploads by itself every 15 minutes.
-- Software-themed versions of three pages, each with a plain view that phones get by default. Projects is a MATLAB desktop with a working Command Window, askAI is a Jupyter notebook and Contact is a plasmid map.
+- Software-themed versions of three pages, each with a plain view that phones get by default. Projects is a MATLAB desktop with a working Command Window, askB.AI is a Jupyter notebook and Contact is a plasmid map.
 - An **activity.mlx** tab in the MATLAB view with my latest videos, posts and GitHub commits (the plain view has the same thing under the project list), plus editor tabs that open and close like the real program.
 - A darkroom photo gallery, and a hidden vault page if you know my cat's name.
 - A small local editor so I can add projects without hand-editing TypeScript.

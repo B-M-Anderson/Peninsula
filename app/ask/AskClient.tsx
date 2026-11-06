@@ -313,11 +313,11 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
     const kernel = busy ? "Busy" : status === null ? "Connecting…" : online ? "Idle" : "Offline";
     return (
       <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", paddingTop: 59 }}>
-        <h1 className="sr-only">askAI</h1>
+        <h1 className="sr-only">askB.AI</h1>
         <div className="md-above">
           <section className="nb" aria-label="Ask notebook">
             <div className="nb-bar">
-              <span>askAI.ipynb</span>
+              <span>askB.AI.ipynb</span>
               <span className="nb-kernel">
                 <span aria-hidden className={pill.pulse ? "nb-dot md-pulse" : "nb-dot"} style={{ background: busy ? "var(--status-ongoing)" : pill.dot }} />
                 {status?.model ? `${status.model} · ` : ""}
@@ -337,7 +337,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                 {/* The heading and the note are the page, not transcript, so they
                     stay outside the live region. */}
                 <div className="nb-cell nb-md">
-                  <h2>askAI</h2>
+                  <h2>askB.AI</h2>
                   <p>
                     Questions here go to a small language model running on an old desktop in my house. There&apos;s no data center or paid AI service behind it,
                     just that one computer, so it&apos;s slower than you&apos;re used to and it only answers while the computer is on. Type a question
@@ -473,7 +473,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
           }}
         >
           <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-3)" }}>
-            <span className="md-label">askAI</span>
+            <span className="md-label">askB.AI</span>
             {priority && (
               <span
                 className="md-label md-fade-in"

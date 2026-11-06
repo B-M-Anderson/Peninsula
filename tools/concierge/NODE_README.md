@@ -1,6 +1,6 @@
 # Concierge node: operator guide
 
-The local half of the bennett-anderson.com **askAI** concierge. It runs on Bennett's
+The local half of the bennett-anderson.com **askB.AI** concierge. It runs on Bennett's
 OptiPlex 5040 (Debian 13, i5-6500, 7.6 GB RAM, no GPU) and reaches the site through
 an outbound-only relay, so no ports are open to the internet.
 

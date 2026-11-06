@@ -8,7 +8,7 @@ import { serverStyleDefault } from "../lib/styleServer";
 const description = "Questions about my work, answered by a small language model running on an old desktop in my house. No data center, no AI company in the middle.";
 
 export const metadata: Metadata = {
-  title: "askAI",
+  title: "askB.AI",
   description,
   alternates: { canonical: "/ask" },
   openGraph: openGraphFor("/ask", description),
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function AskPage() {
   const plain = (
-    <PageFrame title="askAI" subtitle="A small model on an old desktop in my house, answering for me" maxWidth={760} minHeight="60vh">
+    <PageFrame title="askB.AI" subtitle="A small model on an old desktop in my house, answering for me" maxWidth={760} minHeight="60vh">
       <AskClient variant="plain" />
     </PageFrame>
   );

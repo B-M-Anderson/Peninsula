@@ -97,6 +97,39 @@ function AnswerNote() {
   );
 }
 
+// The conversation lives here, outside the component. Each look (plain, notebook) is
+// its own AskClient, and switching looks unmounts one and mounts the other; with
+// per-component state that threw away the transcript, and the unmount cancelled the
+// question in flight. Both looks now read one store, and a question keeps going
+// through a switch. It lasts as long as the tab does.
+type Session = { lines: Line[]; input: string; busy: boolean; progress: Progress | null; priority: string | null };
+const EMPTY_SESSION: Session = { lines: [], input: "", busy: false, progress: null, priority: null };
+let session: Session = EMPTY_SESSION;
+const sessionListeners = new Set<() => void>();
+const readSession = () => session;
+const readServerSession = () => EMPTY_SESSION;
+function subscribeSession(cb: () => void) {
+  sessionListeners.add(cb);
+  return () => {
+    sessionListeners.delete(cb);
+  };
+}
+type Update<T> = T | ((prev: T) => T);
+function setter<K extends keyof Session>(key: K) {
+  return (v: Update<Session[K]>) => {
+    const next = typeof v === "function" ? (v as (prev: Session[K]) => Session[K])(session[key]) : v;
+    session = { ...session, [key]: next };
+    sessionListeners.forEach((f) => f());
+  };
+}
+const setLines = setter("lines");
+const setInput = setter("input");
+const setBusy = setter("busy");
+const setProgress = setter("progress");
+// The fast-lane passphrase, once the server has recognised it. It never ships in the
+// page; it is whatever was typed, kept for this visit only.
+const setPriority = setter("priority");
+
 type Cell = { n: number | null; q: string | null; out: { kind: "bot" | "sys"; text: string } | null };
 
 /** The transcript as notebook cells: each question with the output that answered it. */
@@ -147,17 +180,10 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
   const [status, setStatus] = useState<StatusResponse | null>(null);
   // When the status was last read: the "from 3 hours ago" in the system panel is measured against it.
   const [checkedAt, setCheckedAt] = useState(0);
-  const [lines, setLines] = useState<Line[]>([]);
-  const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<Progress | null>(null);
-  // The fast-lane passphrase, once the server has recognised it. It never
-  // ships in the page; it is whatever was typed, kept for this visit only.
-  const [priority, setPriority] = useState<string | null>(null);
+  const { lines, input, busy, progress, priority } = useSyncExternalStore(subscribeSession, readSession, readServerSession);
   const extendedOn = useSyncExternalStore(subscribeExtended, readExtended, noExtended);
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const inflight = useRef<{ abort: AbortController; poll: ReturnType<typeof setInterval> } | null>(null);
 
   // Live status: on mount, every 30s while the tab is visible, and after each
   // answer — so the pill never claims "Online" about a desktop that went to sleep.
@@ -182,14 +208,6 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
       document.removeEventListener("visibilitychange", load);
     };
   }, [busy]);
-
-  // Leaving the page mid-question stops the polling and the pending request.
-  useEffect(() => {
-    return () => {
-      inflight.current?.abort.abort();
-      if (inflight.current) clearInterval(inflight.current.poll);
-    };
-  }, []);
 
   useEffect(() => {
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -231,7 +249,6 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
         setProgress((prev) => (prev ? { ...prev, seconds } : prev));
       }
     }, PROGRESS_POLL_MS);
-    inflight.current = { abort, poll };
     // Pair up the transcript so a follow-up ("where?") carries what it refers to.
     // Only real you/bot exchanges — system notices are UI chrome, not conversation.
     const history: { q: string; a: string }[] = [];
@@ -280,7 +297,6 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
       setLines((l) => [...l, { from: "sys", text: "That didn't go through, try it again." }]);
     }
     clearInterval(poll);
-    inflight.current = null;
     setProgress(null);
     setBusy(false);
     inputRef.current?.focus();

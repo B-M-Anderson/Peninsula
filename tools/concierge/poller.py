@@ -470,6 +470,18 @@ def answer_extended(q, history):
     return best, route
 
 
+UNADDRESSED = re.compile(r"^\W*(?:Bennett|He)\s+has\s+not\s+(?:addressed|stated|shared|expressed)", re.I)
+
+
+def trim_unaddressed(out, question, ids):
+    """"Not addressed, but here is something he said" is only useful when the
+    something shares the question's topic. Otherwise the model pads with whatever
+    section the embedding picked (nuclear weapons -> his health-care drafts)."""
+    if out and UNADDRESSED.match(out) and not KB.topic_overlap(question, ids):
+        return UNCOVERED_MSG
+    return out
+
+
 def answer_for(question, history=None, extended=False):
     global LAST_RAIL, LAST_ROUTE, LAST_SCORE, LAST_PROMPT_TOKENS, ROUTES_SERVED
     LAST_ROUTE, LAST_SCORE, LAST_PROMPT_TOKENS = [], None, 0
@@ -500,6 +512,7 @@ def answer_for(question, history=None, extended=False):
         if not out:
             LAST_RAIL = "leak" if out is None else "error"
             return REFUSAL if out is None else None
+        out = trim_unaddressed(out, q, route.ids)
         LAST_SCORE = warmcache.score(out, route.max_sentences)[0]
         LAST_RAIL = "extended"
         ROUTES_SERVED += 1
@@ -524,6 +537,7 @@ def answer_for(question, history=None, extended=False):
             LAST_RAIL = "leak"
             log.warning("suppressed self-disclosure for %r", oneline(q, 80))
             return REFUSAL
+        best = trim_unaddressed(best, q, route.ids)
         LAST_SCORE = best_score
         LAST_RAIL = "context" if history else "model"
         ROUTES_SERVED += 1

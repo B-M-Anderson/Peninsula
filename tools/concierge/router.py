@@ -40,7 +40,10 @@ WORD = re.compile(r"[a-z0-9']+")
 OPINION = re.compile(
     r"\b(think|thinks|opinion|opinions|view|views|believe|believes|belief|beliefs|stance|position|"
     r"positions|feel about|feels about|support|supports|oppose|opposes|agree|agrees|take on|takes|stance on|"
-    r"say about|think of)\b", re.I)
+    r"say about|think of|guess|for or against|pro or anti|"
+    r"(?:would|does|do|did)\s+(?:he|bennett)\s+(?:like|want|favor|prefer|approve)|"
+    r"(?:would|is)\s+(?:he|bennett)\s+(?:be\s+)?(?:for|against|in\s+favor))\b",
+    re.I)
 # Keywords that are also everyday words. "right now" must not count as politics.
 AMBIGUOUS = {"right", "left", "rights", "food", "water", "meaning", "truth", "knowledge", "government",
              "sports", "distrust", "budget"}
@@ -212,6 +215,11 @@ class KnowledgeBase:
         return bool(OPINION.search(question) and ABOUT_HIM.search(question)
                     and not any(keyword_hits(question, s["keywords"]) for s in self.sections
                                 if s["id"] not in GENERIC_SECTIONS))
+
+    def topic_overlap(self, question, ids):
+        """True when a routed non-generic section shares a topic keyword with the question."""
+        return any(keyword_hits(question, self.by_id[i]["keywords"]) for i in ids
+                   if i in self.by_id and i not in GENERIC_SECTIONS)
 
     def render(self, picks):
         card = core_card(self.by_id["overview"]) if "overview" in self.by_id else ""

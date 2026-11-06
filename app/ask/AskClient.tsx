@@ -85,9 +85,9 @@ function progressLabel(p: Progress): string {
 }
 
 /** Under every answer, in both looks. The disclaimer belongs to the page, not to the model. */
-function AnswerNote() {
+function AnswerNote({ size = "var(--text-2xs)" }: { size?: string }) {
   return (
-    <p style={{ margin: 0, fontSize: "var(--text-2xs)", lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
+    <p style={{ margin: 0, fontSize: size, lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
       Small local model. It makes mistakes and can state things that aren&apos;t true.{" "}
       <Link href="/projects#local-llm-site-concierge" className="md-link" style={{ fontSize: "inherit" }}>
         How this works
@@ -148,15 +148,6 @@ function toCells(lines: Line[]): Cell[] {
   }
   return cells;
 }
-
-// Short topics for the empty state; each fires a fuller question.
-const TOPICS: { label: string; q: string }[] = [
-  { label: "Research", q: "What research is Bennett doing right now?" },
-  { label: "Projects", q: "What are Bennett's projects?" },
-  { label: "After graduation", q: "What is Bennett looking for after he graduates?" },
-  { label: "Penny", q: "Tell me about Penny the cat." },
-  { label: "Strengths", q: "What is Bennett best at?" },
-];
 
 const MAX = 500;
 // The node's heartbeat expires after ~30s, so the pill re-checks on that cadence.
@@ -343,29 +334,23 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
 
             <div className="nb-page">
               <div className="nb-cells">
-                {/* The heading and the starters are the page, not transcript, so
-                    they stay outside the live region. */}
+                {/* The heading and the note are the page, not transcript, so they
+                    stay outside the live region. */}
                 <div className="nb-cell nb-md">
                   <h2>askAI</h2>
                   <p>
                     Questions here go to a small language model running on an old desktop in my house. There&apos;s no data center or paid AI service behind it,
-                    just that one computer, so it&apos;s slower than you&apos;re used to and it only answers while the computer is on. Run a starter cell or
-                    type your own below.
+                    just that one computer, so it&apos;s slower than you&apos;re used to and it only answers while the computer is on. Type a question
+                    below.
                     {asleep ? " It's off right now, so a question will wait up to 45 seconds for it to wake up and then give up." : ""}
                   </p>
                 </div>
 
-                {empty &&
-                  TOPICS.map((t) => (
-                    <div key={t.label} className="nb-cell">
-                      <span aria-hidden className="nb-prompt nb-in">
-                        In [&nbsp;]:
-                      </span>
-                      <button type="button" className="nb-code nb-starter" onClick={() => ask(t.q)} disabled={busy}>
-                        <span className="nb-fn">ask</span>(<span className="nb-str">&quot;{t.label}&quot;</span>)
-                      </button>
-                    </div>
-                  ))}
+                {empty && (
+                  <div className="nb-cell nb-md">
+                    <AnswerNote size="var(--text-sm)" />
+                  </div>
+                )}
 
                 <div ref={logRef} role="log" aria-live="polite" aria-relevant="additions" className="nb-stream">
                   {cells.map((c, i) => {
@@ -539,13 +524,8 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                   work.
                 </p>
               )}
-              <span className="md-label">Pick a topic or just ask</span>
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-2)", maxWidth: 460 }}>
-                {TOPICS.map((t) => (
-                  <button key={t.label} type="button" onClick={() => ask(t.q)} disabled={busy} className="md-btn md-btn-secondary md-btn-sm">
-                    {t.label}
-                  </button>
-                ))}
+              <div style={{ maxWidth: 420 }}>
+                <AnswerNote size="var(--text-sm)" />
               </div>
             </div>
           ) : (

@@ -90,7 +90,10 @@ RETRY_TEMPERATURE = 0.5
 BASE_TEMPERATURE = 0.2
 NUM_PREDICT = 160         # generation is ~15 tokens/s on this CPU, so this bounds the wait
 KEEP_ALIVE = -1           # keep the model resident so first-after-idle is not a 60s cold start
-EXTENDED = os.environ.get("CONCIERGE_EXTENDED", "1").strip() != "0"
+# "auto" uses thinking when the model has it. "careful" never thinks: qwen3.5:4b on
+# this CPU thought for 1,700 tokens (6 minutes) without starting an answer, so
+# thinking cannot fit any wait a visitor would sit through here. "0" turns it off.
+EXTENDED = os.environ.get("CONCIERGE_EXTENDED", "careful").strip().lower()
 EXT_WALL = 180            # seconds an extended answer may think before it is cut off
 EXT_PREDICT = 700         # thinking and answer together; ~4.6 tokens/s here, so ~150s
 EXT_SECTIONS = 3          # careful mode, for a model with no thinking switch
@@ -426,9 +429,9 @@ def _safe_candidate(out):
 
 def extended_mode():
     """What an extended answer means on this node, as the heartbeat reports it."""
-    if not EXTENDED:
+    if EXTENDED in ("0", "off", "false", ""):
         return False
-    return "thinking" if THINKS else "careful"
+    return "thinking" if THINKS and EXTENDED == "auto" else "careful"
 
 
 def answer_extended(q, history):
@@ -439,7 +442,7 @@ def answer_extended(q, history):
     quote the notes and the setup rules. Rails, tiers, and history sanitizing are the
     same as for a normal answer, so 'extended' can never change what is allowed."""
     global LAST_ROUTE
-    if THINKS:
+    if extended_mode() == "thinking":
         route = KB.route(q, context=history[-1]["q"] if history else "")
         LAST_ROUTE = route.ids
         try:
@@ -455,11 +458,13 @@ def answer_extended(q, history):
         return out, route
     route = KB.route(q, context=history[-1]["q"] if history else "", max_sections=EXT_SECTIONS)
     LAST_ROUTE = route.ids
-    best, best_score = None, -1
+    # Three drafts over more of the profile, then the one that is best on register
+    # and adds the fewest names or numbers the notes do not contain.
+    best, best_score = None, -10**6
     for t in (BASE_TEMPERATURE, 0.4, 0.6):
         cand = generate(q, route.notes, history=history, temperature=t)
         if _safe_candidate(cand):
-            sc = warmcache.score(cand, route.max_sentences)[0]
+            sc = warmcache.score(cand, route.max_sentences)[0] - 15 * len(warmcache.unsupported(cand, route.notes, q))
             if sc > best_score:
                 best, best_score = cand, sc
     return best, route

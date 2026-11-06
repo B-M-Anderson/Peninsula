@@ -80,6 +80,20 @@ FIRST_PERSON = re.compile(r"\b(i am|i'm|my name is|i have|i work|i study)\b", re
 SENTENCE = re.compile(r"[.!?](?:\s|$)")
 
 
+_PROPER = re.compile(r"(?<![.!?]\s)(?<!^)\b([A-Z][a-zA-Z0-9-]{2,})\b")
+_NUMBER = re.compile(r"\b\d[\d,.]*\d\b|\b\d\b")
+_COMMON = {"Bennett", "Anderson", "Please", "The", "For", "His", "He", "This", "That", "Contact", "May"}
+
+
+def unsupported(answer, notes, question=""):
+    """Names and numbers in an answer that appear in neither the notes nor the
+    question: a cheap, conservative sign that the model added a fact."""
+    source = (notes + " " + question).lower()
+    bad = {t for t in _PROPER.findall(answer or "") if t not in _COMMON and t.lower() not in source}
+    bad |= {t for t in _NUMBER.findall(answer or "") if t.rstrip(".,") not in source}
+    return sorted(bad)
+
+
 def score(ans, max_sentences=4):
     """0-100 against the formal register. Returns (score, [reasons])."""
     if not ans or not ans.strip():

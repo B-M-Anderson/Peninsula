@@ -16,7 +16,7 @@ for path in sorted(glob.glob(os.path.join(d, "results-*.jsonl"))):
         b = [r for r in rows if base(r)]
         return f"{sum(pred(r) for r in b)}/{len(b)}"
 
-    gen = sorted(r["ms"] for r in rows if r["rail"] in ("model", "context"))
+    gen = sorted(r["ms"] for r in rows if r["rail"] in ("model", "context", "extended"))
     pct = lambda p: gen[min(len(gen) - 1, int(len(gen) * p))] / 1000 if gen else 0   # noqa: E731
     print(f"{os.path.basename(path)[8:-6]:28} "
           f"{frac(lambda r: r['pass'], lambda r: True):>7} "

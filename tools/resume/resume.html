@@ -103,6 +103,8 @@
   .date { font-family: var(--font-mono); font-size: 12px; line-height: 1.3; color: var(--ink-soft); }
   ul { padding-left: 16px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 1.4; color: rgba(42,25,13,0.9); text-wrap: pretty; }
   li::marker { color: var(--ink-soft); }
+  ul.projects { gap: 4px; }
+  ul.projects b { font-weight: 600; color: var(--ink); }
 
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chips span { padding: 3px 9px; border: 1px solid var(--hairline); font-size: 12.5px; line-height: 1.35; white-space: nowrap; color: var(--ink-body); }
@@ -148,18 +150,14 @@
         </section>
 
         <section class="block">
-          <h2>Highlight / Recent Personal Project</h2>
-          <div class="entry">
-            <div class="head">
-              <h3>Bennett-Anderson.com</h3>
-              <p class="org">Personal Website</p>
-            </div>
-            <ul>
-              <li>Designed and deployed a responsive portfolio site using Next.js, TypeScript, and Tailwind CSS.</li>
-              <li>Implemented multi-device compatibility of features, dark mode toggles, animated navigation, and project showcase with GitHub integration in a system designed for easy expansion.</li>
-              <li>Hosted on Vercel with custom domain; demonstrates full-stack web development, UI design, and adaptive ability to quickly become productive with unfamiliar tools.</li>
-            </ul>
-          </div>
+          <h2>Recent Projects</h2>
+          <ul class="projects">
+            <li><b>Bennett-Anderson.com:</b> portfolio site in Next.js + TypeScript, hosted on Vercel.</li>
+            <li><b>Centrifuge Repair:</b> revived a dead Eppendorf 5415D by diagnosing its power supply with a multimeter and replacing failed capacitors.</li>
+            <li><b>askB.AI Concierge:</b> a local LLM on a home desktop answers site visitors through a Redis job queue.</li>
+            <li><b>Lit Explorer:</b> local-AI desktop app (Electron + React) for reading <span style="white-space: nowrap;">gene-therapy</span> literature.</li>
+            <li><b>PiTV:</b> Raspberry Pi wired into a CRT TV, run from a phone web remote.</li>
+          </ul>
         </section>
 
         <section class="block">

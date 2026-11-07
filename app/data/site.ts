@@ -54,7 +54,7 @@ export const GITHUB_URL = `https://github.com/${GITHUB_USER}`;
 export const REPO_URL = `${GITHUB_URL}/Peninsula`;
 export const LINKEDIN_URL = "https://www.linkedin.com/in/bennett-m-anderson/";
 export const RESUME_PATH = "/ResumeBennettAnderson.pdf";
-export const RESUME_META = { pages: 1, updated: "August 2026" };
+export const RESUME_META = { pages: 1, updated: "November 2026" };
 export const CONTACT_EMAIL = "bennetta32.30@gmail.com";
 /** mailto: with a subject, so a blank compose window never lands in front of someone. */
 export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Hello from bennett-anderson.com")}`;

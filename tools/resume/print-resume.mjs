@@ -1,6 +1,9 @@
 // Renders resume.html to ResumeBennettAnderson.pdf at exact US Letter, no margins,
 // and a 2x PNG of the .page element for the site's Resume Refresh project card.
 //   npm i -D puppeteer && node print-resume.mjs
+// The site's copy has a coffee ring on it (the emailed copy doesn't). To add it:
+//   pdflatex coffee-stain.tex   (run twice; uses the coffeestains package)
+//   qpdf ResumeBennettAnderson.pdf --overlay coffee-stain.pdf -- ResumeBennettAnderson-coffee.pdf
 import puppeteer from "puppeteer";
 import { fileURLToPath } from "url";
 import path from "path";

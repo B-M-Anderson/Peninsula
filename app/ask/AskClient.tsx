@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Send } from "lucide-react";
-import { TextLink } from "../components/ui";
 import { json, type AskResponse, type ProgressResponse, type StatusResponse } from "../lib/api-types";
 import SystemPanel, { ago } from "./SystemPanel";
 import { storageGet, storageSet } from "../lib/storage";
@@ -291,7 +290,7 @@ export default function AskClient() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-      {/* chat panel — arrives with the page; the bands are the one entrance */}
+      {/* chat panel */}
       <div
         style={{
           border: "1px solid var(--border-subtle)",
@@ -501,10 +500,7 @@ export default function AskClient() {
       </p>
       {/* footer: escape hatches + counter */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
-        <span style={{ display: "inline-flex", gap: "var(--space-5)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
-          <TextLink href="/projects">Projects</TextLink>
-          <TextLink href="/contact">Contact</TextLink>
-        </span>
+        <span />
         <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-4)" }}>
           {input.length > 0 && (
             <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip-text)" : "var(--text-faint)" }}>

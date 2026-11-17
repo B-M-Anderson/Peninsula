@@ -28,45 +28,46 @@ Reference for the personal portfolio site as it is today. Operating rules and th
 
 Everything visual comes from `app/globals.css`:
 
-- `@theme` — raw colour ramps (brown, tan, cream, clay, moss), type scale, radii, shadows, easings.
-- `:root` — dark-ground semantic aliases: `--surface-page/raised/sunken/card`, `--text-body/strong/muted/faint/accent`, `--border-*`, `--action-primary-*`, `--status-*` (+ `--status-wip-text` for readable clay), `--mark-*` (the monogram), stripe metrics, textures, `--max-width`, `--gutter-page` (fluid), `--page-top` (subpage `<main>` top padding), `--leading-body` (summaries) / `--leading-relaxed` (long prose), spacing scale.
-- `html.light` / `.md-light` — the eggshell aliases. `color-scheme` follows the class so native scrollbars and form controls match. `@media print` uses a paper palette and hides chrome/textures.
-- Brand utilities: `.md-grain` (film grain), `.md-dapple` (foot dappling), `.md-above` (content above the textures).
-- Primitives: `.md-btn` (+ `-primary/-secondary/-ghost/-sm`, `:disabled`), `.md-chip`, `.md-card` (tighter padding on phones), `.md-link`, `.md-acc-*` (disclosure rows; collapsed panels are `inert` and hidden; `.md-acc-date` is the panel's date line, shown only on phones where the row meta is hidden), `.md-contact-row`, `.md-project-card`, `.md-lede` (a page's opening paragraph: fluid size, 1.5 leading), `.md-video-poster`, `.md-fade-in`, `.md-skip-link`.
-- Motion: the two bands slide in on load (`md-band-in`), cards/rows/figures settle in as they scroll into view (`md-reveal`, CSS scroll-driven, no JS), a deep-linked row lights briefly (`md-landed`), a reading hairline grows along the navbar on `/projects`, the theme toggle's icons cross-fade, `md-pulse` for status dots, `md-fade-in` for things that appear on a visitor's action (a new message on `/ask`, the darkroom form); `prefers-reduced-motion` neutralises all of it, delays included. No animation library — the bands are the one entrance a page makes.
+- `@theme` — raw colour ramps (`leaf`, `beige`, `gold` for the light Monstera brand; `slate`, `ice` for the dark lace-leaf brand), type scale, radii, shadows, easings.
+- `:root` — dark-ground semantic aliases: `--surface-page/raised/sunken/card`, `--text-body/strong/muted/faint/accent`, `--border-*`, `--action-primary-*`, `--status-*` (+ `--status-wip-text`), `--brand` (the leaf), `--highlight` (the rare accent: gold on light, ice blue on dark).
+- `html.light` / `.md-light` — the light aliases. `color-scheme` follows the class. `@media print` uses a paper palette and hides chrome.
+- Primitives: `.md-btn` (+ `-primary/-secondary/-ghost/-sm`), `.md-chip`, `.md-card`, `.md-link` (underlined when it sits inside running text), `.md-acc-*` (disclosure rows).
+- Page pieces: `.pg` / `.pg-head` (every page's frame), `.home-*` and `.hub-*` (home hub), `.proj-*` (projects grid and project pages), `.about-*`, `.cmdk-*` (command prompt), `.nav-sheet` (phone menu), `.site-foot` (footer), `.ba-*` (the leaf).
+- Motion: pages fade up on arrival (`md-route-in`); the home leaf grows in (`ba-blade`, `ba-open`, `ba-etch`); a reading hairline grows along the navbar as you scroll. Everything uses `both` fill, so the reduced-motion rule (0ms) lands it finished.
 
-Theme switching: the inline script in `app/layout.tsx` sets `html.dark`/`html.light` (saved override, else OS preference) and the `theme-color` meta before paint; `Navbar` keeps both in sync afterwards through a `useSyncExternalStore` theme store. Storage access goes through `app/lib/storage.ts`, which never throws.
-
-Per-page look: `/projects`, `/contact` and `/ask` each ship two server-built looks — a software-styled "themed" one (MATLAB desktop, plasmid map, Jupyter notebook) and the plain original. `app/lib/stylePref.tsx` holds the choice (`StyleView` picks, `StyleSwitch` flips, `useStyleChoice` is the `useSyncExternalStore` store behind `localStorage["style-<page>"]`). A saved choice always wins; with none, the look is automatic: plain when the viewport matches `(max-width: 719px), (forced-colors: active)`, themed otherwise. `app/lib/styleServer.ts` makes the same call for the first paint from the request headers (`sec-ch-ua-mobile`, then the User-Agent), so a phone never flashes the desktop layout — and so these three pages are rendered per request rather than statically. The client re-reads the real viewport after hydration and follows resizes; a saved choice that differs from the server's guess arrives one render after hydration. Only a deliberate switch moves focus (to the new `<main>`); an automatic swap leaves it alone. Both looks sit in the page's RSC payload, which is the price of switching without a round trip.
+Theme switching: light is the default for every visitor. The inline script in `app/layout.tsx` sets `html.dark` only when the visitor saved dark, before paint; `app/lib/theme.ts` is the store (`readTheme`, `toggleTheme`) shared by `Navbar` and `LeafLogo`. The choice is saved in localStorage and never changes by itself.
 
 ## 4. App Router structure
 
-Root layout `app/layout.tsx`: fonts, site-wide `metadata` (metadataBase, title template, description, Open Graph, Twitter) and `viewport.themeColor`; a skip link to `#main`; `VaultGate` (the typed-word easter egg) wrapping `Navbar`, the page, and `Footer`. No global padding and no landmark — each page renders its own title frame + `<main id="main" tabIndex={-1}>` (the skip-link target; `Navbar` is the single banner landmark).
+Root layout `app/layout.tsx`: fonts, site-wide `metadata` and `viewport.themeColor`; a skip link to `#main`; `VaultGate` wrapping `Navbar`, the page, `Footer` and `CommandPalette` (whose project rows and links are built here, on the server).
 
 | Route | Server file (metadata) | Client half | Notes |
 |---|---|---|---|
-| `/` | `app/page.tsx` (ISR, `revalidate = 900`) | — | Hero (StripeBand, portrait, blurb, profile buttons), Projects (3 newest, deep-linked to `/projects#slug`), Recent posts rail (server-rendered from `app/lib/posts.ts`), Skills accordion, Penrose grid, Person JSON-LD |
-| `/projects` | `app/projects/page.tsx` (dynamic: reads request headers for the first-paint look) | `ProjectBrowser.tsx` + `CommandWindow.tsx` + `PlotFigure.tsx` (MATLAB look), `ProjectsList.tsx` (classic accordion) | MATLAB-style window: ribbon (filter + sort groups, `aria-pressed`; one scrolling strip on phones), Current Folder table, Live Editor page per project (`ProjectDoc.tsx`, demo figure first), Workspace (variables + a completion-vs-date figure with a data cursor and datatip on the selected project; decorative, `aria-hidden`), Command Window; selection follows `#slug`, otherwise the newest project with a demo; click-to-play YouTube embed in a Figure. Phones get the classic look unless they opt in |
-| `/ask` | `app/ask/page.tsx` (dynamic, as above) | `AskClient.tsx` (`variant="notebook"` / `"plain"`), `SystemPanel.tsx` | Chat with the desktop concierge; status pill refreshes every 30s; progress poll every 2s while a question is in flight. Notebook look: `In [n]` / `Out[n]` cells, `app/ask/notebook.css`; phones get the plain chat unless they opt in |
-| `/contact` | `app/contact/page.tsx` (dynamic, as above) | — | Email, phone (`tel:`), LinkedIn, GitHub as a `<dl>`; themed look is `PlasmidContact.tsx` (a Features list first, then a `role="img"` map whose arcs are mouse-only links and draw in on load; panel above the map below 900px), `app/contact/plasmid.css`; phones get the `<dl>` unless they opt in |
-| `/darkroom` | `app/darkroom/page.tsx` (noindex) | `DarkroomClient.tsx` | Gallery first; the upload station is behind "Keeper's entrance" |
-| `/vault` | `app/vault/page.tsx` (noindex) | `VaultClient.tsx` | Gate form is server-rendered; the unlocked view depends on a sessionStorage flag |
-| 404 / error | `app/not-found.tsx`, `app/error.tsx` | — | Same header/band frame as every page |
+| `/` | `app/page.tsx` (ISR, `revalidate = 900`) | `LeafLogo.tsx` | Hub: leaf + intro, Looking for / Now, one tile per section |
+| `/projects` | `app/projects/page.tsx` (static) | `ProjectsGrid.tsx` | Card grid; filter and sort live in the hash (`#show=…&sort=…`); old `#slug` / `#activity` links redirect |
+| `/projects/[slug]` | `app/projects/[slug]/page.tsx` (`generateStaticParams`, `dynamicParams = false`) | — | One project: demo + write-up, facts sidebar, newer/older links |
+| `/posts` | `app/posts/page.tsx` (ISR) | — | `ActivityList.tsx`: newest from each channel, then a timeline; falls back to `RecentPosts` |
+| `/about` | `app/about/page.tsx` | `Accordion` (skills) | Intro, Now / Looking for, skills, Penrose |
+| `/ask` | `app/ask/page.tsx` | `AskClient.tsx`, `SystemPanel.tsx` | Chat with the desktop concierge; exchanges labelled In [n] / Out [n] |
+| `/contact` | `app/contact/page.tsx` | `CopyButton` | `PlasmidContact.tsx`: the features list (the content) beside an `aria-hidden` map of it |
+| `/darkroom` | `app/darkroom/page.tsx` (noindex) | `DarkroomClient.tsx` | Gallery first; upload behind "Keeper's entrance" |
+| `/vault` | `app/vault/page.tsx` (noindex) | `VaultClient.tsx` | Gate form server-rendered; unlocked view depends on a sessionStorage flag |
+| 404 / error | `app/not-found.tsx`, `app/error.tsx` | — | Same frame as every page |
 
-Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app/icon0.svg` (SVG favicon), `app/icon1.tsx` (64px PNG fallback), `app/apple-icon.tsx` (180px), `app/sitemap.ts` (`/sitemap.xml`), `app/robots.ts` (`/robots.txt`).
+Generated metadata files: `app/opengraph-image.tsx` (1200×630 share card), `app/icon0.svg`, `app/icon1.tsx`, `app/apple-icon.tsx` (the Monstera, via `LeafTile.tsx`), `app/sitemap.ts` (includes every project page), `app/robots.ts`.
 
 ## 5. Components
 
-- `components/brand/StripeBand.tsx` — the two bands. Title renders as `<h1>` (prop `as`), subtitle as `<p>`; text sits in a `max-width`/`--gutter-page` column so it aligns with page content at every width. `offset` is the distance from the top of the surface.
-- `components/brand/Mark.tsx` — the BA monogram; colours come from `--mark-*` tokens (a `tone` prop forces a ground). `MonogramOg.tsx` is the box-drawn version for `next/og`.
-- `components/ui.tsx` — `Button` (internal routes go through `next/link`, external links open in a new tab with a screen-reader cue, `pressed`, `disabled`, `newTab`, `rel`), `Chip`, `Card`, `Badge` (typed `ProjectStatus`), `ProgressBar` (real `role="progressbar"`), `SectionHeading`, `TextLink` (→ for internal, ↗ for external, `newTab` for files), `Dotted`, `statusLabel`. No `"use client"` — these render on the server.
-- `components/Accordion.tsx` — the one stateful primitive (id-keyed, `aria-controls`, `inert` panels, optional `syncHash`); it also tells `DeferredMedia` (`components/DeferredMedia.tsx`) whether a row has been opened, so collapsed rows download no images or video posters. The project browser reuses that context (`RowOpenContext`) and the hash store, providing "selected" instead of "opened", so only the showing project mounts media and switching away stops a playing video.
-- `components/PageFrame.tsx` — every subpage's opening: title frame + bands + the page's `<main id="main">`.
-- `components/Navbar.tsx` — fixed bar with `<header><nav>`, `aria-current` on the active link, 44px theme toggle with a state-dependent label; tucks away on scroll-down on phones only (matchMedia store), pinned elsewhere; `inert` while hidden.
-- `components/Footer.tsx` — one row: name + year (`Year.tsx`, computed in the browser), GitHub / LinkedIn / Email / Source. `components/SkipLink.tsx` focuses `#main` without touching the URL fragment.
-- `components/RecentPosts.tsx` — renders a `Post[]` passed from the server.
-- `components/RichText.tsx` — `**bold**`, `*italic*`, `` `code` ``, bare URLs (shown as host + path), and `~` aside lines; `stripAsides` for clamped previews.
-- `components/MediaBadge.tsx`, `components/YouTubeEmbed.tsx` (poster + play button; loads the player only on click), `components/SkillsSection.tsx`, `components/VaultGate.tsx` (dialog semantics, Escape at any stage, focus restore, scroll lock).
+- `lib/baLeafCore.js` + `lib/leaf.ts` — the leaf generator (letters first as whitespace, leaf grown around them, `interrupt` caps how much tissue crosses the letters).
+- `components/brand/LeafLogo.tsx` — the generated leaf on the home page: a still leaf from first paint, then a new seed grows in; click regrows, right-click / press-and-hold switches ground, a focus-only button does the same for the keyboard.
+- `components/brand/Mark.tsx` — the small navbar/footer leaf (both plants in the markup, CSS shows one), paths baked in `markPaths.ts`. `LeafTile.tsx` is the version for `next/og`.
+- `components/CommandPalette.tsx` — Ctrl/Cmd+K or the navbar search button: jump to pages, projects and links, or run commands through `lib/commands.ts`.
+- `components/ui.tsx` — `Button`, `Chip`, `Card`, `Badge`, `ProgressBar`, `Dotted`, `SectionHeading`, `TextLink`, `statusLabel`.
+- `components/Accordion.tsx` — the one stateful primitive (id-keyed, `aria-controls`, `inert` panels, optional `syncHash`).
+- `components/PageFrame.tsx` — every subpage's `<main id="main">` and header; `maxWidth` makes a centred narrow column.
+- `components/Navbar.tsx` — fixed bar, `aria-current` on the active link, command prompt and theme buttons; below 640px a Menu sheet; tucks away on scroll-down on phones.
+- `components/Footer.tsx` — profiles, email, site source, back to top (deliberately not the navbar again).
+- `components/RecentPosts.tsx`, `components/RichText.tsx`, `components/MediaBadge.tsx`, `components/YouTubeEmbed.tsx`, `components/SkillsSection.tsx`, `components/VaultGate.tsx`, `components/SourceLogo.tsx`.
 
 ## 6. Data
 

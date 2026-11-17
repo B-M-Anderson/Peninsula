@@ -550,6 +550,12 @@ select {
 }
 
 /* Text links — colour shift plus a tan underline on hover. */
+/* A link inside running text is underlined, so it never relies on colour alone. */
+p .md-link,
+p a:not([class]) {
+  border-bottom-color: currentColor;
+}
+
 .md-link {
   display: inline-flex;
   align-items: center;
@@ -1281,6 +1287,12 @@ html.dark .ba-mark-dark {
   letter-spacing: -0.02em;
   color: var(--text-strong);
   text-wrap: balance;
+}
+.home-facts {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 .home-status {
   display: grid;

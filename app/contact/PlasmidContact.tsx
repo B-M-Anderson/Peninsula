@@ -100,7 +100,8 @@ export default function PlasmidContact({ features, lede }: { features: Feature[]
         </div>
 
         <div className="pm-map">
-          <svg viewBox="0 0 640 560" role="img" aria-label={`Circular map of the ways to reach me: ${features.map((f) => f.label).join(", ")}`}>
+          {/* A picture of the list beside it, for the mouse only: the list is the accessible content. */}
+          <svg viewBox="0 0 640 560" aria-hidden="true" focusable="false">
             <circle cx={CX} cy={CY} r={R + 7} className="pm-ring" />
             <circle cx={CX} cy={CY} r={R - 7} className="pm-ring" />
             {TICKS.map((deg) => {

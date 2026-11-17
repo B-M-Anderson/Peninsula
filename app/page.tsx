@@ -74,7 +74,7 @@ export default async function HomePage() {
         <div className="home-intro">
           <p className="home-tagline">{SITE_TAGLINE}</p>
           <h1 id="home-name" className="home-name">{SITE_NAME}</h1>
-          <p className="md-label" style={{ margin: 0, lineHeight: 1.8 }}>
+          <p className="home-facts">
             <Dotted items={HERO_FACTS} />
           </p>
           <p className="md-lede" style={{ margin: 0 }}>{typeset(BLURB)}</p>
@@ -141,7 +141,6 @@ export default async function HomePage() {
         <section className="hub-tile" aria-labelledby="hub-posts">
           <div className="hub-head">
             <h2 id="hub-posts"><Link href="/posts">Posts</Link></h2>
-            <span className="md-label"><Dotted items={["Video", "essays", "posts"]} /></span>
           </div>
           {posts.length ? (
             <ul className="hub-rows">
@@ -158,7 +157,7 @@ export default async function HomePage() {
               ))}
             </ul>
           ) : (
-            <p className="hub-text">Nothing published yet — the channels below are where it will land.</p>
+            <p className="hub-text">Nothing published yet.</p>
           )}
           <TextLink href="/posts" arrow>All posts</TextLink>
         </section>
@@ -166,7 +165,6 @@ export default async function HomePage() {
         <section className="hub-tile" aria-labelledby="hub-about">
           <div className="hub-head">
             <h2 id="hub-about"><Link href="/about">About</Link></h2>
-            <span className="md-label">What I can do</span>
           </div>
           <ul className="hub-chips" aria-label="Skill groups">
             {SKILL_GROUPS.map((g) => (
@@ -175,7 +173,7 @@ export default async function HomePage() {
               </li>
             ))}
           </ul>
-          <TextLink href="/about" arrow>Skills, background and Penrose</TextLink>
+          <TextLink href="/about" arrow>Skills and background</TextLink>
         </section>
 
         <section className="hub-tile" aria-labelledby="hub-ask">

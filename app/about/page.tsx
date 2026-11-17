@@ -41,7 +41,7 @@ export default function AboutPage() {
 
       <div className="about-grid">
         <section aria-label="Introduction" className="about-intro">
-          <p className="md-label" style={{ margin: 0, lineHeight: 1.8 }}>
+          <p className="home-facts">
             <Dotted items={HERO_FACTS} />
           </p>
           <p className="md-lede" style={{ margin: 0 }}>{typeset(BLURB)}</p>

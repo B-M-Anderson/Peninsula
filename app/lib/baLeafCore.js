@@ -273,7 +273,17 @@ export function makeBALeaf() {
         if (worst < 0) break;
         on[worst] = false;
       }
-      var lo = 0.5, hi = 1.25;
+      // Still over with only the ties left: thin them further, then let them go too
+      // (a counter that floats free still reads as the letter).
+      var floor = 0.5;
+      if (lost(combine(floor)) - f0 > limit) floor = 0.3;
+      while (lost(combine(floor)) - f0 > limit && guard++ < 40) {
+        var w2 = -1, r2 = -1;
+        for (t = 0; t < tissue.length; t++) if (on[t] && tissue[t].r * Math.max(1, tissue[t].pts.length) > r2) { r2 = tissue[t].r * Math.max(1, tissue[t].pts.length); w2 = t; }
+        if (w2 < 0) break;
+        on[w2] = false;
+      }
+      var lo = floor, hi = 1.25;
       if (lost(combine(hi)) - f0 <= limit) lo = hi;
       else for (t = 0; t < 5; t++) { var mid = (lo + hi) / 2; if (lost(combine(mid)) - f0 > limit) hi = mid; else lo = mid; }
       kk = lo;

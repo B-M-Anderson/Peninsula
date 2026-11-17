@@ -57,7 +57,7 @@ export default async function PostsPage() {
   });
 
   return (
-    <PageFrame title="Posts" subtitle={<Dotted items={["Video", "essays", "posts", "commits"]} />}>
+    <PageFrame title="Posts" subtitle={<Dotted items={channels.map((c) => c.name)} />}>
       {docItems.length ? (
         <ActivityList items={docItems} channels={channels} />
       ) : (

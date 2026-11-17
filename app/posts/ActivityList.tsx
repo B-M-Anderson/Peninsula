@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Play } from "lucide-react";
-import { Badge, Card, Dotted, SectionHeading, TextLink } from "../components/ui";
+import { Badge, Card, TextLink } from "../components/ui";
 import SourceLogo from "../components/SourceLogo";
 import { PER_SOURCE, timelineOf, type ActivityItem, type ActivitySource } from "../lib/activity";
 
@@ -27,9 +27,8 @@ export default function ActivityList({ items, channels, id }: { items: DocItem[]
 
   return (
     <section id={id} aria-labelledby="activity-heading" className="md-act">
-      <SectionHeading kicker={<Dotted items={channels.map((c) => c.name)} />} id="activity-heading">
-        Recent activity
-      </SectionHeading>
+      <h2 id="activity-heading" className="sr-only">Recent activity</h2>
+      <h3 className="md-label md-act-sub" style={{ marginTop: 0 }}>Latest from each</h3>
 
       <ul className="md-act-latest">
         {latest.map((i) => (

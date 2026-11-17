@@ -72,7 +72,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         <article className="proj-main">
           {videoId ? (
             <div style={{ maxWidth: 640, width: "100%" }}>
-              <YouTubeEmbed id={videoId} title={`${p.title} — video`} />
+              <YouTubeEmbed id={videoId} title={`${p.title} video`} />
             </div>
           ) : null}
           {p.imageUrl ? (

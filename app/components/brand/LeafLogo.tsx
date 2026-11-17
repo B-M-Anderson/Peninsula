@@ -3,6 +3,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { lace, monstera } from "../../lib/leaf";
 import { readTheme, serverTheme, subscribeTheme } from "../../lib/theme";
+import { MARK_PATHS } from "./markPaths";
 
 /* The seed of the leaf grown for this visit. A store rather than state, so it
    is chosen once on the client (never during the server render, where it would
@@ -84,6 +85,15 @@ export default function LeafLogo() {
 
   return (
     <button type="button" className="ba-stage" data-ground={seed ? theme : undefined} onClick={regrow} disabled={!seed} aria-label={`BA ${name.toLowerCase()} logo. Grow another leaf`}>
+      {/* A still leaf from the first paint, so the stage is never empty while the
+          page's script loads. CSS shows the one for the ground; it fades out as
+          the generated leaf grows over it. */}
+      {(["monstera", "lace"] as const).map((k) => (
+        <svg key={k} className={`ba-ghost ${k === "monstera" ? "ba-mark-light" : "ba-mark-dark"}`} viewBox={MARK_PATHS[k].vb} aria-hidden focusable="false">
+          <path fillRule="evenodd" fill="var(--brand)" d={MARK_PATHS[k].body} />
+          <path fill="var(--brand)" d={MARK_PATHS[k].stem} />
+        </svg>
+      ))}
       {drawing}
     </button>
   );

@@ -11,8 +11,9 @@ import { storageSet } from "../lib/storage";
 import { THEME_COLOR, readTheme, serverTheme, subscribeTheme } from "../lib/theme";
 import { OPEN_PALETTE_EVENT } from "./CommandPalette";
 
-// Home is the mark and the name; the links are the places a visitor goes next.
+// The mark and name also lead home; Home is listed too so it is never a guess.
 const links = [
+  { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
   { href: "/posts", label: "Posts" },
   { href: "/about", label: "About" },
@@ -120,7 +121,7 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <ul className="hidden sm:flex gap-1 sm:gap-2 items-center min-w-0 m-0 p-0 list-none" style={{ fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" }}>
             {links.map(({ href, label }) => {
-              const active = pathname === href || pathname.startsWith(`${href}/`);
+              const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <li key={href} className="flex-shrink-0">
                   <Link
@@ -186,7 +187,7 @@ export default function Navbar() {
       {menuOpen ? (
         <div id="nav-sheet" className="nav-sheet sm:hidden">
           <ul>
-            {[{ href: "/", label: "Home" }, ...links].map(({ href, label }) => {
+            {links.map(({ href, label }) => {
               const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <li key={href}>

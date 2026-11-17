@@ -7,8 +7,7 @@ import { usePathname } from "next/navigation";
 import Mark from "./brand/Mark";
 import { RESUME_PATH, SITE_NAME } from "../data/site";
 import { Button } from "./ui";
-import { storageSet } from "../lib/storage";
-import { THEME_COLOR, readTheme, serverTheme, subscribeTheme } from "../lib/theme";
+import { THEME_COLOR, readTheme, serverTheme, subscribeTheme, toggleTheme } from "../lib/theme";
 import { OPEN_PALETTE_EVENT } from "./CommandPalette";
 
 // The mark and name also lead home; Home is listed too so it is never a guess.
@@ -81,16 +80,11 @@ export default function Navbar() {
 
   // Toggle sets an explicit override (persisted); clearing it would fall back to
   // the browser preference again.
-  const toggleTheme = () => {
-    const next = dark ? "light" : "dark";
-    storageSet("local", "theme", next);
-    window.dispatchEvent(new Event("themechange"));
-  };
 
   return (
     <header
       inert={hidden && !menuOpen}
-      data-long={pathname.startsWith("/projects/") ? "" : undefined}
+      data-long=""
       className={`md-site-header fixed top-0 left-0 w-full z-50 transition-[opacity,transform,background-color,border-color,color] duration-300 ease-in-out ${
         hidden && !menuOpen ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"
       }`}

@@ -37,14 +37,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#EEEED2" },
-    { media: "(prefers-color-scheme: dark)", color: "#161B20" },
+    { media: "(prefers-color-scheme: dark)", color: "#EEEED2" }, // light is the default ground; the script below corrects it for a saved dark choice
   ],
 };
 
-// Runs before paint: pick the ground from a saved override, else the browser's
-// prefers-color-scheme. Keeps the class (and the browser-chrome colour) in sync
+// Runs before paint: dark only if the visitor saved it, otherwise the
+// light default. Keeps the class (and the browser-chrome colour) in sync
 // before React hydrates so there's no flash of the wrong theme.
-const themeInit = `(function(){try{var s=localStorage.getItem('theme');var d=(s==='dark'||s==='light')?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;var c=document.documentElement.classList;c.toggle('dark',d);c.toggle('light',!d);var m=document.querySelectorAll('meta[name="theme-color"]');for(var i=0;i<m.length;i++){m[i].content=d?'#161B20':'#EEEED2';}}catch(e){}})();`;
+const themeInit = `(function(){try{var s=localStorage.getItem('theme');var d=s==='dark';var c=document.documentElement.classList;c.toggle('dark',d);c.toggle('light',!d);var m=document.querySelectorAll('meta[name="theme-color"]');for(var i=0;i<m.length;i++){m[i].content=d?'#161B20':'#EEEED2';}}catch(e){}})();`;
 
 // What the command prompt can reach. Built here, on the server, so the projects
 // data module never enters a client bundle.

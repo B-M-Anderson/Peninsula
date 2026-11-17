@@ -1,40 +1,38 @@
 import type { CSSProperties, ReactNode } from "react";
-import StripeBand from "./brand/StripeBand";
 
 /**
- * How every subpage opens: the 232px grain title frame carrying the bands and
- * the page's <h1>, then the page's one <main id="main"> (the skip-link target)
- * with the shared column and gutters. Pages supply their own inner layout.
+ * How every subpage opens: the page's one <main id="main"> (the skip-link
+ * target) with the shared column and gutters, a plain header carrying the
+ * page's <h1>, then the page's own layout. Flat ground, no ornament: the
+ * generated leaf on the homepage is the site's only decoration.
  */
 export default function PageFrame({
   title,
   subtitle,
+  kicker,
   maxWidth,
   minHeight = "50vh",
   children,
 }: {
-  title: string;
+  title: ReactNode;
   subtitle?: ReactNode;
-  /** Cap for narrow pages; left-aligned in the shared column, never centred. */
+  /** A small line above the title: where this page sits, e.g. a link back to its section. */
+  kicker?: ReactNode;
+  /** Cap for narrow pages: the header and content sit together in a centred column. */
   maxWidth?: number;
   minHeight?: CSSProperties["minHeight"];
   children: ReactNode;
 }) {
   return (
-    <div>
-      <div className="md-grain md-surface" style={{ position: "relative", background: "var(--surface-sunken)", overflow: "hidden", height: 232 }}>
-        <StripeBand offset="80px" title={title} subtitle={subtitle} />
+    <main id="main" tabIndex={-1} className="pg md-dapple" style={{ minHeight }}>
+      <div style={maxWidth ? { maxWidth, margin: "0 auto" } : undefined}>
+        <header className="pg-head">
+          {kicker ? <div className="md-label pg-kicker">{kicker}</div> : null}
+          <h1 className="pg-title">{title}</h1>
+          {subtitle ? <p className="pg-sub">{subtitle}</p> : null}
+        </header>
+        {children}
       </div>
-      <main
-        id="main"
-        tabIndex={-1}
-        className="md-dapple"
-        style={{ position: "relative", maxWidth: "var(--max-width)", margin: "0 auto", minHeight, paddingTop: "var(--page-top)", paddingInline: "var(--gutter-page)" }}
-      >
-        <div className="md-above" style={maxWidth ? { maxWidth } : undefined}>
-          {children}
-        </div>
-      </main>
-    </div>
+    </main>
   );
 }

@@ -97,19 +97,34 @@ const categories = [
   },
 ];
 
+/** How each group's name reads on the page (the slug stays its id). */
+const LABEL: Record<string, string> = {
+  "computational-tools": "Computational tools",
+  microbiology: "Microbiology",
+  "data-and-analysis": "Data and analysis",
+  "soft-skills": "Soft skills",
+  "local-ai": "Local AI",
+  "media-production": "Media production",
+  "hardware-and-repair": "Hardware and repair",
+};
+const labelOf = (name: string) => LABEL[name] ?? name.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
+
+/** The group names and sizes, for places that only point at the full list. */
+export const SKILL_GROUPS = categories.map((c) => ({ name: labelOf(c.name), count: c.skills.length }));
+
 export default function SkillsSection() {
   const items: AccordionItem[] = categories.map((cat) => {
     const sorted = [...cat.skills].sort((a, b) => Number(b.strong) - Number(a.strong));
     return {
       id: `skills-${cat.name}`,
       title: (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--text-body)" }}>
-          {cat.name}
+        <span style={{ fontFamily: "var(--font-body)", fontSize: "var(--text-md)", fontWeight: 500, color: "var(--text-strong)" }}>
+          {labelOf(cat.name)}
         </span>
       ),
       meta: String(cat.skills.length),
       content: (
-        <ul aria-label={`${cat.name} skills`} style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", listStyle: "none", margin: 0, padding: 0 }}>
+        <ul aria-label={`${labelOf(cat.name)} skills`} style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", listStyle: "none", margin: 0, padding: 0 }}>
           {sorted.map((s) => (
             <li key={s.name}>
               <Chip emphasis={s.strong ? "strong" : "normal"}>{s.name}</Chip>

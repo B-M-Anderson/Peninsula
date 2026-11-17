@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Play, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { TextLink } from "../components/ui";
 import { json, type AskResponse, type ProgressResponse, type StatusResponse } from "../lib/api-types";
 import SystemPanel, { ago } from "./SystemPanel";
-import { StyleSwitch } from "../lib/stylePref";
 import { storageGet, storageSet } from "../lib/storage";
-import "./notebook.css";
 
 type Line = { from: "you" | "bot" | "sys"; text: string };
 
@@ -89,7 +87,7 @@ function AnswerNote({ size = "var(--text-2xs)" }: { size?: string }) {
   return (
     <p style={{ margin: 0, fontSize: size, lineHeight: "var(--leading-relaxed)", color: "var(--text-muted)" }}>
       Small local model. It makes mistakes and can state things that aren&apos;t true.{" "}
-      <Link href="/projects#local-llm-site-concierge" className="md-link" style={{ fontSize: "inherit" }}>
+      <Link href="/projects/local-llm-site-concierge" className="md-link" style={{ fontSize: "inherit" }}>
         How this works
         <span aria-hidden>→</span>
       </Link>
@@ -97,11 +95,9 @@ function AnswerNote({ size = "var(--text-2xs)" }: { size?: string }) {
   );
 }
 
-// The conversation lives here, outside the component. Each look (plain, notebook) is
-// its own AskClient, and switching looks unmounts one and mounts the other; with
-// per-component state that threw away the transcript, and the unmount cancelled the
-// question in flight. Both looks now read one store, and a question keeps going
-// through a switch. It lasts as long as the tab does.
+// The conversation lives here, outside the component, so it survives the component
+// unmounting (a route change and back) and a question in flight keeps going. It
+// lasts as long as the tab does.
 type Session = { lines: Line[]; input: string; busy: boolean; progress: Progress | null; priority: string | null };
 const EMPTY_SESSION: Session = { lines: [], input: "", busy: false, progress: null, priority: null };
 let session: Session = EMPTY_SESSION;
@@ -130,25 +126,6 @@ const setProgress = setter("progress");
 // page; it is whatever was typed, kept for this visit only.
 const setPriority = setter("priority");
 
-type Cell = { n: number | null; q: string | null; out: { kind: "bot" | "sys"; text: string } | null };
-
-/** The transcript as notebook cells: each question with the output that answered it. */
-function toCells(lines: Line[]): Cell[] {
-  const cells: Cell[] = [];
-  let n = 0;
-  for (const l of lines) {
-    if (l.from === "you") {
-      cells.push({ n: ++n, q: l.text, out: null });
-      continue;
-    }
-    const last = cells[cells.length - 1];
-    const out = { kind: l.from === "bot" ? ("bot" as const) : ("sys" as const), text: l.text };
-    if (last && last.q !== null && last.out === null) last.out = out;
-    else cells.push({ n: null, q: null, out });
-  }
-  return cells;
-}
-
 const MAX = 500;
 // The node's heartbeat expires after ~30s, so the pill re-checks on that cadence.
 const STATUS_REFRESH_MS = 30000;
@@ -167,7 +144,7 @@ const bubble = {
   lineHeight: "var(--leading-relaxed)",
 } as const;
 
-export default function AskClient({ variant = "plain" }: { variant?: "plain" | "notebook" }) {
+export default function AskClient() {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   // When the status was last read: the "from 3 hours ago" in the system panel is measured against it.
   const [checkedAt, setCheckedAt] = useState(0);
@@ -308,143 +285,9 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
   const empty = lines.length === 0;
   const asleep = status !== null && !online;
 
-  if (variant === "notebook") {
-    const cells = toCells(lines);
-    const kernel = busy ? "Busy" : status === null ? "Connecting…" : online ? "Idle" : "Offline";
-    return (
-      <main id="main" tabIndex={-1} className="md-dapple" style={{ position: "relative", paddingTop: 59 }}>
-        <h1 className="sr-only">askB.AI</h1>
-        <div className="md-above">
-          <section className="nb" aria-label="Ask notebook">
-            <div className="nb-bar">
-              <span>askB.AI.ipynb</span>
-              <span className="nb-kernel">
-                <span aria-hidden className={pill.pulse ? "nb-dot md-pulse" : "nb-dot"} style={{ background: busy ? "var(--status-ongoing)" : pill.dot }} />
-                {status?.model ? `${status.model} · ` : ""}
-                {kernel}
-                {priority ? " · priority" : ""}
-              </span>
-              <button type="button" className="nb-tool" disabled={busy || lines.length === 0} onClick={() => setLines([])}>
-                Clear outputs
-              </button>
-              <StyleSwitch page="ask" to="plain">
-                Plain view
-              </StyleSwitch>
-            </div>
-
-            <div className="nb-page">
-              <div className="nb-cells">
-                {/* The heading and the note are the page, not transcript, so they
-                    stay outside the live region. */}
-                <div className="nb-cell nb-md">
-                  <h2>askB.AI</h2>
-                  <p>
-                    Questions here go to a small language model running on an old desktop in my house. There&apos;s no data center or paid AI service behind it,
-                    just that one computer, so it&apos;s slower than you&apos;re used to and it only answers while the computer is on. Type a question
-                    below.
-                    {asleep ? " It's off right now, so a question will wait up to 45 seconds for it to wake up and then give up." : ""}
-                  </p>
-                </div>
-
-                {empty && (
-                  <div className="nb-cell nb-md">
-                    <AnswerNote size="var(--text-sm)" />
-                  </div>
-                )}
-
-                <div ref={logRef} role="log" aria-live="polite" aria-relevant="additions" className="nb-stream">
-                  {cells.map((c, i) => {
-                    const running = busy && i === cells.length - 1 && c.q !== null && c.out === null;
-                    return (
-                      <div key={i} className="nb-cell">
-                        {c.q !== null && (
-                          <div className="nb-row">
-                            <span aria-hidden className="nb-prompt nb-in">
-                              In [{running ? "*" : c.n}]:
-                            </span>
-                            <div className={running ? "nb-code nb-running" : "nb-code"}>{c.q}</div>
-                          </div>
-                        )}
-                        {c.out && (
-                          <div className="nb-row">
-                            <span aria-hidden className="nb-prompt nb-outp">
-                              {c.out.kind === "bot" && c.n !== null ? `Out[${c.n}]:` : ""}
-                            </span>
-                            <div className={c.out.kind === "sys" ? "nb-out nb-notice" : "nb-out"}>{c.out.text}</div>
-                          </div>
-                        )}
-                        {c.out?.kind === "bot" && (
-                          <div className="nb-row">
-                            <span aria-hidden className="nb-prompt nb-outp" />
-                            <AnswerNote />
-                          </div>
-                        )}
-                        {running && (
-                          <div className="nb-row">
-                            <span aria-hidden className="nb-prompt nb-outp" />
-                            <div className="nb-out nb-progress">{progress ? progressLabel(progress) : THINKING}</div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <form
-                className="nb-cell nb-compose"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  ask(input);
-                }}
-              >
-                <span aria-hidden className="nb-prompt nb-in">
-                  In [&nbsp;]:
-                </span>
-                <div className="nb-code nb-field">
-                  <input
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value.slice(0, MAX))}
-                    placeholder={asleep ? "Ask anyway…" : "Ask about Bennett…"}
-                    aria-label="Ask about Bennett"
-                    enterKeyHint="send"
-                    autoComplete="off"
-                    readOnly={busy}
-                  />
-                </div>
-                <button type="submit" disabled={busy || input.trim().length === 0} className="md-btn md-btn-primary nb-run">
-                  <Play size={15} aria-hidden />
-                  <span>Run</span>
-                </button>
-              </form>
-
-              {status?.online === true && status.extended ? (
-                <div className="nb-cell" style={{ paddingTop: 0 }}>
-                  <span aria-hidden className="nb-prompt" />
-                  <ExtendedToggle on={extendedOn} busy={busy} />
-                </div>
-              ) : null}
-
-              <div className="nb-foot">
-                <span className="nb-links">
-                  <TextLink href="/projects">Projects</TextLink>
-                  <TextLink href="/contact">Contact</TextLink>
-                </span>
-                {input.length > 0 && (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-3xs)", color: input.length >= MAX ? "var(--status-wip-text)" : "var(--text-faint)" }}>
-                    {input.length}/{MAX}
-                  </span>
-                )}
-              </div>
-
-              <SystemPanel status={status} now={checkedAt} />
-            </div>
-          </section>
-        </div>
-      </main>
-    );
-  }
+  // Each question and its answer are numbered like notebook cells: In [1], Out [1].
+  let cell = 0;
+  const cellOf = lines.map((l) => (l.from === "you" ? ++cell : cell));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
@@ -495,9 +338,6 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
               style={{ width: 7, height: 7, borderRadius: "50%", background: pill.dot, flex: "0 0 auto" }}
             />
             <span style={{ fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>{pill.label}</span>
-            <StyleSwitch page="ask" to="themed">
-              Notebook view
-            </StyleSwitch>
           </span>
         </div>
 
@@ -542,6 +382,11 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                 );
               }
               const you = line.from === "you";
+              const prompt = (
+                <span aria-hidden className="ask-cell" style={{ alignSelf: you ? "flex-end" : "flex-start" }}>
+                  {you ? "In" : "Out"} [{cellOf[i] || " "}]:
+                </span>
+              );
               const message = (
                 <div
                   key={i}
@@ -549,7 +394,7 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                   style={{
                     ...bubble,
                     alignSelf: you ? "flex-end" : "flex-start",
-                    maxWidth: you ? "86%" : "100%",
+                    maxWidth: "100%",
                     borderBottomRightRadius: you ? 4 : 14,
                     borderBottomLeftRadius: you ? 14 : 4,
                     background: you ? "var(--action-primary-bg)" : "var(--surface-sunken)",
@@ -561,9 +406,16 @@ export default function AskClient({ variant = "plain" }: { variant?: "plain" | "
                   {line.text}
                 </div>
               );
-              if (you) return message;
+              if (you)
+                return (
+                  <div key={i} style={{ alignSelf: "flex-end", maxWidth: "86%", display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                    {prompt}
+                    {message}
+                  </div>
+                );
               return (
                 <div key={i} style={{ alignSelf: "flex-start", maxWidth: "86%", display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                  {prompt}
                   {message}
                   <AnswerNote />
                 </div>

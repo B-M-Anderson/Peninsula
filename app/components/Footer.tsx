@@ -22,6 +22,10 @@ export default function Footer() {
           {SITE_NAME} · © <Year />
         </span>
         <nav aria-label="Footer" style={{ display: "flex", gap: "var(--space-6)", flexWrap: "wrap" }}>
+          <TextLink href="/projects">Projects</TextLink>
+          <TextLink href="/posts">Posts</TextLink>
+          <TextLink href="/about">About</TextLink>
+          <TextLink href="/contact">Contact</TextLink>
           <TextLink href={GITHUB_URL}>GitHub</TextLink>
           <TextLink href={LINKEDIN_URL}>LinkedIn</TextLink>
           <TextLink href={CONTACT_MAILTO}>Email</TextLink>

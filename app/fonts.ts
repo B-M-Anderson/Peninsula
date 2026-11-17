@@ -1,8 +1,9 @@
-import { Newsreader, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Jost, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 
-export const display = Newsreader({
+// Jost is a geometric sans, chosen to sit with the round B and pointed A cut into the leaf.
+export const display = Jost({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   variable: "--font-display-src",
   display: "swap",
 });

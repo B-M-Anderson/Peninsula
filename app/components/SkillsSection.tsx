@@ -97,6 +97,9 @@ const categories = [
   },
 ];
 
+/** The group names and sizes, for places that only point at the full list. */
+export const SKILL_GROUPS = categories.map((c) => ({ name: c.name, count: c.skills.length }));
+
 export default function SkillsSection() {
   const items: AccordionItem[] = categories.map((cat) => {
     const sorted = [...cat.skills].sort((a, b) => Number(b.strong) - Number(a.strong));

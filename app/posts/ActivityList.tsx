@@ -1,17 +1,26 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowUpRight, Play } from "lucide-react";
 import { Badge, Card, Dotted, SectionHeading, TextLink } from "../components/ui";
 import SourceLogo from "../components/SourceLogo";
-import { PER_SOURCE, timelineOf, type ActivitySource } from "../lib/activity";
-import type { Channel, DocItem } from "./ActivityDoc";
+import { PER_SOURCE, timelineOf, type ActivityItem, type ActivitySource } from "../lib/activity";
+
+/** An activity item, plus the project page it belongs to when exactly one project points at its repo. */
+export type DocItem = ActivityItem & { project?: { id: string } };
+export type Channel = { key: ActivitySource; name: string; url: string };
+
+export const sourceName: Record<ActivitySource, string> = {
+  youtube: "YouTube",
+  substack: "Substack",
+  x: "X",
+  github: "GitHub",
+};
 
 /**
- * Recent activity for the classic projects page (and so for phones, which get
- * the classic look by default): the same data as activity.mlx in the MATLAB
- * view — the newest item from each channel as cards, then a timeline — in the
- * site's own card style, below the projects. Server-rendered; no client code.
+ * Recent activity across every channel: the newest item from each as cards,
+ * then a timeline. Server-rendered; no client code.
  */
-export default function ActivityList({ items, channels, id }: { items: DocItem[]; channels: Channel[]; /** Element id, so /projects#activity lands here in this look too. */ id?: string }) {
+export default function ActivityList({ items, channels, id }: { items: DocItem[]; channels: Channel[]; id?: string }) {
   const seen = new Set<ActivitySource>();
   const latest = items.filter((i) => (seen.has(i.source) ? false : (seen.add(i.source), true)));
   const timeline = timelineOf(items);
@@ -78,9 +87,9 @@ export default function ActivityList({ items, channels, id }: { items: DocItem[]
                 ) : null}
               </span>
               {i.project ? (
-                <a className="md-link md-act-project" href={`#${i.project.id}`}>
+                <Link className="md-link md-act-project" href={`/projects/${i.project.id}`}>
                   See the project
-                </a>
+                </Link>
               ) : null}
             </span>
           </li>

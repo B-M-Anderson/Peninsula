@@ -141,7 +141,6 @@ export const statusLabel: Record<ProjectStatus, string> = {
 
 export function Badge({
   children,
-  status,
   icon,
 }: {
   children: ReactNode;
@@ -164,12 +163,6 @@ export function Badge({
         whiteSpace: "nowrap",
       }}
     >
-      {status ? (
-        <span
-          aria-hidden
-          style={{ width: 7, height: 7, borderRadius: "50%", background: statusColor[status], flex: "0 0 auto" }}
-        />
-      ) : null}
       {icon}
       {children}
     </span>

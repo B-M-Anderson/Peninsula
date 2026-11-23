@@ -39,14 +39,40 @@ I started from the knight in Shuhmi's "Chess Set" model on Sketchfab and rebuilt
     importantSkills: ["3D Printing", "CAD", "Python"],
     media: "photo",
     aiUsage: 60,
-    completion: 80,
+    completion: 100,
     thumbnailUrl: "/thumbnails/knight-lamp.png",
     imageUrl: "/Previews/KnightLamp.png",
     imageAspect: 960 / 1480,
-    wip: true,
+    wip: false,
     ongoing: false,
     terminated: false,
-    completed: false,
+    completed: true,
+    shelved: false,
+  },
+
+  {
+    title: "Half-Blade Bed Scraper",
+    summary: "A one-piece, print-in-place bed scraper that holds half a single-edge razor blade at a low 10° angle.",
+    description: `I wanted a print bed scraper that takes half of a single-edge razor blade and sits low and flat, so it slides under a print instead of digging into the plate. I couldn't find one that did both, so I designed one.
+
+It prints as one piece with no screws or hardware. The half-blade slides in from the side along a keyed slot: the thin steel sits at 10° to the bed, and the folded metal spine rides in its own channel behind it. The spine is what makes it work, its back presses flat against a solid wall, so pushing into a stuck print loads the body and the blade can't get shoved back into the handle. A small spring tooth printed as part of the head clicks in behind the blade so it can't slide back out the side, and a paperclip through the hole on the other side pushes it out when it's time to swap.
+
+The handle sits about 10 mm off the bed so your knuckles don't drag. There's a guard and a ribbed rest for your index finger, grooves underneath for the rest of your fingers, knurling on the sides, and a round knob at the end to push into with your palm (it doubles as a hang hole).
+
+I modeled it in Python with trimesh and manifold3d and checked the fit against a blade with its spine in the model, but I haven't printed one yet. Expect a revision once it's been used on a real bed.`,
+    date: "November 16, 2026",
+    skills: ["3D Printing", "Mechanical Design", "Print-in-Place", "Ergonomics", "Python", "trimesh", "manifold3d"],
+    importantSkills: ["Mechanical Design", "3D Printing", "Print-in-Place"],
+    media: "photo",
+    aiUsage: 85,
+    completion: 100,
+    thumbnailUrl: "/thumbnails/half-blade-scraper.png",
+    imageUrl: "/Previews/HalfBladeScraper.png",
+    imageAspect: 1600 / 760,
+    wip: false,
+    ongoing: false,
+    terminated: false,
+    completed: true,
     shelved: false,
   },
 
@@ -260,7 +286,7 @@ Feel free to look through the code on GitHub, it was my first public repository.
 Note: I learned TypeScript web development mostly from LLMs early on, and most of the newer features were built with AI coding tools, with me deciding what gets built, reviewing it and testing it.
 The more I work on this site, the more of it I can do on my own.`,
     githubUrl: "https://github.com/B-M-Anderson/peninsula",
-    date: "September 23, 2026",
+    date: "November 17, 2026",
     skills: [
       "Web Development",
       "UI Design",
@@ -275,12 +301,12 @@ The more I work on this site, the more of it I can do on my own.`,
     importantSkills: ["TypeScript", "Web Development", "UI Design", "Responsive Design", "Git & GitHub"],
     media: "none",
     aiUsage: 55,
-    completion: 85,
+    completion: 100,
     thumbnailUrl: "/thumbnails/favicon.png",
     wip: false,
-    ongoing: true,
+    ongoing: false,
     terminated: false,
-    completed: false,
+    completed: true,
     shelved: false,
   },
 

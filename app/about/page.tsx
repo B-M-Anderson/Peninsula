@@ -71,7 +71,6 @@ export default function AboutPage() {
           <dl className="md-status-list" style={{ marginTop: 0 }}>
             <div className="md-status-row">
               <dt>
-                <span aria-hidden className="md-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--status-complete)", display: "inline-block", marginRight: "var(--space-2)" }} />
                 Now
               </dt>
               <dd>{typeset(CURRENTLY.now)}</dd>

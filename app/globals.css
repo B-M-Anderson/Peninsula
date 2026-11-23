@@ -1328,13 +1328,6 @@ html.dark .ba-mark-dark {
   line-height: var(--leading-relaxed);
   color: var(--text-body);
 }
-.home-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--highlight);
-  flex: 0 0 auto;
-}
 
 /* The hub: one tile per section of the site, each leading to its own page. */
 .hub {
@@ -1848,20 +1841,11 @@ html.dark .ba-mark-dark {
   }
 }
 
-/* subtle pulse for status dots — the one animation carried over */
-@keyframes md-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-.md-pulse {
-  animation: md-pulse 2.4s ease-in-out infinite;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .ba-stage:not(:disabled):hover .ba-leaf {
     transform: none;
   }
-  .md-pulse,
   .md-reveal,
   .md-landed > .md-acc-trigger {
     animation: none;

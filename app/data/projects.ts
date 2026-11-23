@@ -33,7 +33,7 @@ export const projects: Project[] = [
     summary: "A hollow, 3D-printed chess knight that glows from a smart bulb inside its head.",
     description: `A chess knight that works as a lamp. The shell is hollow, printed in white PLA with thin walls so the light comes through the plastic, and a Govee smart bulb sits inside the head. The shell clicks onto a separate base that holds the bulb socket, so the two print apart and the bulb can be swapped without cutting anything open.
 
-I started from the knight in Shuhmi's "Chess Set" model on Sketchfab and rebuilt it for lighting: smoothed it, hollowed it to a roughly 0.9 mm wall, and designed the base around the bulb and socket. The first print came out stringy and rough, so this is the second pass, with a finer hollowing step and a re-sliced profile. It glows the way I wanted. The head is still visibly rougher than the body, so there's another revision coming.`,
+I started from the knight in Shuhmi's "Chess Set" model on Sketchfab and rebuilt it for lighting: smoothed it, hollowed it to a roughly 0.9 mm wall, and designed the base around the bulb and socket. The first print came out stringy and rough, so this is the second pass, with a finer hollowing step and a re-sliced profile. It glows the way I wanted.`,
     date: "November 23, 2026",
     skills: ["3D Printing", "CAD", "Python", "trimesh", "Slicing", "Lighting"],
     importantSkills: ["3D Printing", "CAD", "Python"],
@@ -59,7 +59,7 @@ It prints as one piece with no screws or hardware. The half-blade slides in from
 
 The handle sits about 10 mm off the bed so your knuckles don't drag. There's a guard and a ribbed rest for your index finger, grooves underneath for the rest of your fingers, knurling on the sides, and a round knob at the end to push into with your palm (it doubles as a hang hole).
 
-I modeled it in Python with trimesh and manifold3d and checked the fit against a blade with its spine in the model, but I haven't printed one yet. Expect a revision once it's been used on a real bed.`,
+I modeled it in Python with trimesh and manifold3d and checked the fit against a blade with its spine in the model, then printed it.`,
     date: "November 16, 2026",
     skills: ["3D Printing", "Mechanical Design", "Print-in-Place", "Ergonomics", "Python", "trimesh", "manifold3d"],
     importantSkills: ["Mechanical Design", "3D Printing", "Print-in-Place"],

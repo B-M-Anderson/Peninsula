@@ -29,7 +29,7 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    title: "Knight Lamp",
+    title: "Knight Light",
     summary: "A hollow, 3D-printed chess knight that glows from a smart bulb inside its head.",
     description: `A chess knight that works as a lamp. The shell is hollow, printed in white PLA with thin walls so the light comes through the plastic, and a Govee smart bulb sits inside the head. The shell clicks onto a separate base that holds the bulb socket, so the two print apart and the bulb can be swapped without cutting anything open.
 

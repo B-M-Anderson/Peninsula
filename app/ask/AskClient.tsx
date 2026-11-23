@@ -272,13 +272,11 @@ export default function AskClient() {
   const online = status?.online === true;
   const pill =
     status === null
-      ? { dot: "var(--text-faint)", label: "Connecting…", pulse: true }
+      ? { label: "Connecting…" }
       : online
-      ? { dot: "var(--status-complete)", label: "Online", pulse: true }
+      ? { label: "Online" }
       : {
-          dot: "var(--status-wip)",
           label: status.lastSeen ? `Offline · last seen ${ago(status.lastSeen.at, checkedAt)}` : "Offline",
-          pulse: false,
         };
 
   const empty = lines.length === 0;
@@ -331,11 +329,6 @@ export default function AskClient() {
             )}
           </span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-2)" }}>
-            <span
-              aria-hidden
-              className={pill.pulse ? "md-pulse" : undefined}
-              style={{ width: 7, height: 7, borderRadius: "50%", background: pill.dot, flex: "0 0 auto" }}
-            />
             <span style={{ fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>{pill.label}</span>
           </span>
         </div>
@@ -436,15 +429,6 @@ export default function AskClient() {
                 border: "1px solid var(--border-subtle)",
               }}
             >
-              <span style={{ display: "inline-flex", gap: 4 }}>
-                {[0, 1, 2].map((d) => (
-                  <span
-                    key={d}
-                    className="md-pulse"
-                    style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--text-accent)", animationDelay: `${d * 0.2}s` }}
-                  />
-                ))}
-              </span>
               <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
                 {progress ? progressLabel(progress) : THINKING}
               </span>

@@ -96,14 +96,12 @@ export default async function HomePage() {
       <dl className="home-status">
         <div className="home-status-card" data-lead="">
           <dt>
-            <span aria-hidden className="home-dot" />
             Looking for
           </dt>
           <dd>{typeset(CURRENTLY.lookingFor)}</dd>
         </div>
         <div className="home-status-card">
           <dt>
-            <span aria-hidden className="home-dot md-pulse" style={{ background: "var(--status-complete)" }} />
             Now
           </dt>
           <dd>{typeset(CURRENTLY.now)}</dd>

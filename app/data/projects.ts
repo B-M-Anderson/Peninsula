@@ -30,10 +30,10 @@ export type Project = {
 export const projects: Project[] = [
   {
     title: "Knight Light",
-    summary: "A hollow, 3D-printed chess knight that glows from a smart bulb inside its head.",
-    description: `A chess knight that works as a lamp. The shell is hollow, printed in white PLA with thin walls so the light comes through the plastic, and a Govee smart bulb sits inside the head. The shell clicks onto a separate base that holds the bulb socket, so the two print apart and the bulb can be swapped without cutting anything open.
+    summary: "A 3D-printed chess knight lamp with a smart bulb inside.",
+    description: `A chess knight lamp. The shell is hollow white PLA with thin walls, so light comes through the plastic, and a Govee smart bulb sits inside the head. The shell clicks onto a separate base that holds the bulb socket, so the bulb can be swapped without cutting anything open.
 
-I started from the knight in Shuhmi's "Chess Set" model on Sketchfab and rebuilt it for lighting: smoothed it, hollowed it to a roughly 0.9 mm wall, and designed the base around the bulb and socket. The first print came out stringy and rough, so this is the second pass, with a finer hollowing step and a re-sliced profile. It glows the way I wanted.`,
+The knight comes from Shuhmi's "Chess Set" model on Sketchfab. I smoothed it, hollowed it to about a 0.9 mm wall, and designed the base around the bulb and socket.`,
     date: "November 23, 2026",
     skills: ["3D Printing", "CAD", "Python", "trimesh", "Slicing", "Lighting"],
     importantSkills: ["3D Printing", "CAD", "Python"],
@@ -52,14 +52,14 @@ I started from the knight in Shuhmi's "Chess Set" model on Sketchfab and rebuilt
 
   {
     title: "Half-Blade Bed Scraper",
-    summary: "A one-piece, print-in-place bed scraper that holds half a single-edge razor blade at a low 10° angle.",
-    description: `I wanted a print bed scraper that takes half of a single-edge razor blade and sits low and flat, so it slides under a print instead of digging into the plate. I couldn't find one that did both, so I designed one.
+    summary: "A one-piece, print-in-place bed scraper that holds half a single-edge razor blade at 10°.",
+    description: `A print bed scraper that holds half of a single-edge razor blade at a low 10° angle, so it slides under a print without digging into the plate.
 
-It prints as one piece with no screws or hardware. The half-blade slides in from the side along a keyed slot: the thin steel sits at 10° to the bed, and the folded metal spine rides in its own channel behind it. The spine is what makes it work, its back presses flat against a solid wall, so pushing into a stuck print loads the body and the blade can't get shoved back into the handle. A small spring tooth printed as part of the head clicks in behind the blade so it can't slide back out the side, and a paperclip through the hole on the other side pushes it out when it's time to swap.
+It prints as one piece with no screws. The blade slides in from the side along a slot, and its folded spine sits in a channel against a solid wall, so pushing into a stuck print can't shove the blade back into the handle. A small printed spring tooth locks the blade in. A paperclip through the hole on the other side pushes it out to swap.
 
-The handle sits about 10 mm off the bed so your knuckles don't drag. There's a guard and a ribbed rest for your index finger, grooves underneath for the rest of your fingers, knurling on the sides, and a round knob at the end to push into with your palm (it doubles as a hang hole).
+The handle sits about 10 mm off the bed to keep your knuckles clear. It has a guard, a finger rest, grooves underneath, knurled sides, and a round knob at the end that doubles as a hang hole.
 
-I modeled it in Python with trimesh and manifold3d and checked the fit against a blade with its spine in the model, then printed it.`,
+Modeled in Python with trimesh and manifold3d.`,
     date: "November 16, 2026",
     skills: ["3D Printing", "Mechanical Design", "Print-in-Place", "Ergonomics", "Python", "trimesh", "manifold3d"],
     importantSkills: ["Mechanical Design", "3D Printing", "Print-in-Place"],

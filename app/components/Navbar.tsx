@@ -2,42 +2,23 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { FileText, Moon, Sun } from "lucide-react";
+import { FileText, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Mark from "./brand/Mark";
 import { RESUME_PATH, SITE_NAME } from "../data/site";
 import { Button } from "./ui";
-import { storageGet, storageSet } from "../lib/storage";
+import { THEME_COLOR, readTheme, serverTheme, subscribeTheme, toggleTheme } from "../lib/theme";
+import { OPEN_PALETTE_EVENT } from "./CommandPalette";
 
+// The mark and name also lead home; Home is listed too so it is never a guess.
 const links = [
   { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
+  { href: "/posts", label: "Posts" },
+  { href: "/about", label: "About" },
   { href: "/ask", label: "askB.AI" },
   { href: "/contact", label: "Contact" },
 ];
-
-// Theme store: the effective ground follows a saved override, or the browser's
-// prefers-color-scheme when there's no override.
-function subscribeTheme(cb: () => void) {
-  const mq = window.matchMedia("(prefers-color-scheme: dark)");
-  mq.addEventListener("change", cb);
-  window.addEventListener("themechange", cb);
-  window.addEventListener("storage", cb);
-  return () => {
-    mq.removeEventListener("change", cb);
-    window.removeEventListener("themechange", cb);
-    window.removeEventListener("storage", cb);
-  };
-}
-
-function readTheme(): "light" | "dark" {
-  const saved = storageGet("local", "theme");
-  if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-// Browser chrome colour (Android address bar, iOS tab strip) for each ground.
-const THEME_COLOR = { dark: "#3A2412", light: "#FAF4E9" };
 
 // Phone-width store, so the hide-on-scroll behaviour follows the viewport if it
 // is resized or rotated rather than whatever it was on first paint.
@@ -50,12 +31,16 @@ function subscribePhone(cb: () => void) {
 const readPhone = () => window.matchMedia(PHONE_QUERY).matches;
 
 export default function Navbar() {
-  const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark");
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, serverTheme);
   const dark = theme === "dark";
   const phone = useSyncExternalStore(subscribePhone, readPhone, () => false);
 
   const [tucked, setTucked] = useState(false);
   const pathname = usePathname();
+  // The phone menu, remembered against the page it was opened on, so following
+  // a link closes it without an effect.
+  const [menuOn, setMenuOn] = useState<string | null>(null);
+  const menuOpen = phone && menuOn === pathname;
   // Only a phone ever hides the bar; wider viewports keep it pinned.
   const hidden = phone && tucked;
 
@@ -95,18 +80,13 @@ export default function Navbar() {
 
   // Toggle sets an explicit override (persisted); clearing it would fall back to
   // the browser preference again.
-  const toggleTheme = () => {
-    const next = dark ? "light" : "dark";
-    storageSet("local", "theme", next);
-    window.dispatchEvent(new Event("themechange"));
-  };
 
   return (
     <header
-      inert={hidden}
-      data-long={pathname === "/projects" ? "" : undefined}
+      inert={hidden && !menuOpen}
+      data-long=""
       className={`md-site-header fixed top-0 left-0 w-full z-50 transition-[opacity,transform,background-color,border-color,color] duration-300 ease-in-out ${
-        hidden ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"
+        hidden && !menuOpen ? "opacity-0 -translate-y-full" : "opacity-100 translate-y-0"
       }`}
       style={{
         background: "color-mix(in srgb, var(--surface-page) 88%, transparent)",
@@ -119,7 +99,7 @@ export default function Navbar() {
       <nav aria-label="Primary" className="flex justify-between items-center gap-3 px-4 sm:px-6 py-2.5">
         {/* Left: mark + name */}
         <Link href="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0 rounded-sm">
-          <Mark variant="favicon" size={26} />
+          <Mark size={26} />
           {/* The name is the link's accessible name at every width; phones only show the mark */}
           <span className="sr-only sm:hidden">{SITE_NAME}</span>
           <span
@@ -133,9 +113,9 @@ export default function Navbar() {
         {/* Links + toggle. On narrow screens the links scroll horizontally between
             the pinned identity (left) and the toggle (right). */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <ul className="flex gap-1 sm:gap-2 items-center overflow-x-auto no-scrollbar min-w-0 m-0 p-0 list-none" style={{ fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" }}>
+          <ul className="hidden sm:flex gap-1 sm:gap-2 items-center min-w-0 m-0 p-0 list-none" style={{ fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" }}>
             {links.map(({ href, label }) => {
-              const active = pathname === href;
+              const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <li key={href} className="flex-shrink-0">
                   <Link
@@ -157,6 +137,19 @@ export default function Navbar() {
             </Button>
           </span>
 
+          {/* The command prompt: jump to any page or project, or run a command.
+              Also opens with Ctrl/Cmd+K. */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
+            aria-label="Open the command prompt"
+            aria-keyshortcuts="Control+K Meta+K"
+            className="md-theme-btn flex-shrink-0 grid place-items-center -my-1"
+            style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)" }}
+          >
+            <Search size={17} aria-hidden />
+          </button>
+
           {/* Ground toggle — overrides the browser preference; always pinned.
               The label is the same in both grounds so the server's markup never
               has to guess which one the visitor is in; CSS shows the right icon. */}
@@ -170,8 +163,42 @@ export default function Navbar() {
             <span className="md-theme-icon" data-icon="sun"><Sun size={17} aria-hidden /></span>
             <span className="md-theme-icon" data-icon="moon"><Moon size={17} aria-hidden /></span>
           </button>
+
+          {/* Phones: the links live behind one Menu button. */}
+          <button
+            type="button"
+            onClick={() => setMenuOn(menuOpen ? null : pathname)}
+            aria-expanded={menuOpen}
+            aria-controls="nav-sheet"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            className="md-theme-btn sm:hidden flex-shrink-0 grid place-items-center -my-1"
+            style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)" }}
+          >
+            {menuOpen ? <X size={19} aria-hidden /> : <Menu size={19} aria-hidden />}
+          </button>
         </div>
       </nav>
+      {menuOpen ? (
+        <div id="nav-sheet" className="nav-sheet sm:hidden">
+          <ul>
+            {links.map(({ href, label }) => {
+              const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <li key={href}>
+                  <Link href={href} aria-current={active ? "page" : undefined} className="nav-sheet-link" onClick={() => setMenuOn(null)}>
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <div style={{ marginTop: "var(--space-5)" }}>
+            <Button variant="primary" href={RESUME_PATH} newTab iconLeft={<FileText size={15} />}>
+              Resume (PDF)
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

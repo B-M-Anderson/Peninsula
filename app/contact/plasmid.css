@@ -1,38 +1,18 @@
-/* Contact as a plasmid map. Chrome sits on --surface-sunken and the panes on
-   --surface-raised, like the projects browser, so it follows the ground toggle. */
+/* Contact as a plasmid map: the list of ways to reach me beside a circular map of
+   the same list. One bordered panel on the page ground; the feature colours come
+   from the theme's own status and accent tokens, so they follow the ground. */
 .pm {
-  --pm-email: #d3b68a;
-  --pm-phone: #9cc474;
-  --pm-linkedin: #7cc4ee;
-  --pm-github: #d3a6ee;
-  --pm-resume: #e08a6e;
-  border-block: 1px solid var(--border-default);
-  background: var(--surface-sunken);
+  --pm-email: var(--text-accent);
+  --pm-phone: var(--status-complete);
+  --pm-linkedin: var(--highlight);
+  --pm-github: var(--status-shelved);
+  --pm-resume: var(--status-wip);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface-raised);
   font-family: var(--font-body);
   color: var(--text-body);
-}
-html.light .pm,
-.md-light .pm {
-  --pm-email: #6b4420;
-  --pm-phone: #2e7d32;
-  --pm-linkedin: #0b6aa8;
-  --pm-github: #8a2bb0;
-  --pm-resume: #8e3a22;
-}
-
-.pm-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: 6px var(--space-4);
-  border-bottom: 1px solid var(--border-default);
-  font-family: var(--font-mono);
-  font-size: var(--text-3xs);
-  color: var(--text-muted);
-}
-.pm-bar-note {
-  margin-right: auto;
-  color: var(--text-faint);
 }
 
 /* Panel above the map on a phone (the address first), map left of it from 900px. */
@@ -150,15 +130,6 @@ html.light .pm,
 
 .pm-panel {
   background: var(--surface-raised);
-}
-.pm-panel-head {
-  padding: 5px var(--space-4);
-  background: var(--surface-sunken);
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--text-strong);
 }
 .pm-features {
   margin: 0;

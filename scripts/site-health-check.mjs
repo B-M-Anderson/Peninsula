@@ -51,15 +51,15 @@ for (const entry of entries) {
 }
 if (!hasIssues) console.log("Project dates, status flags and video links look consistent.");
 
-// --- homepage photos -------------------------------------------------------
-const page = readFileSync("app/page.tsx", "utf8");
-const photos = [...page.matchAll(/["'](?:\.\.\/public)?(\/(?:cats|Previews)\/[^"']+|\/profile\.jpeg)["']/g)].map((m) => m[1]);
+// --- page photos (the About page's cat gallery, and anything the homepage imports) ---
+const page = ["app/page.tsx", "app/about/page.tsx"].filter((f) => existsSync(f)).map((f) => readFileSync(f, "utf8")).join("\n");
+const photos = [...page.matchAll(/["'](?:(?:\.\.\/)+public)?(\/(?:cats|Previews)\/[^"']+|\/profile\.jpeg)["']/g)].map((m) => m[1]);
 const lost = photos.filter((u) => !existsSync(`public${u}`));
 if (lost.length) {
-  issue(`\nMISSING HOMEPAGE PHOTOS (${lost.length}):`);
+  issue(`\nMISSING PAGE PHOTOS (${lost.length}):`);
   lost.forEach((m) => console.log(`  - ${m}`));
 } else {
-  console.log("\nEvery homepage photo resolves to a file in public/.");
+  console.log("\nEvery page photo resolves to a file in public/.");
 }
 
 if (hasIssues) process.exitCode = 1;

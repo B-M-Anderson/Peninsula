@@ -29,6 +29,28 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    title: "Knight Light",
+    summary: "A hollow, 3D-printed chess knight that glows from a smart bulb inside its head.",
+    description: `A chess knight that works as a lamp. The shell is hollow, printed in white PLA with thin walls so the light comes through the plastic, and a Govee smart bulb sits inside the head. The shell clicks onto a separate base that holds the bulb socket, so the two print apart and the bulb can be swapped without cutting anything open.
+
+I started from the knight in Shuhmi's "Chess Set" model on Sketchfab and rebuilt it for lighting: smoothed it, hollowed it to a roughly 0.9 mm wall, and designed the base around the bulb and socket. The first print came out stringy and rough, so this is the second pass, with a finer hollowing step and a re-sliced profile. It glows the way I wanted. The head is still visibly rougher than the body, so there's another revision coming.`,
+    date: "November 23, 2026",
+    skills: ["3D Printing", "CAD", "Python", "trimesh", "Slicing", "Lighting"],
+    importantSkills: ["3D Printing", "CAD", "Python"],
+    media: "photo",
+    aiUsage: 60,
+    completion: 80,
+    thumbnailUrl: "/thumbnails/knight-lamp.png",
+    imageUrl: "/Previews/KnightLamp.png",
+    imageAspect: 960 / 1480,
+    wip: true,
+    ongoing: false,
+    terminated: false,
+    completed: false,
+    shelved: false,
+  },
+
+  {
     title: "Half-Blade Bed Scraper",
     summary: "A one-piece, print-in-place bed scraper that holds half a single-edge razor blade at a low 10° angle.",
     description: `I wanted a print bed scraper that takes half of a single-edge razor blade and sits low and flat, so it slides under a print instead of digging into the plate. I couldn't find one that did both, so I designed one.

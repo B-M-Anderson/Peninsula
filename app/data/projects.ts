@@ -29,6 +29,28 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    title: "Knight Lamp",
+    summary: "A hollow, 3D-printed chess knight that glows from a smart bulb inside its head.",
+    description: `A chess knight that works as a lamp. The shell is hollow, printed in white PLA with thin walls so the light comes through the plastic, and a Govee smart bulb sits inside the head. The shell clicks onto a separate base that holds the bulb socket, so the two print apart and the bulb can be swapped without cutting anything open.
+
+I started from a knight model I already had and rebuilt it for lighting: smoothed it, hollowed it to a roughly 0.9 mm wall, and designed the base around the bulb and socket. The first print came out stringy and rough, so this is the second pass, with a finer hollowing step and a re-sliced profile. It glows the way I wanted. The head is still visibly rougher than the body, so there's another revision coming.`,
+    date: "November 23, 2026",
+    skills: ["3D Printing", "CAD", "Python", "trimesh", "Slicing", "Lighting"],
+    importantSkills: ["3D Printing", "CAD", "Python"],
+    media: "photo",
+    aiUsage: 80,
+    completion: 80,
+    thumbnailUrl: "/thumbnails/knight-lamp.png",
+    imageUrl: "/Previews/KnightLamp.png",
+    imageAspect: 780 / 1120,
+    wip: true,
+    ongoing: false,
+    terminated: false,
+    completed: false,
+    shelved: false,
+  },
+
+  {
     title: "Centrifuge Repair",
     description: `A dead centrifuge, fully disassembled on a folding table and assessed for issues. After a few YouTube videos, multimeter testing, capacitor replacements, soldering, and some blind luck, it's back to life! 
 

@@ -33,7 +33,7 @@ export const projects: Project[] = [
     summary: "A hollow, 3D-printed chess knight that glows from a smart bulb inside its head.",
     description: `A chess knight that works as a lamp. The shell is hollow, printed in white PLA with thin walls so the light comes through the plastic, and a Govee smart bulb sits inside the head. The shell clicks onto a separate base that holds the bulb socket, so the two print apart and the bulb can be swapped without cutting anything open.
 
-I started from the knight in Stanleyerland's "World Chess Championship - Chess Pieces" on Thingiverse (CC BY) and rebuilt it for lighting: smoothed it, hollowed it to a roughly 0.9 mm wall, and designed the base around the bulb and socket. The first print came out stringy and rough, so this is the second pass, with a finer hollowing step and a re-sliced profile. It glows the way I wanted. The head is still visibly rougher than the body, so there's another revision coming.`,
+I started from the knight in Shuhmi's "Chess Set" model on Sketchfab and rebuilt it for lighting: smoothed it, hollowed it to a roughly 0.9 mm wall, and designed the base around the bulb and socket. The first print came out stringy and rough, so this is the second pass, with a finer hollowing step and a re-sliced profile. It glows the way I wanted. The head is still visibly rougher than the body, so there's another revision coming.`,
     date: "November 23, 2026",
     skills: ["3D Printing", "CAD", "Python", "trimesh", "Slicing", "Lighting"],
     importantSkills: ["3D Printing", "CAD", "Python"],

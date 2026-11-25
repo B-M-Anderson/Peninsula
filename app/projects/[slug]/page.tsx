@@ -6,6 +6,7 @@ import PageFrame from "../../components/PageFrame";
 import MediaBadge from "../../components/MediaBadge";
 import RichText from "../../components/RichText";
 import YouTubeEmbed from "../../components/YouTubeEmbed";
+import Thumb from "../../components/Thumb";
 import { Badge, Chip, ProgressBar, TextLink, statusLabel } from "../../components/ui";
 import { projectSlug, publishedProjects, relatedProjects, statusOf, summaryOf } from "../../data/projects";
 import { youTubeId } from "../../lib/youtube";
@@ -58,7 +59,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <PageFrame
-      title={p.title}
+      title={
+        <span className="proj-title">
+          <Thumb project={p} size={64} />
+          <span>{p.title}</span>
+        </span>
+      }
       kicker={<TextLink href="/projects">← All projects</TextLink>}
       subtitle={
         <span style={{ display: "inline-flex", gap: "var(--space-4)", alignItems: "center", flexWrap: "wrap" }}>

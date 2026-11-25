@@ -53,15 +53,15 @@ The knight comes from Shuhmi's "Chess Set" model on Sketchfab. I smoothed it, ho
   },
 
   {
-    title: "Jewel (chess engine)",
-    summary: "A chess engine written in Julia, with a Lichess bot account, being taught to judge positions with a learned evaluation.",
-    description: `A chess engine written from scratch in **Julia**. It plays on bitboards and searches with negamax, alpha-beta pruning, MVV-LVA move ordering, quiescence search and iterative deepening, and it speaks UCI, so any chess GUI can play it.
+    title: "JewelBot",
+    summary: "A chess engine written in Julia, playing on Lichess as JewelBot, being taught to judge positions with a learned evaluation.",
+    description: `**JewelBot** is a chess engine written from scratch in **Julia**. It plays on bitboards and searches with negamax, alpha-beta pruning, MVV-LVA move ordering, quiescence search and iterative deepening, and it speaks UCI, so any chess GUI can play it.
 
-**How it is measured.** Jewel plays matches against Stockfish limited to 1320 Elo using Cute Chess, with a fixed time control and a book of opening positions, so the same experiment can be repeated after every change. Its first version scored about even with that opponent.
+**How it is measured.** The engine plays matches against Stockfish limited to 1320 Elo using Cute Chess, with a fixed time control and a book of opening positions, so the same experiment can be repeated after every change. Its first version scored about even with that opponent.
 
 **What it gets wrong.** Its evaluation only counts material, so it has no sense of where pieces belong. That is the next thing to fix: a piece-square-table evaluation trained on positions with Texel tuning, which later becomes the first layer of a small neural network.
 
-**JewelBot** is its Lichess bot account. It is switched off until the evaluation improves, so it stops losing to engines far stronger than it.
+**On Lichess** it plays as the bot account JewelBot. That account is switched off until the evaluation improves, so it stops losing to engines far stronger than it.
 
 **Built with** Julia, UCI, Cute Chess and Stockfish for testing, and lichess-bot.`,
     date: "November 25, 2026",
@@ -338,6 +338,7 @@ The more I work on this site, the more of it I can do on my own.`,
     aiUsage: 55,
     completion: 100,
     thumbnailUrl: "/thumbnails/favicon.png",
+    thumbnailDarkUrl: "/thumbnails/favicon-dark.png",
     wip: false,
     ongoing: false,
     terminated: false,

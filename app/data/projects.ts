@@ -61,7 +61,9 @@ The knight comes from Shuhmi's "Chess Set" model on Sketchfab. I smoothed it, ho
 
 **What it gets wrong.** Its evaluation only counts material, so it has no sense of where pieces belong. That is the next thing to fix: a piece-square-table evaluation trained on positions with Texel tuning, which later becomes the first layer of a small neural network.
 
-**On Lichess** it plays as the bot account JewelBot. That account is switched off until the evaluation improves, so it stops losing to engines far stronger than it.
+**On Lichess** it plays as the bot account JewelBot: https://lichess.org/@/JewelBot
+
+That account is switched off until the evaluation improves, so it stops losing to engines far stronger than it.
 
 **Built with** Julia, UCI, Cute Chess and Stockfish for testing, and lichess-bot.`,
     date: "November 25, 2026",

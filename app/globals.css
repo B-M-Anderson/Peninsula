@@ -1512,8 +1512,8 @@ html:not(.light) .thumb-dark { display: block; }
   gap: var(--space-5);
 }
 .proj-title .hub-thumb {
-  width: clamp(48px, 7vw, 64px);
-  height: clamp(48px, 7vw, 64px);
+  width: clamp(56px, 9vw, 80px);
+  height: clamp(56px, 9vw, 80px);
 }
 .proj-card-title {
   margin: 0 0 2px;

@@ -61,7 +61,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     <PageFrame
       title={
         <span className="proj-title">
-          <Thumb project={p} size={64} />
+          <Thumb project={p} size={80} />
           <span>{p.title}</span>
         </span>
       }

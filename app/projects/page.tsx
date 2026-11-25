@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Thumb from "../components/Thumb";
 import Link from "next/link";
 import PageFrame from "../components/PageFrame";
 import MediaBadge from "../components/MediaBadge";
@@ -46,7 +46,7 @@ function gridRow(p: Project): GridRow {
       <Link href={`/projects/${id}`} className="md-card-link">
         <Card interactive className="proj-card">
           <div className="proj-card-top">
-            <Image src={p.thumbnailUrl ?? "/thumbnails/default.png"} alt="" width={48} height={48} className="hub-thumb" />
+            <Thumb project={p} size={48} />
             <div style={{ minWidth: 0 }}>
               <h2 className="proj-card-title">{p.title}</h2>
               <span className="md-label">{p.date}</span>

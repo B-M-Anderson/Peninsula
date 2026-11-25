@@ -1411,6 +1411,20 @@ html.dark .ba-mark-dark {
   object-fit: cover;
   background: var(--surface-sunken);
 }
+/* Icons that come in two versions: the light one shows on the light ground,
+   the dark one on the dark ground (an unset ground reads as dark, like :root). */
+.thumb-dark { display: none; }
+html:not(.light) .thumb-light { display: none; }
+html:not(.light) .thumb-dark { display: block; }
+/* The desktop-status light (navbar, phone menu, home tile). Filled green is on;
+   an amber ring is off, so the difference does not rest on colour alone. */
+.node-status { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; vertical-align: middle; }
+.node-dot { width: 8px; height: 8px; border-radius: 50%; box-sizing: border-box; border: 2px solid var(--status-wip); background: transparent; }
+.node-status[data-on] .node-dot { border-color: var(--status-complete); background: var(--status-complete); }
+.node-off-label { display: none; font-size: var(--text-2xs); color: var(--status-wip-text); letter-spacing: 0.02em; }
+@media (min-width: 1024px) { .node-off-label { display: inline; } }
+.node-line { display: flex; align-items: center; gap: 0; margin: 0; min-height: 1.5em; font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--text-muted); }
+.node-line .node-status { margin-left: 0; margin-right: 8px; }
 .hub-row-text {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Thumb from "./components/Thumb";
+import { NodeStatusLine } from "./components/NodeStatus";
 import Link from "next/link";
 import { FileText, Linkedin, Github } from "lucide-react";
 import LeafLogo from "./components/brand/LeafLogo";
@@ -121,7 +122,7 @@ export default async function HomePage() {
               return (
                 <li key={p.title}>
                   <Link href={`/projects/${projectSlug(p)}`} className="hub-row">
-                    <Image src={p.thumbnailUrl ?? "/thumbnails/default.png"} alt="" width={44} height={44} className="hub-thumb" />
+                    <Thumb project={p} size={44} />
                     <span className="hub-row-text">
                       <span className="hub-row-title">
                         {p.title} <Badge status={status}>{statusLabel[status]}</Badge>
@@ -179,6 +180,7 @@ export default async function HomePage() {
             <h2 id="hub-ask"><Link href="/ask">askB.AI</Link></h2>
           </div>
           <p className="hub-text">Questions about my work, answered by a small language model running on an old desktop in my house.</p>
+          <NodeStatusLine />
           <TextLink href="/ask" arrow>Ask a question</TextLink>
         </section>
 

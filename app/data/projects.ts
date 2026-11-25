@@ -13,6 +13,8 @@ export type Project = {
   aiUsage?: number;
   completion?: number;
   thumbnailUrl?: string;
+  /** Same icon redrawn for the dark ground. Without it the light icon is used on both. */
+  thumbnailDarkUrl?: string;
   imageUrl?: string;
   /** width / height of imageUrl, so the panel reserves the right space before it loads. */
   imageAspect?: number;
@@ -51,6 +53,35 @@ The knight comes from Shuhmi's "Chess Set" model on Sketchfab. I smoothed it, ho
   },
 
   {
+    title: "JewelBot",
+    summary: "A chess engine written in Julia, playing on Lichess as JewelBot, being taught to judge positions with a learned evaluation.",
+    description: `**JewelBot** is a chess engine written from scratch in **Julia**. It plays on bitboards and searches with negamax, alpha-beta pruning, MVV-LVA move ordering, quiescence search and iterative deepening, and it speaks UCI, so any chess GUI can play it.
+
+**How it is measured.** The engine plays matches against Stockfish limited to 1320 Elo using Cute Chess, with a fixed time control and a book of opening positions, so the same experiment can be repeated after every change. Its first version scored about even with that opponent.
+
+**What it gets wrong.** Its evaluation only counts material, so it has no sense of where pieces belong. That is the next thing to fix: a piece-square-table evaluation trained on positions with Texel tuning, which later becomes the first layer of a small neural network.
+
+**On Lichess** it plays as the bot account JewelBot: https://lichess.org/@/JewelBot
+
+That account is switched off until the evaluation improves, so it stops losing to engines far stronger than it.
+
+**Built with** Julia, UCI, Cute Chess and Stockfish for testing, and lichess-bot.`,
+    date: "November 25, 2026",
+    skills: ["Julia", "Chess Engines", "Search Algorithms", "Bitboards", "UCI", "Texel Tuning", "Machine Learning"],
+    importantSkills: ["Julia", "Search Algorithms", "Machine Learning"],
+    media: "none",
+    aiUsage: 50,
+    completion: 25,
+    thumbnailUrl: "/thumbnails/jewel.png",
+    thumbnailDarkUrl: "/thumbnails/jewel-dark.png",
+    wip: true,
+    ongoing: false,
+    terminated: false,
+    completed: false,
+    shelved: false,
+  },
+
+  {
     title: "Half-Blade Bed Scraper",
     summary: "A one-piece, print-in-place bed scraper that holds half a single-edge razor blade at 10°.",
     description: `A print bed scraper that holds half of a single-edge razor blade at a low 10° angle, so it slides under a print without digging into the plate.
@@ -67,6 +98,7 @@ Modeled in Python with trimesh and manifold3d.`,
     aiUsage: 85,
     completion: 100,
     thumbnailUrl: "/thumbnails/half-blade-scraper.png",
+    thumbnailDarkUrl: "/thumbnails/half-blade-scraper-dark.png",
     imageUrl: "/Previews/HalfBladeScraper.png",
     imageAspect: 1600 / 760,
     wip: false,
@@ -91,6 +123,7 @@ https://youtu.be/f-lBA9Kq3T4?si=uDx0hGnT-V_UUTgt
     aiUsage: 0,
     completion: 100,
     thumbnailUrl: "/thumbnails/centrifuge.png",
+    thumbnailDarkUrl: "/thumbnails/centrifuge-dark.png",
     videoUrl: "https://www.youtube.com/watch?v=7f_vMT50zss",
     wip: false,
     ongoing: false,
@@ -117,6 +150,7 @@ Finished and in use playing Wii, watching The Matrix, and eventually for use in 
     aiUsage: 30,
     completion: 100,
     thumbnailUrl: "/thumbnails/pitv.png",
+    thumbnailDarkUrl: "/thumbnails/pitv-dark.png",
     videoUrl: "https://www.youtube.com/watch?v=P2h4f3itk0k",
     wip: false,
     ongoing: false,
@@ -165,6 +199,7 @@ It must be noted with such a machine running it hard indefinitely is a lot, so i
     aiUsage: 80,
     completion: 82,
     thumbnailUrl: "/thumbnails/concierge.png",
+    thumbnailDarkUrl: "/thumbnails/concierge-dark.png",
     wip: true,
     ongoing: false,
     terminated: false,
@@ -213,6 +248,7 @@ It must be noted with such a machine running it hard indefinitely is a lot, so i
     aiUsage: 75,
     completion: 80,
     thumbnailUrl: "/thumbnails/lit-explorer.png",
+    thumbnailDarkUrl: "/thumbnails/lit-explorer-dark.png",
     wip: true,
     ongoing: false,
     terminated: false,
@@ -258,6 +294,7 @@ Its most useful feature is **pairs**: two clips joined into one item, composited
     aiUsage: 90,
     completion: 80,
     thumbnailUrl: "/thumbnails/video-workflow.png",
+    thumbnailDarkUrl: "/thumbnails/video-workflow-dark.png",
     wip: true,
     ongoing: true,
     terminated: false,
@@ -303,6 +340,7 @@ The more I work on this site, the more of it I can do on my own.`,
     aiUsage: 55,
     completion: 100,
     thumbnailUrl: "/thumbnails/favicon.png",
+    thumbnailDarkUrl: "/thumbnails/favicon-dark.png",
     wip: false,
     ongoing: false,
     terminated: false,
@@ -323,6 +361,7 @@ The more I work on this site, the more of it I can do on my own.`,
     aiUsage: 60,
     completion: 65,
     thumbnailUrl: "/thumbnails/mp3.png",
+    thumbnailDarkUrl: "/thumbnails/mp3-dark.png",
     wip: false,
     ongoing: true,
     terminated: false,
@@ -346,6 +385,7 @@ Customer feedback: TBD
     aiUsage: 0,
     completion: 35,
     thumbnailUrl: "/thumbnails/CatTree.png",
+    thumbnailDarkUrl: "/thumbnails/CatTree-dark.png",
     wip: false,
     ongoing: false,
     terminated: false,
@@ -369,6 +409,7 @@ Visible on my mainpage as a downloadable PDF.`,
     aiUsage: 30,
     completion: 100,
     thumbnailUrl: "/thumbnails/resume.png",
+    thumbnailDarkUrl: "/thumbnails/resume-dark.png",
     imageUrl: "/Previews/BennettAndersonResume1.png",
     imageAspect: 1632 / 2112,
     wip: false,

@@ -9,6 +9,7 @@ import { RESUME_PATH, SITE_NAME } from "../data/site";
 import { Button } from "./ui";
 import { THEME_COLOR, readTheme, serverTheme, subscribeTheme, toggleTheme } from "../lib/theme";
 import { OPEN_PALETTE_EVENT } from "./CommandPalette";
+import { NodeDot } from "./NodeStatus";
 
 // The mark and name also lead home; Home is listed too so it is never a guess.
 const links = [
@@ -124,6 +125,7 @@ export default function Navbar() {
                     className="md-nav-link block whitespace-nowrap px-2 py-2 rounded-sm"
                   >
                     {label}
+                    {href === "/ask" ? <NodeDot withLabel /> : null}
                   </Link>
                 </li>
               );
@@ -187,6 +189,7 @@ export default function Navbar() {
                 <li key={href}>
                   <Link href={href} aria-current={active ? "page" : undefined} className="nav-sheet-link" onClick={() => setMenuOn(null)}>
                     {label}
+                    {href === "/ask" ? <NodeDot withLabel /> : null}
                   </Link>
                 </li>
               );

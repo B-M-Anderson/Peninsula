@@ -33,6 +33,8 @@ export const VAULT_TRIGGERS = ["penny", "penrose"];
 // Concierge (local desktop AI) — displayed on /ask. Update when the desktop
 // node comes online for real.
 export const CONCIERGE = {
+  /** What the status dot and the home tile call the thing the desktop runs. Change it here if the desktop takes on a different job. */
+  label: "askB.AI",
   plannedRuntime: "Ollama",
   plannedModel: "not yet provisioned",
   host: "desktop node · home network · outbound-only relay",

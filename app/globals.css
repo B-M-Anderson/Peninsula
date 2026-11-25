@@ -1504,6 +1504,17 @@ html:not(.light) .thumb-dark { display: block; }
   width: 48px;
   height: 48px;
 }
+/* A project page's heading: its icon beside the title, centred on it even when
+   a long title wraps. */
+.proj-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+.proj-title .hub-thumb {
+  width: clamp(56px, 9vw, 80px);
+  height: clamp(56px, 9vw, 80px);
+}
 .proj-card-title {
   margin: 0 0 2px;
   font-family: var(--font-display);

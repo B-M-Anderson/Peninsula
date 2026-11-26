@@ -65,6 +65,52 @@ export type PhotosResponse = {
 
 export type UploadResponse = { ok?: true; url?: string; error?: string };
 
+// ---- Chess (/chess, /api/chess/*) -------------------------------------------
+// The board lives on the desktop node (~/chess-host on the OptiPlex): it
+// referees every move and asks the Jewel engine for a reply. These routes only
+// forward, so the node's address and shared secret never reach the browser.
+
+export type ChessOutcome = {
+  over: boolean;
+  /** "1-0", "0-1", "1/2-1/2" */
+  result: string | null;
+  /** python-chess termination name: "checkmate", "stalemate", "insufficient_material", "threefold_repetition", ... */
+  reason: string | null;
+  winner?: "white" | "black" | null;
+};
+
+export type ChessGame = {
+  fen: string;
+  /** Every move so far, UCI ("e2e4", "e7e8q"). The node is stateless: the page sends this back each turn. */
+  moves: string[];
+  san: string[];
+  turn: "white" | "black";
+  check: boolean;
+  /** Legal moves for the side to move, UCI. */
+  legal: string[];
+  outcome: ChessOutcome;
+};
+
+export type ChessReply = { uci: string; san: string; by: "jewel" | "random"; ms: number };
+
+export type ChessMoveResponse =
+  /** `reply.by: "random"` means Jewel could not answer and a random legal move stood in. */
+  | ({ ok: true; reply: ChessReply | null } & ChessGame)
+  | { ok: false; error: string; offline?: boolean };
+
+export type ChessStatusResponse = {
+  online: boolean;
+  engine?: { state: "idle" | "starting" | "ready" | "missing" | "failed"; name: string | null; error: string | null };
+  build?: {
+    commit: string | null;
+    message: string | null;
+    committedAt: string | null;
+    deployedAt: string | null;
+    playable: boolean;
+  };
+  note?: string;
+};
+
 /** `fetch(...).then(json<T>)` — one place to say what a response is. */
 export function json<T>(r: Response): Promise<T> {
   return r.json() as Promise<T>;

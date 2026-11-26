@@ -1,0 +1,182 @@
+/* /chess — the board. Squares and pieces keep fixed contrast in both themes;
+   everything around the board uses the site's semantic aliases. */
+
+.ch {
+  --ch-light: #e8dcc4;
+  --ch-dark: #9a7b5b;
+  --ch-select: rgba(250, 214, 110, 0.75);
+  --ch-last: rgba(250, 214, 110, 0.38);
+  --ch-check: rgba(214, 72, 56, 0.75);
+  --ch-dot: rgba(30, 20, 12, 0.35);
+  display: grid;
+  grid-template-columns: minmax(0, 560px) minmax(220px, 1fr);
+  gap: var(--space-9);
+  align-items: start;
+}
+
+@media (max-width: 799px) {
+  .ch {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+}
+
+.ch-board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  aspect-ratio: 1;
+  width: 100%;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.ch-sq {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  font: inherit;
+  line-height: 1;
+  cursor: default;
+  background: var(--ch-light);
+}
+.ch-sq[data-dark="true"] { background: var(--ch-dark); }
+.ch-sq[data-last="true"]::before,
+.ch-sq[data-sel="true"]::before,
+.ch-sq[data-check="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ch-sq[data-last="true"]::before { background: var(--ch-last); }
+.ch-sq[data-check="true"]::before { background: radial-gradient(circle, var(--ch-check) 30%, transparent 75%); }
+.ch-sq[data-sel="true"]::before { background: var(--ch-select); }
+.ch-sq[data-can="true"] { cursor: pointer; }
+.ch-sq:focus-visible {
+  outline: 3px solid var(--border-accent);
+  outline-offset: -3px;
+  z-index: 1;
+}
+
+/* A dot on an empty target, a ring on a capture. */
+.ch-sq[data-target="true"]::after {
+  content: "";
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: var(--ch-dot);
+  pointer-events: none;
+}
+.ch-sq[data-target="true"][data-occupied="true"]::after {
+  width: 88%;
+  height: 88%;
+  background: transparent;
+  border: 5px solid var(--ch-dot);
+}
+
+.ch-piece {
+  position: relative;
+  font-size: clamp(26px, 8.4vw, 54px);
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "DejaVu Sans", serif;
+  pointer-events: none;
+}
+.ch-piece[data-color="w"] {
+  color: #fbf7ef;
+  text-shadow: 0 0 1px #2a1d12, 0 0 1px #2a1d12, 0 1px 1px #2a1d12;
+}
+.ch-piece[data-color="b"] {
+  color: #24170e;
+}
+
+.ch-coord {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  pointer-events: none;
+  color: rgba(36, 23, 14, 0.7);
+}
+.ch-coord-file { right: 3px; bottom: 3px; }
+.ch-coord-rank { left: 3px; top: 3px; }
+
+.ch-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.ch-status {
+  margin: 0;
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+  color: var(--text-strong);
+  min-height: 3em;
+}
+.ch-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-muted);
+}
+
+.ch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.ch-moves {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-body);
+  list-style: none;
+  display: grid;
+  grid-template-columns: 3ch 1fr 1fr;
+  column-gap: var(--space-4);
+  row-gap: var(--space-1);
+}
+.ch-moves li { display: contents; }
+.ch-moves .ch-no { color: var(--text-faint); }
+
+.ch-promo {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ch-promo .ch-piece { font-size: 30px; }
+.ch-promo button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--ch-light);
+  cursor: pointer;
+}
+.ch-promo button:focus-visible {
+  outline: 3px solid var(--border-accent);
+  outline-offset: 2px;
+}
